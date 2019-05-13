@@ -1,0 +1,286 @@
+﻿#NAME?,"Sorry, the query is too large to fit into the Excel cell. You will not be able to update your table with the .Stat Populator.",,,
+Dataset: Education,,,,
+Time,,2016,,
+Indicator,,"Mean years of schooling (ISCED 1 or higher), population 25+ years, both sexes","Mean years of schooling (ISCED 1 or higher), population 25+ years, female","Mean years of schooling (ISCED 1 or higher), population 25+ years, male"
+Country,,,,
+Afghanistan,,..,..,..
+Åland Islands,,..,..,..
+Albania,,..,..,..
+Algeria,,..,..,..
+American Samoa,,..,..,..
+Andorra,,10.16,10.09,10.22
+Angola,,..,..,..
+Anguilla,,..,..,..
+Antigua and Barbuda,,..,..,..
+Argentina,,11.42,11.57,11.25
+Armenia,,..,..,..
+Aruba,,..,..,..
+Australia,,12.42,12.44,12.41
+Austria,,12.56,12.28,12.95
+Azerbaijan,,10.52,10.21,11.01
+Bahamas,,..,..,..
+Bahrain,,8.17,8.54,7.98
+Bangladesh,,5.91,5.21,6.6
+Barbados,,..,..,..
+Belarus,,..,..,..
+Belgium,,11.78,11.63,11.95
+Belize,,..,..,..
+Benin,,..,..,..
+Bermuda,,..,..,..
+Bhutan,,..,..,..
+Bolivia (Plurinational State of),,..,..,..
+Bosnia and Herzegovina,,9.69,8.63,10.85
+Botswana,,..,..,..
+Brazil,,..,..,..
+British Virgin Islands,,..,..,..
+Brunei Darussalam,,..,..,..
+Bulgaria,,11.81,11.87,11.75
+Burkina Faso,,..,..,..
+Burundi,,..,..,..
+Cambodia,,..,..,..
+Cameroon,,..,..,..
+Canada,,..,..,..
+Cabo Verde,,..,..,..
+Cayman Islands,,..,..,..
+Central African Republic,,..,..,..
+Chad,,..,..,..
+Channel Islands,,..,..,..
+Chile,,..,..,..
+China,,..,..,..
+"China, Hong Kong Special Administrative Region",,..,..,..
+"China, Macao Special Administrative Region",,10.51,10.3,10.74
+Colombia,,8.27,8.46,8.13
+Comoros,,..,..,..
+Congo,,..,..,..
+Cook Islands,,..,..,..
+Costa Rica,,8.58,8.66,8.5
+Côte d'Ivoire,,..,..,..
+Croatia,,..,..,..
+Cuba,,..,..,..
+Curaçao,,..,..,..
+Cyprus,,12.1,12.01,12.2
+Czechia,,12.74,12.53,12.96
+Democratic People's Republic of Korea,,..,..,..
+Democratic Republic of the Congo,,6.76,5.27,8.37
+Denmark,,12.59,12.72,12.43
+Djibouti,,..,..,..
+Dominica,,..,..,..
+Dominican Republic,,..,..,..
+Ecuador,,8.99,8.91,9.07
+Egypt,,..,..,..
+El Salvador,,6.89,6.66,7.31
+Equatorial Guinea,,..,..,..
+Eritrea,,..,..,..
+Estonia,,13.66,14.11,13.17
+Eswatini,,..,..,..
+Ethiopia,,..,..,..
+Faeroe Islands,,..,..,..
+Falkland Islands (Malvinas),,..,..,..
+Fiji,,..,..,..
+Finland,,..,..,..
+France,,11.35,11.13,11.59
+French Guiana,,..,..,..
+French Polynesia,,..,..,..
+Gabon,,..,..,..
+Gambia,,..,..,..
+Georgia,,12.81,12.8,12.83
+Germany,,14.13,13.77,14.52
+Ghana,,..,..,..
+Gibraltar,,..,..,..
+Greece,,10.26,9.96,10.59
+Greenland,,..,..,..
+Grenada,,..,..,..
+Guadeloupe,,..,..,..
+Guam,,..,..,..
+Guatemala,,..,..,..
+Guernsey,,..,..,..
+Guinea,,..,..,..
+Guinea-Bissau,,..,..,..
+Guyana,,..,..,..
+Haiti,,..,..,..
+Holy See,,..,..,..
+Honduras,,6.53,6.56,6.5
+Hungary,,11.89,11.68,12.13
+Iceland,,..,..,..
+India,,..,..,..
+Indonesia,,7.98,7.57,8.39
+Iran (Islamic Republic of),,10.01,9.94,10.07
+Iraq,,..,..,..
+Ireland,,..,..,..
+Isle of Man,,..,..,..
+Israel,,..,..,..
+Italy,,..,..,..
+Jamaica,,..,..,..
+Japan,,..,..,..
+Jersey,,..,..,..
+Jordan,,..,..,..
+Kazakhstan,,..,..,..
+Kenya,,..,..,..
+Kiribati,,..,..,..
+Kuwait,,..,..,..
+Kyrgyzstan,,..,..,..
+Lao People's Democratic Republic,,..,..,..
+Latvia,,..,..,..
+Lebanon,,..,..,..
+Lesotho,,..,..,..
+Liberia,,..,..,..
+Libya,,..,..,..
+Liechtenstein,,..,..,..
+Lithuania,,13.22,13.21,13.24
+Luxembourg,,..,..,..
+Madagascar,,..,..,..
+Malawi,,..,..,..
+Malaysia,,10.16,10.02,10.3
+Maldives,,..,..,..
+Mali,,1.55,1.03,2.11
+Malta,,11.29,11.02,11.56
+Marshall Islands,,..,..,..
+Martinique,,..,..,..
+Mauritania,,..,..,..
+Mauritius,,..,..,..
+Mayotte,,..,..,..
+Mexico,,8.6,8.42,8.8
+Micronesia (Federated States of),,..,..,..
+Monaco,,..,..,..
+Mongolia,,..,..,..
+Montenegro,,..,..,..
+Montserrat,,..,..,..
+Morocco,,..,..,..
+Mozambique,,..,..,..
+Myanmar,,..,..,..
+Namibia,,..,..,..
+Nauru,,..,..,..
+Nepal,,..,..,..
+Netherlands,,12.19,11.91,12.49
+Netherlands Antilles,,..,..,..
+New Caledonia,,..,..,..
+New Zealand,,13.34,13.27,13.42
+Nicaragua,,..,..,..
+Niger,,..,..,..
+Nigeria,,..,..,..
+Niue,,..,..,..
+Norfolk Island,,..,..,..
+Northern Mariana Islands,,..,..,..
+Norway,,12.57,12.61,12.52
+Oman,,..,..,..
+Pakistan,,5.06,3.69,6.38
+Palau,,..,..,..
+Palestine,,9.1,8.89,9.31
+Panama,,..,..,..
+Papua New Guinea,,..,..,..
+Paraguay,,8.35,8.38,8.32
+Peru,,..,..,..
+Philippines,,..,..,..
+Pitcairn,,..,..,..
+Poland,,12.29,12.32,12.26
+Portugal,,9.19,9.22,9.16
+Puerto Rico,,..,..,..
+Qatar,,9.67,11.09,9.34
+Republic of Korea,,..,..,..
+Republic of Moldova,,..,..,..
+Réunion,,..,..,..
+Romania,,10.98,10.64,11.35
+Russian Federation,,..,..,..
+Rwanda,,..,..,..
+Saint Helena,,..,..,..
+Saint Kitts and Nevis,,..,..,..
+Saint Lucia,,..,..,..
+Saint Pierre and Miquelon,,..,..,..
+Saint Vincent and the Grenadines,,..,..,..
+Saint-Barthélemy,,..,..,..
+Saint-Martin (French part),,..,..,..
+Samoa,,..,..,..
+San Marino,,..,..,..
+Sao Tome and Principe,,..,..,..
+Saudi Arabia,,..,..,..
+Senegal,,..,..,..
+Serbia,,11.13,10.69,11.6
+Seychelles,,..,..,..
+Sierra Leone,,..,..,..
+Singapore,,10.12,9.79,10.48
+Sint Maarten (Dutch part),,..,..,..
+Slovakia,,13.64,13.55,13.74
+Slovenia,,12.27,12.21,12.34
+Solomon Islands,,..,..,..
+Somalia,,..,..,..
+South Africa,,..,..,..
+South Sudan,,..,..,..
+Spain,,9.82,9.69,9.96
+Sri Lanka,,..,..,..
+Sudan,,..,..,..
+Sudan (pre-secession),,..,..,..
+Suriname,,..,..,..
+Svalbard and Jan Mayen Islands,,..,..,..
+Sweden,,12.43,12.54,12.31
+Switzerland,,13.85,13.4,14.33
+Syrian Arab Republic,,..,..,..
+Tajikistan,,..,..,..
+Thailand,,7.61,7.4,7.85
+The former Yugoslav Republic of Macedonia,,..,..,..
+Timor-Leste,,..,..,..
+Togo,,..,..,..
+Tokelau,,..,..,..
+Tonga,,..,..,..
+Trinidad and Tobago,,..,..,..
+Tunisia,,7.09,6.35,7.86
+Turkey,,7.6,6.86,8.35
+Turkmenistan,,..,..,..
+Turks and Caicos Islands,,..,..,..
+Tuvalu,,..,..,..
+Uganda,,..,..,..
+Ukraine,,..,..,..
+United Arab Emirates,,10.95,..,..
+United Kingdom of Great Britain and Northern Ireland,,..,..,..
+United Republic of Tanzania,,..,..,..
+United States of America,,13.38,13.41,13.35
+United States Virgin Islands,,..,..,..
+Uruguay,,8.72,8.98,8.42
+Uzbekistan,,11.52,11.3,11.76
+Vanuatu,,..,..,..
+Venezuela (Bolivarian Republic of),,10.32,10.65,10.03
+Viet Nam,,..,..,..
+Wallis and Futuna Islands,,..,..,..
+Western Sahara,,..,..,..
+Yemen,,..,..,..
+Zambia,,..,..,..
+Zimbabwe,,..,..,..
+Sustainable Development Goal Regions,,..,..,..
+  World,,..,..,..
+  Landlocked Developing Countries,,..,..,..
+  Least Developed Countries,,..,..,..
+  Small Island Developing States,,..,..,..
+  Africa (Sub-Saharan) ,,..,..,..
+  Western Asia and Northern Africa,,..,..,..
+  Africa (Northern),,..,..,..
+  Asia (Western),,..,..,..
+  Asia (Central and Southern),,..,..,..
+  Asia (Central),,..,..,..
+  Asia (Southern),,..,..,..
+  Asia (Eastern and South-eastern),,..,..,..
+  Asia (Eastern),,..,..,..
+  Asia (South-eastern),,..,..,..
+  Latin America and the Caribbean,,..,..,..
+  Oceania,,..,..,..
+  Oceania (Australia/New Zealand),,..,..,..
+  Oceania (excl. Australia/New Zealand),,..,..,..
+  Northern America and Europe,,..,..,..
+  Europe,,..,..,..
+  Northern America ,,..,..,..
+UIS Regions,,..,..,..
+  World,,..,..,..
+  Arab States,,..,..,..
+  Central and Eastern Europe,,..,..,..
+  Central Asia,,..,..,..
+  East Asia and the Pacific,,..,..,..
+  Latin America and the Caribbean,,..,..,..
+  North America and Western Europe,,..,..,..
+  South and West Asia,,..,..,..
+  Sub-Saharan Africa,,..,..,..
+  Small Island Developing States,,..,..,..
+World Bank Income Groups,,..,..,..
+  Low income countries,,..,..,..
+  Lower middle income countries,,..,..,..
+  Middle income countries,,..,..,..
+  Upper middle income countries,,..,..,..
+  High income countries,,..,..,..
+Data extracted on 14 Oct 2018 20:28 UTC (GMT) from UIS.Stat,,,,
