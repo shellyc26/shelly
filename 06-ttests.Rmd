@@ -1,0 +1,1038 @@
+# The R team tries t-tests and its non-parametric alternatives
+
+## Achievements to unlock
+
+Leslie is ready to move on to her next inferential statistical test. Kiara explains that today they will be working on t-tests. Leslie remembers that the t-statistic has come up before when they were looking at the confidence intervals. Kiara is impressed that Leslie remembers the t-statistic is used in confidence intervals in place of the $z$ statistic when sample sizes are small. She explains that the t-statistic is also used as the test statistic for a t-test. A t-test is used to compare the means of two groups to see whether they are different. 
+
+There are several versions of the t-test t-test is a **bivariate** statistical test primarily used when there are two variables Chi-squared is great for when Leslie has two categorical variables, but what about one categorical and one continuous variable? 
+
+* Achievement 1: Using graphics and descriptive statistics to make a prediction
+* Achievement 2: One sample t-test
+* Achievement 3: Independent samples t-test
+* Achievement 4: Dependent samples t-test
+* Achievement 5: Introducing assumptions
+* Achievement 6: Alternate tests for when assumptions are not met
+
+Follow Chelsea, Bobbi, and Leslie through the examples and exercises to test some relationships.
+
+## The vexing vitals problem
+
+After examining the relationship between sugar-sweetened beverage (SSB) consumption and obesity, Chelsea, Bobbi, and Leslie start talking about indicators of good health and behaviors that result in poor health outcomes. Leslie was recently talking with her parents and they were concerned about the health implications of high blood pressure after a recent physical exam. All three of the women have a general idea of their own blood pressure but do not have a good understanding of the relationship of blood pressure to health behaviors like drinking SSB, drinking alcohol, marijuana use, smoking, or physical activity influence blood pressure. 
+
+To start, they read about the two blood pressure measures, systolic and diastolic. Systolic blood pressure is measured in millimeters of mercury or mmHG and ranges from 74 to 238. Diastolic blood pressure is also measured in mmHG and ranges from 0 to 120. The National Health and Nutrition Examination Survey (NHANES) collects blood pressure from participants. Before they read more blood pressure, they explore the NHANES data from 2015-2016 [@NHANES20152016codebook] and examine the distribution of diastolic and systolic blood pressure.
+
+```{r}
+# import nhanes 2015-2016 BPX_I and demographics
+nhanes.2016 <- read.csv("data/nhanes2016.csv")
+```
+
+```{r fig.cap="Distribution of systolic blood pressure in mmHg for 2015-2016 NHANES participants."}
+# graph systolic bp BPXSY1
+library(tidyverse)
+sbp.histo <- nhanes.2016 %>% 
+  ggplot(aes(x = BPXSY1)) +
+  geom_histogram(fill = "#88398a", col = "grey") +
+  theme_minimal() + 
+  labs(x = "Systolic blood pressure (mmHg)",
+       y = "NHANES participants") 
+sbp.histo  
+```
+
+Leslie suggests that it looks like most people are between 100 and about 150. She finds that the Centers for Disease Control and Prevention define normal systolic blood pressure as below 120mmHg, at-risk between 120-139, and high as 140 and above. Viewing these ranges in the histogram might be useful, so she searches for how to fill ranges with different colors and creates a histogram with purple representing normal systolic blood pressure and gray representing at-risk or high systolic blood pressure:
+
+```{r fig.cap="Distribution of systolic blood pressure in mmHg for 2015-2016 NHANES participants."}
+# graph systolic bp BPXSY1
+sbp.histo <- nhanes.2016 %>% 
+  ggplot(aes(x = BPXSY1)) +
+  geom_histogram(aes(fill = BPXSY1 > 120), color="black") +
+  theme_minimal() + 
+  scale_fill_manual(values = c("#88398a","gray"),
+                                      guide = FALSE) +
+  labs(x = "Systolic blood pressure (mmHg)",
+       y = "NHANES participants") 
+sbp.histo  
+```
+
+```{r fig.cap="Distribution of diastolic blood pressure in mmHg for 2015-2016 NHANES participants."}
+# graph diastolic bp BPXDI1
+ggplot(nhanes.2016, aes(BPXDI1)) + 
+  geom_histogram(aes(fill = BPXDI1 > 80), color="black") + 
+  theme_minimal() + 
+  scale_fill_manual(values = c("#88398a","gray"),
+                                      guide = FALSE) + 
+  labs(x="Diastolic blood pressure (mmHg)",
+       y="NHANES participants")
+```
+
+It appears that more people are within the normal range for diastolic blood pressure than are in the normal range for systolic blood pressure. Looking at these two distributions, Leslie thinks that the mean systolic blood pressure in the sample is likely higher than the 120 threshold for healthy.
+
+### Achievement 1: Using graphics and descriptive statistics to make a prediction
+
+Leslie has predicted that the mean systolic blood pressure in the sample is higher than 120. In addition to the histogram, she can check this with the mean and standard deviation computed using the `mean()` and `sd()` commands. First she will have to load the RNHANES package and open the 2015-2016 data:
+
+```{r eval = FALSE}
+# import nhanes 2015-2016 BPX file with demographics
+nhanes.2016 <- nhanes_load_data("BPX", "2015-2016", demographics = TRUE)
+
+```
+
+Once the data are imported, Leslie computes descriptive statistics:
+
+```{r}
+# mean and sd of systolic blood pressure
+mean(nhanes.2016$BPXSY1, na.rm = TRUE)
+sd(nhanes.2016$BPXSY1, na.rm = TRUE)
+```
+
+Leslie finds that the observed mean of 120.5 is just slightly higher than the threshold of 120. While it does not seem like a big difference, she looks at the histogram again and wonders if the .5 difference is statistically significantly different from 120. 
+
+```{r fig.cap="Distribution of systolic blood pressure in mmHg for 2015-2016 NHANES participants."}
+# graph systolic bp BPXSY1
+ggplot(nhanes.2016, aes(BPXSY1)) + 
+  geom_histogram(aes(fill = BPXSY1 > 120), color="black") + 
+  theme_minimal() + 
+  scale_fill_manual(values = c("#88398a","gray"),
+                                      guide = FALSE) + 
+  labs(x="Systolic blood pressure (mmHg)",
+       y="NHANES participants") 
+
+  
+```
+
+### Unlock achievement 1: Check your understanding
+
+Which graphs could be used to determine if the distribution of a continuous variable is normal (check all that apply):
+
+* bar graph 
+* histogram 
+* scatterplot 
+* box plot 
+* line graph 
+
+## Achievement 2: One sample t-test
+
+Bobbi explains that comparing the mean in the NHANES data to a hypothesized value like 120 can be done with a _one sample t-test_. The _one sample t-test_ compares a sample mean to a hypothesized or population mean. It is one of three types of t-tests:
+
+* _one-sample t-test_: compares a mean to a population or hypothesized value 
+* _independent samples t-test_: compares the means of two unrelated groups 
+* _paired samples t-test_: compares the means of two related groups 
+
+### One sample t-test test statitic
+
+Since Leslie is interested in comparing a single group mean to a hypothesized value, she can use the one-sample test. The one-sample t-test uses the t-statistic (sort of like a z-statistic) as the test statistic:
+
+\[
+t=\frac{\bar{x}-\mu}{\frac{s}{\sqrt{N}}}
+\]
+
+#### Null Hypothesis Significance Testing (NHST)
+
+One process to organize statistical tests like _chi-squared_ and the _t-test_ in _null hypothesis significance testing_ or NHST. The steps of NHST are:
+
+#. Write null and alternate hypotheses 
+#. Compute the test statistic 
+#. Calculate the probability that your test statistic is at least as big as it is if there is no relationship (i.e., the null is true) 
+#. If the probability that the null is true is very small, usually less than 5%, reject the null hypothesis 
+#. If the probability that the null is true is not small, usually 5% or greater, retain the null hypothesis 
+
+##### NHST Step 1: Write the null and alternate hypotheses
+
+The null hypothesis is usually a statement that claims there is _no difference_ or _no relationship_ between things. In this case, the null hypothesis is stating that the mean systolic blood pressure of adults in the US is 120. The NHANES data are a sample drawn from the US population, so the NHANES data should have the same characteristics as the population from which it was drawn. 
+
+The alternate hypothesis is the claim that there is _a difference_ or _a relationship_ between things. 
+
+The null and alternate hypotheses are written about the population and are tested using a sample from the population. Here are the null and alternate for Leslie's idea:
+
+H0: The mean systolic blood pressure in the US population is 120  
+
+HA: The mean systolic blood pressure in the US population is not 120
+
+Note that HA is sometimes written as H1. 
+
+##### NHIST Step 2: Compute the test statistic
+
+The second step is to compute the test-statistic. In this case, compute the one-sample t-statistic using the formula above. Leslie needs the mean, standard deviation, and sample size to enter into the formula. She re-runs her code from above and looks at the nhanes.2016 data object in the environment pane to get the sample size:
+
+```{r}
+# mean and sd of systolic blood pressure
+mean(nhanes.2016$BPXSY1, na.rm = TRUE)
+sd(nhanes.2016$BPXSY1, na.rm = TRUE)
+
+```
+
+
+\[
+t=\frac{120.5394-120}{\frac{18.61692}{\sqrt{9544}}}=2.83
+\]
+
+After she computes the t-statistic Bobbi mentions that there are ways to do these calculations in R. In base R, the `t.test()` command is useful for a _one-sample t-test_. The command takes the name of the variable and the value to compare it to, like this: 
+
+```{r}
+# comparing mean of BPXSY1 to 120
+t.test(nhanes.2016$BPXSY1, mu=120)
+```
+
+The output contains a lot of information. The first row confirms the variable examined by the `t.test()` command. This appears correct. The second row starts with **t = 2.4491**, which is very different from the computed value. Leslie goes back and checks her calculations and the math seems to be right. 
+
+The next part of the output is df = 7144. Bobbi explains that, in this context, the degrees of freedom (df) are not computed using rows and columns like the chi-squared degrees of freedom. In this case, the df value is computed by subtracting 1 from the sample size. So, a df = 7144 would indicate the sample size is 7145. Leslie looks back at her calculations and notices that her sample size shows 9544, the number of people in the data set. Bobbi reminds Leslie that there is often missing data and that she can identify how many are missing the BPXSY1 value by using the `summary()` command:
+
+```{r}
+# sample size for mean and sd 
+summary(nhanes.2016$BPXSY1)
+```
+
+There are 2399 NA values in for the systolic blood pressure variable. Leslie subtracts 9544 - 2399 and gets 7145, which matches the degrees of freedom value reported in the `t.test()` output. Leslie uses this new sample size to compute the t-statistic again:
+
+\[
+t=\frac{120.5394-120}{\frac{18.61692}{\sqrt{7145}}}=2.45
+\]
+
+This time the two match perfectly. 
+
+The next number in the `t.test()` output is the p-value. 
+
+```{r}
+# comparing mean of BPXSY1 to 120
+t.test(nhanes.2016$BPXSY1, mu=120)
+```
+
+##### NHST Step 3: Compute the probability for the test statistic (p-value) 
+
+The t-statistic is 2.45. Like the chi-squared statistic, the t-statistic has a distribution made up of all the possible values of t and how probable each value is to occur. In the case of t, the distribution looks similar to a normal distribution. Bobbi plots a t-distribution with 7,144 degrees of freedom:
+
+```{r echo=FALSE, fig.cap="T distribution with df = 7,144."}
+dat<-with(density(rt(100000, 7144)),data.frame(x,y))
+ggplot(data = dat, mapping = aes(x = x, y = y)) +
+    geom_line()+
+  theme_minimal() +
+  xlab("t statistic") + ylab("Probability")
+```
+
+Bobbi suggests shading in the t-statistic of 2.45 and higher in the t-distribution graph. This shows the shaded area under the curve that represents the probability of a t-statistic of this magnitude or greater. 
+
+```{r echo=FALSE, fig.cap="T distribution (df = 7,144) shaded greater than 2.45."}
+dat<-with(density(rt(100000, 7144)),data.frame(x,y))
+ggplot(data = dat, mapping = aes(x = x, y = y)) +
+    geom_line()+
+    geom_area(mapping = aes(x = ifelse(x > 2.45 , x, 0)), fill = "#88398a") + 
+  ylim(0,.5) + xlim(-5, 5) +
+  theme_minimal() +
+  xlab("t statistic") + ylab("Probability")
+
+```
+
+The shaded section of the distribution is very small, indicating that a t-statistic of 2.45 or greater has a low probability. The output from the t-test quantifies this probability with the p-value of .014. The interpretation of this value is that there is a 1.4% probability that a t-statistic would be 2.45 or greater for a sample this large from a population where the mean systolic blood pressure was 120. 
+
+Usually a t-statistic, or any statistic, with a probability of occurring of less than 5% of the time is statistically significant. For the t distribution, the cutoff for values that would be occur less than 5% of the time are shown by the shaded areas. The shaded areas together make up the _critical region_ or _rejection region_ where the t-statistic occur infrequently. The t-statistics fallling into this critical region are  considered _statistically significant_. That is, a t-statistic that large happens so infrequently when there is no difference in means, that the difference between means is deemed statistically significant.
+
+```{r echo=FALSE, fig.cap="T distribution (df = 7,144) shaded rejection region."}
+
+dat<-with(density(rt(100000, 7144)),data.frame(x,y))
+ggplot(data = dat, mapping = aes(x = x, y = y)) +
+    geom_line() +
+    geom_ribbon(data = subset(dat, x < -1.96), aes(ymax = y), ymin=0,
+              fill="#88398a") +
+  geom_ribbon(data = subset(dat, x > 1.96), aes(ymax = y), ymin=0,
+              fill="#88398a") +
+  ylim(0,.5) + xlim(-5, 5) +
+  theme_minimal() +
+  xlab("t statistic") + ylab("Probability")
+
+```
+
+Any value of the t-statistic that is in the shaded tales of the distribution happens less with a probability less than 5%. 
+
+##### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+
+In this case, the t-statistic is in the rejection region, so there is sufficient evidence to reject the null hypothesis in favor of the alternate hypothesis. Even though the difference between the mean systolic blood pressure of 120.5 and the hypothesized value of 120 is small, it is statistically significant. The probability of the sample coming from a population where the mean is 120 is very low, just 1.4%. This sample is likely to be from a population with a higher mean blood pressure.
+
+Chelsea summarizes the results of this t-test: The mean systolic blood pressure in the sample was 120.5. A one-sample t-test found this mean to be statistically significantly different from the hypothesized mean of 120 [t(7144) = 2.45; p = .014]. The sample likely came from a population with a mean systolic blood pressure higher than 120.
+
+### Unlock achievement 2: Check your understanding
+
+Interpret the results of the same one-sample t-test conducted after limiting the NHANES sample to people 65 years old or older:
+
+```{r}
+# subset data frame to 65+ years old
+nhanes.2016.65plus <- subset(nhanes.2016, RIDAGEYR >= 65)
+
+# comparing mean of BPXSY1 to 120
+t.test(nhanes.2016.65plus$BPXSY1, mu=120)
+```
+
+## Achievement 3: Independent samples t-test
+
+Leslie asks if the t-test can be used for anything else. Bobbi explains that there are two additional types of t-test. Instead of comparing one mean to a hypothesized or population mean, the _independent samples t-test_ compares the means of two groups to each other. For example, in the NHANES data there are males and females. We might be interested in whether the mean systolic blood pressure is the same for males and females. That is, do males and females in the sample come from populations with the same mean systolic blood pressure? Bobbi suggests the independent samples t-test can be used to find out if this is the case. Before conducting NHIST, Leslie starts with some descriptive and visual EDA. Chelsea suggests the `compmeans()` command is good for comparing means of groups. The `compmeans()` command is in the descr package. Leslie loads the descr package and looks at the help documentation to write the command. The first argument of the command (x) is the name of the continuous variable, while the second argument (f) is the name of the categorical or **factor** variable.
+
+```{r}
+library(descr)
+
+# compare means of BPXSY1 across groups
+# sex variable is RIAGENDR
+compmeans(x = nhanes.2016$BPXSY1, 
+          f = nhanes.2016$RIAGENDR)
+```
+
+The output includes the means for groups 1 and 2, which are shown in the code book as 1 = Male and 2 = Female. Labeling and renaming the sex variable and renaming the systolic blood pressure variable would make the command and output much easier to interpret. 
+
+```{r}
+# rename the sex and bp variables
+nhanes.2016$sex      <- nhanes.2016$RIAGENDR
+nhanes.2016$systolic <- nhanes.2016$BPXSY1
+
+# add labels to the levels of new variable
+nhanes.2016$sex <- factor(nhanes.2016$sex, 
+                         levels = c(1, 2), 
+                         labels = c("Male", "Female"))
+
+# compare means
+compmeans(x = nhanes.2016$systolic, 
+          f = nhanes.2016$sex)
+
+
+```
+
+With the `compmeans()` output it looks like the males have a higher mean systolic blood pressure of 122.2, while the females have a mean of 119.0. The box plot shows the distribution of blood pressure for the two groups. While higher than the females, Bobbi notes, the distributions of the two groups do not look much different overall. However, she reminds Leslie, with the significant difference found in the one-sample t-test for a small difference between 120 and 120.5, it makes sense to conduct the _independent samples t-test_ to examine the difference more closely. Leslie uses the steps of NHIST to organize the testing:
+
+#### NHST for the independent samples t-test
+
+##### NHST Step 1: Write the null and alternate hypotheses
+
+H0: There is no difference in mean systolic blood pressure for males and females in the US population 
+
+HA: There is a difference in mean systolic blood pressure for males and females in the US population 
+
+##### NHST Step 2: Compute the test statistic
+
+\[
+t=\frac{\bar{x_1}-\bar{x_2}}{\sqrt{\frac{s_1^2}{N_1}+\frac{s_2^2}{N_2}}}
+\]
+
+The means and standard deviations for the two groups were printed in the `compmeans()` output. Leslie substitutes them in:
+
+\[
+t=\frac{122.1767 - 118.9690}{\sqrt{\frac{18.14654^2}{3498}+\frac{18.92703^2}{3647}}}=7.31
+\]
+
+Bobbi suggest that she use one line of code instead: 
+
+```{r}
+# compare systolic blood pressure for males and females
+t.test(nhanes.2016$systolic ~ nhanes.2016$sex)
+```
+
+The output shows a t-statistic of 7.3135, which is consistent with what Leslie calculated. The degrees of freedom are 7,143, which is the sample size of 7,145 minus two because there are two groups. In the case of the _independent samples t-test_, the degrees of freedom are computed as n - k, where n is the sample size and k is the number of groups.
+
+##### NHST Step 3: Compute the probability for the test statistic (p-value) 
+
+The p-value in this case is shown in _scientific notation_, so Leslie converts it: p = .0000000000002886. Bobbi suggests using p < .05 instead since the longer number is more difficult to read and takes up a lot of space. The value of this t-statistic happens with a probability of much less than 5%. 
+
+##### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+
+In this case, the t-statistic is in the rejection region, so there is sufficient evidence to reject the null hypothesis in favor of the alternate hypothesis. Even though the difference between the mean systolic blood pressure for males and females is small, it is statistically significant. The probability of the sample coming from a population where the means for males and females are equal is very low, it would happen about 1.4% of the time. This sample is likely to be from a population where males and females have different mean systolic blood pressure.
+
+Bobbi summarizes the interpretation: There is a statistically significant difference [t(7143) = 7.31; p < .05] between the mean systolic blood pressure for males (m = 122.2) and females (m = 119.0). The sample is from the US population indicating that males in the US likely have a higher mean systolic blood pressure than females in the US.
+
+### Unlock achievement 3: Check your understanding
+
+Conduct the same independent samples t-test on the sample created in the previous section of people 65+ years old. Interpret your results.
+
+## Achievement 4: Dependent samples t-test
+
+Chelsea mentions that sometimes the means to compare will be related. This usually happens in one of two ways, either the same people are measured twice or people are siblings or spouses or co-workers or have some other type of relationship. Chelsea explains that it may seem strange to measure the same people twice, but often people will be measured before and after some sort of intervention and the measures are compared to see if they changed. 
+
+The dependent samples t-test works a little differently from the independent samples t-test. In this case, it is the mean of the differences between the first and second measures. So, for example, if Chelsea's systolic blood pressure was measured to be 110 on the first measure and 112 on the second measure, the difference between the two is 2. If Bobbi were measured as having 115 first and 110 second, the difference between the two measures is -5. The numerator for the paired t-test would take the mean of those differences and subtract 0 since this is the hypothesized mean difference when two measures are the same. The denominator also takes the differences into consideration:
+
+\[
+t=\frac{\bar{d}-0}{\sqrt{\frac{s_d^2}{n}}}
+\]
+
+In the case of the systolic blood pressure measurement for NHANES, the measure is taken up to four times for each person to ensure that it is accurate. In this case, Bobbi notes, these measures should be the same or very similar, so if they are measured accurately there would not be a significant difference between blood pressure measure 1 and blood pressure measure 2. She suggests that Leslie find the difference between the two measures and use descriptive and visual EDA to examine the data.
+
+Leslie starts by making a new variable:
+
+```{r fig.cap="Difference between measure 1 and 2 for systolic blood pressure (mmHg)."}
+# difference between measure 1 and 2 for systolic BP
+nhanes.2016$diff.sbp <- nhanes.2016$systolic - nhanes.2016$BPXSY2
+
+# mean of the differences
+mean(nhanes.2016$diff.sbp, na.rm = TRUE)
+
+# histogram of the differences
+ggplot(nhanes.2016, aes(diff.sbp)) + 
+  geom_histogram(fill = "#88398a", color="grey") + 
+  theme_minimal() + 
+  labs(x="Difference between measure 1 and 2",
+       y="NHANES participants")
+
+```
+
+The distribution of differences looks close to normal and the center is near 0, but not exactly 0. The mean difference is .54. If measures 1 and 2 were exactly the same for each person, the mean difference would be 0. Using the NHST process, Leslie tests to see if the .54 mean difference is significantly different from the 0 she would expect to see if the measures were perfectly consistent:
+
+#### NHST for the dependent samples t-test
+
+##### NHST Step 1: Write the null and alternate hypotheses
+
+H0: There is no difference between measures 1 and 2 for systolic blood pressure  
+
+HA: There is a difference between measures 1 and 2 for systolic blood pressure 
+
+##### NHST Step 2: Compute the test statistic
+
+Leslie substitutes the mean, variance, and sample size of the difference between the measures into the formula for the paired t-test statistic. First she needs the variance and sample size:
+
+```{r}
+# var and sample size of the difference variable
+var(nhanes.2016$diff.sbp, na.rm = TRUE)
+summary(nhanes.2016$diff.sbp)
+
+```
+
+Note that the sample size is smaller this time, 2,443 people had missing data for one or both of the systolic blood pressure measures. With 9,544 people in the full data set, this means that 7,101 people had data for both measures available. 
+
+\[
+t=\frac{.54-0}{\sqrt{\frac{23.88}{7101}}}=9.38
+\]
+
+Bobbi asks Leslie what she expects to find with a t-statistic this large. In light of the significant tests for the one-sample and independent samples t-tests, Leslie thinks this is likely to be a _statistically significant_ result as well. Bobbi suggests using the `t.test()` command again, but this time with the `paired = TRUE` option since the default for the command is an independent samples test. Leslie tries it: 
+
+```{r}
+# paired t-test for systolic measures 1 and 2
+t.test(x = nhanes.2016$systolic, 
+       y = nhanes.2016$BPXSY2, 
+       paired = TRUE)
+```
+
+##### NHST Step 3: Compute the probability for the test statistic (p-value) 
+
+Once again, the p-value is shown in scientific notation, with an actual value of .00000000000000022. Just as Leslie suspected, the p-value is well below .05 indicating that the probability of a mean difference of .54 is much lower than 5%.
+
+##### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+
+Once again, the t-statistic has a low probability and is in the rejection region, so there is sufficient evidence to reject the null hypothesis in favor of the alternate hypothesis. Even though the mean difference between the first and second measures is small, it is statistically significant. The probability of the sample coming from a population where the measures are equal is very low. This sample is likely to be from a population where systolic blood pressure is not measured consistently over time.
+
+Bobbi summarizes the interpretation: The mean difference between systolic blood pressure measures is statistically significantly different from zero [t(7100) = 9.38; p < .05]. The positive difference of .54 indicates that systolic blood pressure is significantly higher for the first measure compared to the second measure.
+
+Note that the mean difference is quite small and does not seem to be reason to worry. While it is not zero, as it would be if the measures were completely consistent, it is .54 on average, which is not a large clinical difference. This example and the small but significant differences for the one-sample and independent samples t-tests demonstrate that results can be statistically significant but not clinically meaningful. 
+
+A review of the formulas for the three t-statistics shows one possible reason why the results of these three t-tests were all significant. The denominator of all three tests includes the sample size, which was large. Large sample sizes in these denominators resulted in small denominators which, in turn, result in large t-statistics.
+
+### Unlocking achievement 4: Check your understanding
+
+Match each type of t-test to its description:
+
+t-tests: 
+
+* One-sample  
+* Dependent samples 
+* Independent samples 
+
+descriptions: 
+
+* Compares means of two unrelated groups 
+* Compares a single mean to a population or hypothesized value 
+* Compares two related means 
+
+### Achievement 5: Introducing assumptions
+
+So far the only requirements for the chi-squared and t-tests have been having the right variable types. Chi-squared is used for examining the relationship between two categorical variables while t-tests are used for comparing means of continuous variables between two groups. 
+
+In addition to variable type requirements, Chelsea explains, there are other qualities of the data necessary for the tests to be accurate. These qualities are called _assumptions_ and are part of the foundation for each test.
+
+The first assumption for the t-test is that the data are normally distributed. For the one-sample t-test, the single variable being examined should be normally distributed. For the independent samples t-test and the paired samples t-test the data within each of the two groups should be normally distributed. There are several ways to assess normality. Visually, a histogram or a QQ-plot is useful for identifying normal and non-normal data distribution. Statistically, a Shapiro-Wilk test can be used. 
+
+#### Testing normality 
+
+For the one-sample t-test comparing systolic blood pressure to a hypothesized population mean of 120, the histogram to determine whether a t-test was appropriate would look like this:
+
+```{r fig.cap="Distribution of systolic blood pressure in mmHg\nfor 2015-2016 NHANES participants"}
+# graph systolic bp BPXSY1
+ggplot(nhanes.2016, aes(systolic)) + 
+  geom_histogram(fill = "#88398a", col = "grey") + 
+  theme_minimal() + 
+  labs(x="Systolic blood pressure (mmHg)",
+       y="NHANES participants") 
+```
+
+The histogram does not suggest a normal distribution. The data appear right skewed. Another way to visually check normality is with a QQ-plot, or quantile-quantile plot. This plot is made up of points below which a certain percentage of the observations fall. On the x-axis are normally distributed values with a mean of 0 and a standard deviation of 1. On the y-axis are the observations from the data. If the data are normally distributed, the values will form a diagonal line through the graph. 
+
+```{r echo = FALSE, fig.cap="Distribution of systolic blood pressure in mmHg for 2015-2016 NHANES participants"}
+
+# graph systolic bp BPXSY1
+ggplot(nhanes.2016, aes(sample = systolic)) + 
+  stat_qq(color = "#88398a") + 
+  geom_abline(intercept = mean(nhanes.2016$systolic, na.rm = TRUE), 
+              slope = sd(nhanes.2016$systolic, na.rm = TRUE)) +
+  theme_minimal() + 
+  labs(x = "Theoretical normal distribution",
+       y = "Observed values")
+  
+```
+
+Consistent with the right-skewed histogram, the higher observed values at the top of the graph are further from the line representing normality. In this case, the visual evidence is enough to state that this assumption is not met. If the graphs showed the data were closer to normal, a statistical test can contribute to confirming whether the data are or are not normally distributed. 
+
+The Shapiro-Wilk test for normality has the following null and alternate hypotheses:
+
+H0: The data are normally distributed.
+
+HA: The data are not normally distributed.
+
+In R, the test is conducted using the `shapiro.test()` command. Because the Shapiro-Wilk test is likely to always be significant in very large samples, the command only works when there are 5,000 observations or fewer. Had the sample size been smaller, this command would test the null hypothesis:
+
+```{r eval = FALSE}
+# statistical test of normality for systolic variable
+shapiro.test(x = nhanes.2016$systolic)
+```
+
+To demonstrate how the test works, Bobbi suggests taking a sample from the NHANES data and testing the sample. The `sample()` command is useful for taking a random sample from a data frame in R. Chelsea suggests 1,000 people as the sample size. Bobbi writes a small amount of code, explaining that the `sample()` command selects the number of people specified and then the sub-setting format with square brackets can be used to take the subset of these people:
+
+```{r}
+# set a starting value
+set.seed(42)
+
+# sample 1000 cases from nhanes.2016 and name nhanes.2016sample
+nhanes.2016sample <- nhanes.2016[sample(1:nrow(nhanes.2016), 1000), ]
+```
+
+To understand the distribution of this smaller data set, start by graphing it:
+
+```{r fig.cap="Distribution of systolic blood pressure in mmHg for 1,000 2015-2016 NHANES participants."}
+
+#graph systolic bp BPXSY1
+ggplot(nhanes.2016sample, aes(systolic)) + 
+  geom_histogram(fill = "#88398a", col = "grey") + 
+  theme_minimal() + 
+  labs(x="Systolic blood pressure (mmHg)",
+       y="NHANES participants")
+  
+```
+
+
+The smaller sample appears even more right skewed than the full NHANES data set, so it is unlikely to be normal by the Shapiro-Wilk test:
+
+```{r eval = FALSE}
+# statistical test of normality for systolic variable
+shapiro.test(x = nhanes.2016sample$systolic)
+```
+
+The result of the test is that the probability that the data are normally distributed is .000000000000015. This is a tiny probability and typically would result in rejecting the null hypothesis that the data are normally distributed. Instead, the results of this test favor the alternate hypothesis. Leslie tries her hand at an interpretation: A Shapiro-Wilk test for normality rejected the null hypothesis (W = .95; p < .05) and found the systolic blood pressure variable to be non-normal. The variable fails the assumption of a normal distribution. 
+
+Normality is checked for _each group_ for the independent samples t-test and paired samples t-test. Bobbi explains that histograms can be shown together on the same x and y axes using different colors, or on separate plots. Leslie thinks plotting them separately would be best to be able to see the shape clearly for each group. Bobbi copies the `ggplot()` code from earlier and adds a `facet_grid()` option with the facets identified by the sex variable. 
+
+```{r fig.cap="Distribution of systolic blood pressure in mmHg for 1,000 2015-2016 NHANES participants"}
+#graph systolic bp by sex
+ggplot(nhanes.2016sample, aes(systolic)) + 
+  geom_histogram(fill = "#88398a", col = "grey") + 
+  facet_grid(sex ~ .) + 
+  theme_minimal() + 
+  ylim(c(0,60)) + 
+  labs(x="Systolic blood pressure (mmHg)",
+       y="NHANES participants")
+  
+```
+
+The two separate groups look right skewed, like the overall distribution. A qq-plot with facets might be able to confirm:
+
+```{r fig.cap = "Distribution of systolic blood pressure in mmHg\nfor 2015-2016 NHANES participants."}
+#graph systolic bp
+ggplot(nhanes.2016, aes(sample = systolic)) + 
+  stat_qq(color = "#88398a") +
+  facet_grid(sex ~ .) + 
+  geom_abline(intercept = mean(nhanes.2016$systolic, na.rm = TRUE), 
+              slope = sd(nhanes.2016$systolic, na.rm = TRUE)) +
+  theme_minimal() + 
+  labs(x="Theoretical normal distribution",
+       y="Observed values")
+```
+
+The groups clearly _fail the assumption of normal distribution_. The Shapiro-Wilk test of normality can help to confirm this statistically for each of the two groups:
+
+```{r eval = FALSE}
+# statistical test of normality for Male systolic bp
+shapiro.test(x = nhanes.2016$systolic[nhanes.2016$sex == "Male"])
+shapiro.test(x = nhanes.2016$systolic[nhanes.2016$sex == "Female"])
+```
+
+With a statistically significant result, the Shapiro-Wilk test suggests that systolic blood pressure is not normally distributed among males (W = .95; p < .05) or among females (W = .94; p < .05). 
+
+Testing normality for the paired-samples t-test is similar to the one-sample t-test, just graph or statistically test the diff.sbp variable to see if the differences between the first and second measures are normally distributed.
+
+```{r fig.cap="Distribution of differences in systolic blood pressure readings \nfor 2015-2016 NHANES participants."}
+#graph systolic bp BPXSY1
+ggplot(nhanes.2016, aes(diff.sbp)) + 
+  geom_histogram(fill = "#88398a", col = "grey") + 
+  theme_minimal() + 
+  labs(x="Difference between measures of systolic blood pressure (mmHg)",
+       y="NHANES participants")
+```
+
+Leslie notes that this distribution looks more normal than any of the previous ones. She tries a qq-plot to see if her observation holds:
+
+```{r fig.cap="Distribution of differences in systolic blood pressure measures\nfor 2015-2016 NHANES participants."}
+
+#graph systolic bp BPXSY1
+ggplot(nhanes.2016, aes(sample = diff.sbp)) + 
+  stat_qq(color = "#88398a") + 
+  geom_abline(intercept = mean(nhanes.2016$diff.sbp, na.rm = TRUE), 
+              slope = sd(nhanes.2016$diff.sbp, na.rm = TRUE)) +
+  theme_minimal() + 
+  labs(x="Theoretical normal distribution",
+       y="Observed values")
+  
+```
+
+Leslie is a little disappointed that the variable does not look normally distributed in this plot, but decides to try a statistical test of the variable from the small sample data frame to check one more time:
+
+```{r eval = FALSE}
+# statistical test of normality for difference variable
+shapiro.test(x = nhanes.2016sample$diff.sbp)
+```
+
+Despite the promising histogram, the qq-plot and Shapiro-Wilk test suggest that the difference variable is not normally distributed (W = .96; p < .05).
+
+Leslie notes that _none_ of t-tests met the _normal distribution_ assumption! While failing this assumption would be enough of a reason to choose another test, Chelsea explains that there is one additional assumption to test for the independent samples t-test. The second assumption is the assumption of _homogeneity of variances_ or _equal variances across groups_. So, not only do the data need to be normally distributed, but the data should be equally spread out in each group. Leslie reviews the graphs thinks this might actually be an easier assumption to meet.
+
+Chelsea mentions that the _Levene's Test_ is widely used to test the assumption of equal variances. The null hypothesis is that _the variances are equal_ while the alternate is that at least two of the variances are different. The **car** package in R has a Levene's test command that can be used to test for equal variances:
+
+```{r}
+library(car)
+
+# equal variances for systolic by sex
+leveneTest(y = systolic ~ sex, data = nhanes.2016)
+```
+
+The Levene's test finds that there is no statistical reason to reject the null hypothesis for _sex_; the variances of systolic blood pressure for men and women are not statistically significantly different (p = .06). So, the independent samples t-test meets the assumption of _homogeneity of variances_.
+
+So, overall, none of the tests passed all assumptions. All of the tests failed the assumption of normal distribution.
+
+Chelsea summarizes the assumptions for the tests to make sure Leslie has them all:
+
+#### one-sample t-test assumptions
+
+* continuous variable 
+* independent observations 
+* normal distribution 
+
+#### independent-samples t-test assumptions 
+
+* continuous variable and two independent groups 
+* independent observations 
+* normal distribution in each group 
+* equal variances for each group 
+
+#### dependent-samples t-test assumptions 
+
+* continuous variable and two dependent groups 
+* independent observations  
+* normal distribution of differences 
+
+Leslie asks Chelsea what the difference is between independent observations and independent groups. Chelsea explains that independent observations is the assumption that the people in your data are not related to one another in any important way. Things that might violate this assumption are having siblings or spouses in a data set or measuring the same person multiple times. Independent groups is the assumption that two groups are not related to one another. If one group was made up of all the spouses of another group, the two groups would not be independent.
+
+Leslie expresses some disappointment that none of the statistical tests passed the assumptions. Bobbi explains that each test has a variation for when the assumptions are not met.
+
+### Unlocking achievement 5: Check your understanding
+
+Which independent samples t-test assumption appears to be violated by the data in the graph shown? 
+
+```{r echo = FALSE, fig.cap="Distribution of data violating a t-test assumption."}
+ggplot(subset(nhanes.2016[nhanes.2016$INDFMPIR < 5, ], !is.na(sex)), aes(INDFMPIR)) + 
+  geom_histogram(fill = "#88398a", col = "grey") + 
+  facet_grid(sex ~ .) +
+  theme_minimal() 
+  
+```
+
+* continuous variable and two independent groups 
+* independent observations 
+* normal distribution in each group 
+* equal variances for each group 
+
+## Achievement 6: Sign test, Mann-Whitney U, and other alternative tests when assumptions are not met
+
+Chelsea introduces Leslie to the alternate tests she can use when the assumptions fail:
+
+* one-sample t-test -> Sign test 
+* paired-samples t-test -> Wilcoxon signed rank test
+* independent-samples t-test -> Mann-Whitney U or Kolmogorov-Smirnoff 
+
+### Sign test
+
+When the data failed the assumption of normality for a one-sample t-test, the median could be examined rather than the mean, just like in descriptive statistics. The alternative to the one-sample t-test is the _Sign test_, which tests whether the _median_ of a variable is equal to some hypothesized value. In this case, Chelsea suggests:
+
+H0: The median systolic blood pressure in the US population is 120 
+
+HA: The median systolic blood pressure in the US population is not 120
+
+Leslie looks up the _Sign test_ and finds that it is conducted using the `SIGN.test()` command from the BSDA package. She installs the BSDA package and then loads it to conduct the test. Before conducting the test, she remembers that EDA is an important step and examines the median value of the systolic variable.
+
+```{r}
+
+# examine median for systolic variable
+median(nhanes.2016$systolic, na.rm = TRUE)
+
+```
+
+The median systolic blood pressure is 118. This is close but a little lower than the 120 hypothesized to be the median value. Chelsea reminds Leslie and Bobbi that the median value is exactly in the middle with the same number of observations above as below it. Leslie opens the BSDA library and tests the median of 118 against the hypothesized median of 120. The `md =` option in the `SIGN.test()` indicates the hypothesized value to test.
+
+
+```{r}
+# sign test in BSDA package
+library(BSDA)
+
+# conduct median test
+SIGN.test(nhanes.2016$systolic, md = 120)
+
+```
+
+Bobbi interprets the results: The median systolic blood pressure for NHANES participants was 118. A Sign-test comparing the median to a hypothesized median of 120 had a statistically significant (s = 3004; p < .05) result. We reject the null hypothesis that the US population median systolic blood pressure is 120 in favor of the alternate that the median is not 120.
+
+Chelsea notes that the output includes a 95% confidence interval of 116 to 118. In this case, she says, the confidence interval suggests that this sample likely came from a population where the median systolic blood pressure was between 116-118. So, the median in the sample is 118 and the median in the population the sample came from is likely between 116-118.
+
+Leslie asks about the list of confidence intervals at the end of the output. Bobbi and Chelsea think those can be ignored for now, but may come back later.
+
+### Wilcoxon signed-rank test
+
+This test is an alternative to the _paired-samples t-test_ when the continuous variable is not normally distributed. The Wilcoxon test determines if two related samples come from populations with the same distribution. That is, instead of comparing means, the test compares the overall distributions of the two groups. 
+
+Chelsea thinks it is important to consider way the test compares distributions, since many of the alternate tests use a similar process. Chelsea explains the steps used to compute the test statistic:
+
+Step 1: Find the differences between the two paired measures (measure 1 - measure 2)
+
+Step 2: Put the absolute values of the differences in order from smallest to largest and give each one a rank
+
+Step 3: Sum the ranks for all the _positive_ differences
+
+Step 4: Sum the ranks for the _negative_ differences 
+
+The test statistic for this test (V) is the smaller of the _Step 3_ and _Step 4_ values. Unless a sample size is very small (n(n+1)/2 < 20), the test statistic value is used to compute a z-score:
+
+\[
+q=\frac{W - \frac{n(n+1)}{4}}{\sqrt{\frac{n(n+1)(2n+1)}{24}-\frac{(t^3-t)}{48}}}
+\]
+
+Where t is the number of ties in rank. The z-score is then translated into a corresponding p-value.  
+
+The null and alternate hypotheses are:
+
+H0: There is no difference in systolic blood pressure measures taken at time 1 and time 2 in the US population.
+
+HA: There is no difference in systolic blood pressure measures taken at time 1 and time 2 in the US population.
+
+In R, the `wilcox.test()` in the MASS package tests the null hypothesis. Bobbi reminds Leslie to include the `paired = TRUE` argument in the code:
+
+```{r}
+# open the MASS library
+library(MASS)
+
+# test the distribution of SBP by time period
+wilcox.test(nhanes.2016$systolic, nhanes.2016$BPXSY2, paired = TRUE)
+```
+
+So, the smallest sum of ranks is 9,550,000. 
+
+The resulting output is similar to the output for many of the tests. Leslie interprets it: A Wilcoxon signed-rank test distribution of systolic blood pressure at time 1 and time 2 is _not_ the same in the US population (V = 9,550,000; p < .05). 
+
+A graph of the two distributions might demonstrate the difference:
+
+```{r fig.cap="Distribution of systolic blood pressure by measure 1 and 2 for 2015-2016 NHANES participants."}
+library(tidyverse)
+
+# make subset of data long to graph
+vars <- c("BPXSY1","BPXSY2","SEQN")
+nhanes.2016.long.sbp <- gather(nhanes.2016[vars], measure, sbp, BPXSY1:BPXSY2, factor_key = TRUE) 
+
+# with lines
+ggplot(nhanes.2016.long.sbp, aes(x=sbp, fill=measure)) +
+  geom_histogram(fill = "#88398a", col = "grey") + 
+  facet_grid(measure ~ .) + 
+  theme_minimal() + 
+  labs(x="Systolic blood pressure (mmHg)",
+       y="NHANES participants")
+
+```
+
+The distributions look quite similar, but have enough minor differences to reach statistical significance. In this case, the difference may be _statistically significant_ but not large enough to be concerned about the measurement strategy for NHANES.
+
+Note that this test, the Mann-Whitney U, the K-S test, and the Kruskal-Wallis test are often interpreted as testing for _equal medians_. While none of these tests examine medians directly like a t-test examined means directly, the ordering and ranking is similar to how medians are identified, so there is some logic to this interpretation. However, if the distribution shape or spread (or both) are different, the interpretation of results with respect only to the median can be very misleading. 
+
+For example, data can have far different shape and still have the same median value. Bobbi simulates two  synthetic data sets with 125 observations and nearly equal medians. She examines the medians and conducts a Wilcoxon signed rank test:
+
+```{r echo = FALSE}
+# data with mean of 100 and different sd
+set.seed(42)
+demo1 <- rnorm(n = 125, mean = 100, sd = 2)
+demo2 <- rnorm(n = 125, mean = 100, sd = 10)
+spread_example <- data.frame(demo1, demo2)
+```
+
+```{r}
+# medians
+median(demo1)
+median(demo2)
+
+# test of medians
+wilcox.test(x = spread_example$demo1, 
+            y = spread_example$demo2, 
+            paired = TRUE)
+```
+The medians are close at 100.16 and 99.14. The Wilcoxon test would _fail to reject_ the null hypothesis in this case (V = 4191; p = .53), resulting in the conclusion that the two measures are not different from one another. While it is true that the medians are similar, graphs of the two variables shows extremely different distributions. The first variable shows a narrow distribution with all values close together, while the second shows a wide distribution with values spread far. The _central tendency_ is similar, but the _spread_ is not. This may or may not be important to a research project, but should at least be noted with the test results.
+
+```{r echo = FALSE, warning = FALSE, message = FALSE, fig.cap="Two synthetic measures on one group."}
+
+spread.long <- gather(spread_example, narrow, measure, demo1:demo2, factor_key = TRUE) 
+
+# with lines
+ggplot(spread.long, aes(x=measure)) +
+  geom_histogram(fill = "#88398a", col = "grey") + 
+  facet_grid(narrow ~ .) + 
+  theme_minimal() + 
+  labs(x="Synthetic measure",
+       y="Frequency") 
+
+
+```
+
+To conclude that these measures are not different from one another seems limited at best and fairly misleading. Remember to conduct visual and descriptive analyses before (or with) inferential analyses in order to interpret your results accurately. The Wilcoxon signed rank test should be accompanied by a histogram or box plot comparing the groups to support or clarify the statistical results.
+
+#### Mann-Whitney U test or Wilcoxon rank-sum test
+
+This test is an alternative to the independent-samples t-test when the continuous variable is not normally distributed. This test also relaxes the variable type assumption and can be used for ordinal variables in addition to continuous variables. Similar to the _Wilcoxon_ rank-sum test, the Mann-Whitney U test puts all the values for the continuous variable in order, assigns each value a rank, and compares sums of ranks in the two groups. The formula for the test statistic is to sum all the ranks (R) for each group and subtract the sum of possible ranks for a group of that size (n(n+1)/2), resulting in a zero or positive value.
+
+\[
+U_1=R_1 - \frac{n_1(n_1+1)}{2}
+\]
+
+\[
+U_2=R_2 - \frac{n_2(n_2+1)}{2}
+\]
+
+Like the Wilcoxon signed-rank test, the lower of the two U statistics is the test statistic. A z-score is then computed to translate the U into a corresponding p-value:
+
+\[
+z=\frac{U - m_U)}{s_U}
+\]
+
+Where m and s are the mean and standard deviation of U.
+
+The null and alternate hypotheses would be: 
+
+H0: There is no difference in systolic blood pressure for males and females in the US population.
+
+HA: There is a difference in systolic blood pressure for males and females in the US population.
+
+The same command used in the Wilcoxon rank-sum test can be used here with a formula (See Pull-Out Box) and without the `paired =` argument:
+
+```{r}
+# test the distribution of SBP by sex
+wilcox.test(nhanes.2016$systolic ~ nhanes.2016$sex)
+
+```
+
+The Mann-Whitney U test comparing systolic blood pressure for males and females in the US found a _statistically significant difference_ between the two groups (W = 7,186,900; p < .05). Histograms demonstrate the differences with notably more females at the lower end of the histogram compared to males.
+
+```{r fig.cap="Distribution of systolic blood pressure in mmHg\nfor 2015-2016 NHANES participants."}
+#graph systolic bp by sex
+ggplot(nhanes.2016, aes(systolic)) + 
+  geom_histogram(fill = "#88398a", col = "grey") + 
+  facet_grid(sex ~ .) + 
+  theme_minimal() + 
+  labs(x="Systolic blood pressure (mmHg)",
+       y="NHANES participants") 
+  
+```
+
+Again, the test compares ranks but it is often interpreted as comparing medians. As with the Wilcoxon signed-rank test, this can be misleading. For example, Bobbi creates a synthetic data set with two groups that have nearly equal medians:
+
+```{r echo = FALSE}
+# data with mean of 100 and different sd
+set.seed(450)
+group1 <- rnorm(n = 200, mean = 50, sd = 5)
+group2 <- rnorm(n = 200, mean = 50, sd = 20)
+groups_example <- data.frame(group1, group2)
+groups.long <- gather(groups_example, group, measure, group1:group2, factor_key = TRUE) 
+```
+
+```{r}
+# medians
+median(group1)
+median(group2)
+
+# test of medians
+wilcox.test(groups.long$measure ~ groups.long$group)
+```
+
+The non-significant result would suggest that there is no difference between the groups. While this may be true for the medians, which are very close to each other, the result does not take into consideration the spread or shape of the data. When graphed, these two groups look very different despite the statistical test indicating no difference. Interpreting the results should take into consideration important differences beyond the medians.
+
+```{r fig.cap="Synthetic measure for two groups."}
+#graph systolic bp by sex
+ggplot(groups.long, aes(measure)) + 
+  geom_histogram(fill = "#88398a", col = "grey") + 
+  facet_grid(group ~ .) + 
+  theme_minimal() + 
+  labs(x="Synthetic measure",
+       y="Frequency") 
+  
+```
+
+#### The Kolmogorov-Smirnov (or K-S) test
+
+The KS test is an alternative to the independent-samples t-test when the homogeneity of variances assumption is _not met_. That is, KS is used when the variances in the two groups are different whether or not the normality assumption is met. 
+
+When variances are unequal, the larger variance has a bigger influence on the size of the t-statistic, so one group is dominating the calculations:
+
+\[
+t=\frac{\bar{x_1}-\bar{x_2}}{\sqrt{\frac{s_1^2}{N_1}+\frac{s_2^2}{N_2}}}
+\]
+
+Unlike the Wilcoxon rank-sum and Mann-Whitney U, the K-S test compares the the distributions of the groups:
+
+H0: The distribution of systolic blood pressure for males and females is the same in the US population.
+
+HA: The distribution of systolic blood pressure for males and females is not the same in the US population.
+
+The `ks.test()` command is used to test the null hypothesis. 
+
+```{r}
+# test the distribution of SBP by sex
+ks.test(nhanes.2016$systolic[nhanes.2016$sex == "Male"], nhanes.2016$systolic[nhanes.2016$sex == "Female"])
+```
+
+The K-S test comparing the distribution of systolic blood pressure for males and females in the US found a _statistically significant difference_ between the two groups (D = .11; p < .05). The test statistic, _D_ is the maximum distance between the empirical cumulative distribution functions (EDCF) of the two groups. The ECDF is the probability distribution when samples are taken from a sample rather than from a population. 
+
+To examine the difference between the ECDF for Males and Females, graph the two ECDF curves:
+
+```{r fig.cap="ECDF of systolic blood pressure in mmHg for 2015-2016 NHANES participants."}
+ggplot(nhanes.2016, aes(systolic, color = sex)) +
+  stat_ecdf(size = 1.25) + 
+  theme_minimal() + 
+  labs(x="Systolic blood pressure (mmHg)",
+       y="Cumulative probability of value") +
+  scale_color_manual(values=c("#88398a", "gray"), name = "") 
+  
+```
+
+At the widest gap between these two curves, the cumulative probability of systolic blood pressure for Male and Female are .11 apart, giving a test statistic of D = .11. The probability of getting a test statistic this large or larger is determined by examining the K-S distribution, similar to how the p-value was determined for the t-test, chi-squared, and other tests so far. In this case, the probability of .11 difference between the two was very tiny (p < .05), so the difference would be reported as statistically significant.
+
+#### Over achiever 6: Check your understanding
+
+Next to each non-parametric test, put the parametric test is is an alternative for. Use: one-sample t-test, independent samples t-test, and paired samples t-test.
+
+* K-S test 
+* Mann-Whitney U test 
+* Wilcoxon rank sum test 
+* Wilcoxon signed-rank test 
+
+## Chapter summary
+
+### Achievements unlocked in this chapter: Recap
+
+After reading this chapter and following along, Leslie (and you) has learned and practiced: 
+
+#### Achievement 1 recap: Using graphics and descriptive statistics to make a prediction
+
+Prior to conducting inferential statistical tests like chi-squared, it is useful to get some idea of the characteristics and relationships in your data. Descriptive statistics and graphs, or exploratory data analysis (EDA), can serve two purposes: (1) understand the people, things, or phenomena you are studying better, and (2) make an educated prediction about the likely results of a statistical test, which can help identify issues if (or when) the test is not properly conducted.
+
+#### Achievement 2 recap: One sample t-test
+
+The t-test compares means to determine if one mean is statistically significantly different from another. There are three types of t-test: one sample, independent samples, paired samples. The one sample t-test compares the mean of one variable to a hypothesized or population mean. Significant results indicate that the difference between the means likely reflects a difference in means from the populations the samples came from.
+
+#### Achievement 3 recap: Independent samples t-test
+
+The independent samples t-test compares means from two unrelated groups (e.g., males and females). Significant results indicate that the difference between the means likely reflects a difference in means from the populations the samples came from.
+
+#### Achievement 4 recap: Paired samples t-test
+
+The paired samples t-test compares means from related groups (e.g., pre and post measures on the same person). Significant results indicate that the difference between the means likely reflects a difference in means from the populations the samples came from.
+
+#### Achievement 5 recap: Introducing assumptions
+
+Statistical tests rely on underlying assumptions about the characteristics of the data. When these assumptions are not met, the results may not reflect the true relationships among the variables. 
+
+#### Achievement 6 recap: Sign test, Mann-Whitney U, and other alternative tests when assumptions are not met
+
+When assumptions are not met for t-tests, there are several alternative tests that compare medians or distributions rather than means. 
+
+### Chapter exercises 
+
+The coder and hacker exercises are an opportunity to apply the skills from this chapter to a new scenario or a new data set. The coder edition will evaluate your application of the commands learned in this chapter (and earlier chapters) to similar scenarios to those in the chapter; the hacker edition will evaluate your use of the procedures from this chapter in new scenarios, usually going a step beyond what was explicitly explained. 
+
+Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 multiple choice questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 multiple choice questions correctly on your first try the rest correctly on your first or second try.
+
+Q1: Which of the following tests would be used to test the mean of a continuous variable to a population mean? 
+
+a. K-S test*  
+b. Mann-Whitney U test 
+c. Wilcoxon rank sum test 
+d. Wilcoxon signed-rank test 
+
+Q2: What is the primary purpose of the three t-tests?
+
+a. Comparing means among groups* 
+b. Comparing medians among groups 
+c. Examining the relationship between two categorical variables 
+d. Identifying normally distributed data 
+
+Q3: Which of the following assumptions does NOT apply to all three t-tests? 
+
+a. Independent observations 
+b. Normal distribution of continuous variable  
+c. Homogeneity of variances* 
+d. Includes one continuous variable  
+
+Q4: Which t-test would you use to compare mean BMI in sets of two brothers? 
+
+a. one-sample t-test 
+b. independent samples t-test 
+c. chi-squared t-test 
+d. paired samples t-test* 
+
+Q5: When an independent samples t-test does not meet the assumption of normality, what is an appropriate alternative test? 
+
+a. Sign test 
+b. Levene's test 
+c. Mann-Whitney U test* 
+d. paired samples t-test 
+
+
+#### Chapter exercises: Coder edition 
+
+Depending on your score in the knowledge check, choose either the coder or hacker edition of the chapter exercises. Use the NHANES data from this chapter and the appropriate tests to examine diastolic blood pressure for Males and Females. 
+
+1) Open the 2015 - 2016 NHANES data using the strategy shown in this chapter 
+2) Clean the sex, diastolic blood pressure measure 1, and diastolic blood pressure measure 2 so they have clear variable names, category labels, and missing value coding 
+3) (**A1**) Use graphics and descriptive statistics to examine diastolic blood pressure *measure 1* on its own and by participant sex
+4) (**A1**) Use graphics and descriptive statistics to examine diastolic blood pressure *measure 2* on its own 
+5) (**A1**) Based on the graphs and statistics from questions 3 and 4, make predictions about what you would find when you compare the mean DBP from measure 1 and measure 2
+6) (**A1**) Based on the graphs and statistics from questions 3 and 4, make predictions about what you would find when you compare the mean DBP from measure 1 by sex
+7) (**A3**, **A5**, **A6**) Select and use the appropriate t-tests to compare DBP measure 1 for Males and Females, interpret your results using the test statistics and p-value along with a graph showing the two groups. Check assumptions for this test. If the assumptions were not met, conduct and interpret the appropriate alternate test. 
+8) (**A4**, **A5**, **A6**) Select and use the appropriate t-tests to compare the means of DBP measure 1 and measure 2, interpret your results using the test statistics and p-value. Check assumptions for this test. If the assumptions were not met, conduct and interpret the appropriate alternate test. 
+
+#### Chapter exercises: Hacker edition
+
+Complete #1 through #8 of the coder edition, then complete the following:
+
+9) Create a new variable by recoding the `RIDAGEYR` variable into categories: 18-49, 50+. The new variable should have a logical name, clear labels, and appropriate missing value codes.
+10) (**A2**, **A5**) Restrict the data to a subset of people under 50 years old. Using the appropriate test, compare their mean DBP to the normal threshold of 80. Interpret your results and check the test assumptions. If the test does not meet assumptions, conduct and interpret the appropriate alternate test. 
+11) (**A2**, **A5**) Restrict the data to a subset of people 50+ years old. Using the appropriate test, compare their mean DBP to the normal threshold of 80. Interpret your results and check the test assumptions. If the test does not meet assumptions, conduct and interpret the appropriate alternate test. 
+
+### BOX(ES)
+
+#### (BOX) Chelsea's clever code: Formulas in R
+
+<img align = "left" src = "avatars\chelsea.gif" style="PADDING-RIGHT: 30px">
+
+R uses the tilde, or `~`, to separate the right hand side and left hand side of a formula. A formula typically contains one variable that is being explained by one or more other variables. For example, income and sex may aid in explaining smoking status so a formula might be `smoking status ~ income + sex`. 
+
+In a formula in R, the variable that is being explained is on the left hand side of the formula. The variables that are explaining are on the right hand side of the formula. The tilde that separates the right and left sides of the formula can usually be read as "is dependent on" or "is explained by." For example, in the Mann-Whitney U test explained earlier, the formula in the parentheses is systolic blood pressure explained by sex:
+
+```{r}
+# compare systolic blood pressure by sex
+wilcox.test(formula = nhanes.2016$systolic ~ nhanes.2016$sex)
+```
+
+There may be other ways of reading the `~`, but for this chapter and the next few chapters, try these two choices. Use the help documentation by typing `?tilde` at the R prompt to learn more. 
+
+
+> Gamification idea for Chapter 6: Performance on student work in the achievements unlocked, are you a coder or hacker, and chapter exercises in this chapter could be included as part of earning a continuous data analysis badge. Combine scores from this chapter and chapters 10 and 11. Set thresholds for earning a bronze, silver, or gold badge. Integrate badge earnings into Blackboard or other platforms students use to share their portfolios and achievements with prospective employers or degree programs. Create a class contest for students to create a decision tree for choosing descriptive and bivariate statistics depending on variable type and assumptions. Students can work as individuals or groups. Decision trees are posted online and the class votes for the "best" decision tree. The individual or group responsible gets additional points for the chapter 6 exercises. 
+
+

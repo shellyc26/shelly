@@ -1297,7 +1297,7 @@ Solutions to exercises can be found on the book website, along with *Ideas for G
 
 #### Kiara's reproducibility resource: installing R and R Studio {#ch1kiara1}
 
-<img align = "left" src = "graphics/Kiara.gif" style="PADDING-RIGHT: 30px">
+<img align = "left" src = "graphics/kiara.gif" style="PADDING-RIGHT: 30px">
 
 To follow along with this text, install R and R Studio. R can be downloaded from The Comprehensive R Archive Network [@TheComprehensiveRArchiveNetwork-2015-12-19]. Once R has been installed, then install RStudio [@RStudio]. RStudio is an IDE, or interactive development environment, which in this case makes R much easier to use.
 
@@ -1328,7 +1328,7 @@ When you open R Studio for the first time you will notice it is divided into fou
 
 If you would like to choose and organize your visible panes, use the **View** menu and choose **Panes** to see all the available options.
 
-#### Nancy's fancy code: Working with R packages {#ch1nancy}
+#### Nancy's fancy code: working with R packages {#ch1nancy}
 
 <img align = "left" src = "graphics/nancy.gif" style="PADDING-RIGHT: 30px">
 
@@ -1364,7 +1364,7 @@ USArrests %>%
   theme_minimal()                                                    
 ```
 
-#### Kiara's reproducibility resource: Reproducible research {#ch1kiara3}
+#### Kiara's reproducibility resource: reproducible research {#ch1kiara3}
 
 <img align = "left" src = "graphics/kiara.gif" style="PADDING-RIGHT: 10px">
 
@@ -1381,7 +1381,7 @@ Science is currently facing a reproducibility crisis. Recent research has found:
 
 As you make your way through this text, you will find tips on how to format the code you write to manage and analyze your data. Writing, formatting, and annotating your code clearly can increase reproducibility.
 
-#### Kiara's reproducibility resource: Naming variables {#ch1kiara4}
+#### Kiara's reproducibility resource: naming variables {#ch1kiara4}
 
 <img align = "left" src = "graphics/kiara.gif" style="PADDING-RIGHT: 10px">
 

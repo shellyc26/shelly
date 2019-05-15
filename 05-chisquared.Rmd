@@ -10,11 +10,12 @@ Kiara puts together a list of achievements for today:
 
 * Achievement 1: Understanding the relationship between two categorical variables using bar graphs, frequencies, and percents  
 * Achievement 2: Computing and comparing observed and expected values for the groups 
-* Achievement 3: Calculating the chi-squared statistic by hand and with R
+* Achievement 3: Calculating the chi-squared statistic for the test of independence by hand and with R 
 * Achievement 4: Interpreting the chi-squared statistic and making a conclusion about whether or not there is a relationship
 * Achievement 5: Using Null Hypothesis Significance Testing (NHST) to organize statistical testing 
 * Achievement 6: Using standardized residuals to understand which groups contributed to significant relationships
-* Achievement 7: Computing and interpreting effect sizes to understand the strength of a significant chi-squared relationship  
+* Achievement 7: Computing and interpreting effect sizes to understand the strength of a significant chi-squared relationship 
+* Achievement 8: Understanding the options for failed chi-squared assumptions
 
 Follow Nancy, Kiara, and Leslie through the examples and exercises to test some relationships.
 
@@ -26,7 +27,7 @@ Kiara remembers hearing several stories in the news after the 2018 midterm elect
 
 Kiara and Leslie feel like they understand why the bills making it easier to register and vote are being introduced and passed, but are interested in why states are simultaneously introducing and supporting bills that make it more difficult to vote. Nancy thinks she understands what is going on with the new voter identification laws. She visted her uncles last summer and they were adamant that people should be required to show identification and prove who they are in order to vote because of voter fraud. Leslie looks up some information on voter fraud and finds that the evidence suggests voter fraud does happen but is rare [@WhoCanVote; @minnite2017myth; @levitt2014]. She also finds that Nancy's uncles are not the only ones who feel that fraud is a problem. She reads one paper that shows 23% of people think that people voting more than once in an election is very common (8%) or occasionally (15%) happens, 30% think that noncitizens voting is very common (13%) or occasionally (17%) happens, 24% think voter impersonation is very common (8%) or occasionally (16%) happens, with similar percentages for vote theft (21%), and absentee ballot fraud (28%) [@stewart2016revisiting]. 
 
-Nancy finds some additional research that is not related directly to voter registration, but to election fraud instead. Specifically, just over 70% of people in one survey think election officials are fair *very often* or *fairly often* and 80% think votes are counted fairly *very often* or *fairly often* [@bowler2015election] leaving a large percent of US citizens believing officials and vote counting are not fair. Republicans are more likely to believe voter fraud is widespread [@stewart2016revisiting] and found elections to be unfair [@bowler2015election; @wolak2014campaigns]. However, they are not the only ones. About half the percent of Democrats as Republicans think voter fraud is frequent [@stewart2016revisiting] and women, minorities, younger people, people with less education, and "sore losers" (people whose candidate lost an election) are more likely to think that elections were unfair [@bowler2015election; @wolak2014campaigns]. Some research shows that people who believe voter fraud is widespread are more likely to support voter identification laws [@stewart2016revisiting] although this relationship differs a lot by political party and by the amount and sources of information a person has  [@stewart2016revisiting; @wilson2013foundations; @kane2017can].
+Nancy finds some additional research that is not related directly to voter registration, but to election fraud instead. Specifically, just over 70% of people in one survey think election officials are fair *very often* or *fairly often* and 80% think votes are counted fairly *very often* or *fairly often* [@bowler2015election] leaving a large percent of US citizens believing officials and vote counting are not fair. Republicans are more likely to believe voter fraud is widespread [@stewart2016revisiting] and found elections to be unfair [@bowler2015election; @wolak2014campaigns]. However, they are not the only ones. About half the percent of Democrats as Republicans think voter fraud is frequent [@stewart2016revisiting] and women, minorities, younger people, people with less education, and "sore losers" (people whose candidate lost an election) are more likely to think that elections were unfair [@bowler2015election; @wolak2014campaigns]. Some research shows that people who believe voter fraud is widespread are more likely to support voter identification laws [@stewart2016revisiting] although this relationship differs a lot by political party and by the amount and sources of information a person has  [@stewart2016revisiting; @wilson2013foundations; @kane2017can]. 
 
 Given the ongoing policy battles over voter registration and all the information out there about voting fraud and voter identification, Nancy and Kiara think it is a great topic to focus on for learning about chi-squared. Before they begin, Kiara wants to get everyone on the same page with the basics so she shows Nancy and Leslie the $\chi^2$ symbol and confirms that it is pronounced kai-squared, not chai squared! Nancy, ever eager to get to the actual coding, finds some data from 2017 on the Pew Internet & American Life website with two questions that ask participants to choose which statement best represents their views on voting:
 
@@ -35,8 +36,6 @@ Given the ongoing policy battles over voter registration and all the information
 * All citizens should be required to vote in national elections [OR] Every citizen should be able to decide for themselves whether or not to vote in national elections 
 
 She downloads the data set, which includes 1,028 observations, and quickly writes some code to graph the responses to these two questions. It looks like about 40% of people think that citizens should have to prove they want to vote by registering and another 60% think voting should be made as easy as possible. The split is bigger with making voting a requirement, with about 80% of people thinking voting should be a choice. 
-
-With this background and data, the team feels ready to tackle a chi-squared adventure.
 
 ```{r echo = FALSE}
 library(tidyverse)
@@ -68,8 +67,8 @@ mutate(pew1a, pew1a = recode_factor(.x = pew1a,
                                     `Neither/Both equally` = NA_character_))
 ```
 
-```{r, fig.cap="Opinions about ease of voting registration and mandatory voting from a Pew Research Center April 2017 survey (n = 1028)."}
-library(ggplot2)
+```{r ch5intro1, echo = FALSE, fig.cap="Opinions about ease of voting registration and mandatory voting from a Pew Research Center April 2017 survey (n = 1028)."}
+
 library(gridExtra)
 #graph voting funding
 vote.easy <- vote.cleaned %>%
@@ -93,6 +92,8 @@ vote.mandatory <-  vote.cleaned %>%
 grid.arrange(vote.easy, vote.mandatory,
              nrow = 1)
 ```
+
+With this background and data, the team feels ready to tackle a chi-squared adventure.
 
 ## Achievement 1: Understanding the relationship between two categorical variables using bar graphs, frequencies, and percents 
 
@@ -404,6 +405,30 @@ Kiara explains that, if there were no relationship between opinions on voting ea
 
 Differences between observed values and what is expected indicates that there may be a relationship between the variables. In this case it looks like there are more than expected who want to make voting easier in all the categories except Non-Hispanic White. In the Non-Hispanic White category there are more than expected who want people to prove they want to vote. This suggests that there may be some relationship between opinions about the ease of voting and race ethnicity.
 
+### The assumptions of the chi-squared test of independence
+
+While they are talking about observed and expected values, Kiara thinks it is a good time to bring up the **assumptions** of the chi-squared test. Leslie has heard about assumptions before, they are typically lists of requirements that must be met before using a statistical test. Kiara confirms that this is correct. She lists the assumptions for conducting a chi-squared test  [@mchugh2013chi]:
+
+* The variables must be nominal or ordinal (usually nominal) 
+* The expected values should be 5 or higher in at least 80% of groups 
+* The observations must be independent
+
+These assumptions seem confusing to Leslie and she asks if they can walk through them for the voting ease and race example. Kiara is fine with that. She lists the assumptions and they work together to explain how the data for the voting example meets each one:
+
+#### Assumption 1: The variables must be nominal or ordinal
+
+Race has categories that are in no particular order, so it is nominal. The ease of voting variable has categories that are in no particular order so it is also nominal. This assumption is met.
+
+#### Assumption 2: The expected values should be 5 or higher in at least 80% of groups 
+
+Kiara explains that the groups are the different cells of the table, so White Non-Hispanic participants who think people should prove they want to vote is one group. In this example, there are eight groups and 80% of this would be 6.4 groups. So, seven or more of the groups should have expected values of 5 or more. None of the groups have expected values even close to 5; all are much higher. This assumption is met.
+
+#### Assumption 3: The observations must be independent 
+
+There are a couple of ways observations can be non-independent. One way to violate this assumption would be if the data included the same set of people before and after some intervention or treatment. Kiara explains that another way to violate this assumption is for the data to include siblings or parents and children or spouses or other people who are somehow linked to one another. Since people who are linked to each other often have similar characteristics, the statistical tests need to be able to account for this and the chi-squared test does not. Leslie thinks she gets it and the Pew data includes independent observations (not siblings or other related people and not the same people measured more than once) so this assumption is met.
+
+Leslie asks what happens when the assumptions are not met for a statistical test. Kiara explains that often there is another test that can be used, depending on which of the assumptions is not met. For chi-squared, the assumption that is often a problem is the assumption about expected values being at least 5 in most cells. Kiara says they will look at an option for addressing this assumption violation as they walk through some examples. 
+
 ### Unlocking achievement 2: Check your understanding
 
 Which of the following is true about the observed and expected values for voting ease and race ethnicity? (choose all that apply)
@@ -412,7 +437,7 @@ Which of the following is true about the observed and expected values for voting
 * There are more people than expected who want to make it easy to vote and are Black Non-Hispanic 
 * There are more people than expected who want people to prove they want to vote and are Black Non-Hispanic
 
-## Achievement 3: Calculating the chi-squared statistic by hand and with R
+## Achievement 3: Calculating the chi-squared statistic for the test of independence by hand and with R 
 
 ### Summing the differences between observed and expected values
 
@@ -438,6 +463,7 @@ $$
 $$
 \begin{equation}
 \frac{(292-256.6)^2}{256.6}+\frac{(28-51.3)^2}{51.3}+\frac{(51-60.3)^2}{60.3}+\frac{(338-373.4)^2}{373.4}+\frac{(98-74.7)^2}{74.7}+\frac{(97-87.7)^2}{87.7}+\frac{(46-43.3)^2}{43.3} = 28.952
+ (\#eq:chisq2)
 \end{equation}
 $$
 
@@ -611,7 +637,7 @@ What is the most common value for an _alpha_ in most fields?
 
 ## Achievement 5: Using Null Hypothesis Significance Testing (NHST) to organize statistical testing
 
-Kiara mentions to Leslie that one process to organize statistical tests like _chi-squared_ is _null hypothesis significance testing_ or NHST. The steps of NHST are:
+Kiara mentions to Leslie that one process to organize statistical tests like _chi-squared_ is _null hypothesis significance testing_ or NHST. Leslie asks if this is the same as the chi-square goodness-of-fit test? Kiara says no and Leslie decides she will look that up later (see Box \@ref(ch5leslie2)). Kiara writes out the steps of NHST:
 
 #. Write the null and alternate hypotheses 
 #. Compute the test statistic 
@@ -662,7 +688,7 @@ Leslie likes this way of organizing the statistical test and writes up a full in
 
 ## Achievement 6: Using standardized residuals to understand which groups contributed to significant relationships
 
-One limitation of the chi-squared statistic is that it determines whether or not there is a statistically significant relationship between two categorical variables but does not identify what makes the relationship significant. For example, is the relationship between opinions on voting ease and race ethnicity category significant because there are more Non-Hispanic White people than expected who think people should prove they want to vote, or fewer Non-Hispanic Black than expected who think people should prove they want to vote? Where are the largest differences between observed and expected? 
+One limitation of the chi-squared independence test is that it determines whether or not there is a statistically significant relationship between two categorical variables but does not identify what makes the relationship significant. For example, is the relationship between opinions on voting ease and race ethnicity category significant because there are more Non-Hispanic White people than expected who think people should prove they want to vote, or fewer Non-Hispanic Black than expected who think people should prove they want to vote? Where are the largest differences between observed and expected? 
 
 ### Using standardized residuals following chi-squared tests
 
@@ -671,7 +697,7 @@ Nancy explains that standardized residuals (like z-scores) can aid analysts in d
 $$
 \begin{equation}
 standardized.residual =\frac{observed - expected}{\sqrt{expected}}
- (\#eq:expected)
+ (\#eq:stdres)
 \end{equation}
 $$
 
@@ -737,7 +763,7 @@ $$
 $$
 \begin{equation}
 V =\sqrt\frac{28.952}{977\cdot(2-1)} =.17
- (\#eq:cramerv2)
+ (\#eq:cramerv3)
 \end{equation}
 $$
 
@@ -781,9 +807,9 @@ For example, Kiara remembers there was a binary variable that classified people 
 
 #### NHST Step 1: Write the null and alternate hypotheses 
 
-H0: Opinions on how easy voting should be are different by home ownership status. 
+H0: Opinions on how easy voting should be are the same by home ownership status. 
 
-HA: Opinions on how easy voting should be are NOT different by home ownership status. 
+HA: Opinions on how easy voting should be are NOT the same by home ownership status. 
 
 #### NHST Step 2: Compute the test statistic 
 
@@ -845,7 +871,7 @@ Leslie has noticed that sometimes a different statistic is reported with a chi-s
 $$
 \begin{equation}
 \phi =\sqrt\frac{\chi^2}{n}
- (\#eq:cramerv)
+ (\#eq:phi)
 \end{equation}
 $$
 There is no reason to use a different R package to compute $\phi$ since it is just a special case of Cramer's V. Kiara mentions that the $\phi$ calculation uses the version of chi-squared that is NOT adjusted by the Yates' correction. Leslie asks why this is only used for 2-by-2 tables since any chi-squared where one of the variables has two categories would have $k-1=1$. Kiara thinks she is right but does not know why. Leslie does a little digging and finds some information on why $\phi$ tends to be used only for 2-by-2 tables. Nancy is getting bored and asks if they can discuss it some other time. Leslie writes up a few notes so she will remember (see Box \@ref(ch5leslie)) and the team moves on to another effect size option. 
@@ -868,7 +894,7 @@ The calculation of the odds ratio is:
 $$
 \begin{equation}
 OR =\frac{exposed.with.outcome/unexposed.with.outcome}{exposed.no.outcome/unexposed.no.outcome}
- (\#eq:cramerv)
+ (\#eq:oddsr)
 \end{equation}
 $$
 
@@ -877,9 +903,10 @@ Substituting in the values:
 $$
 \begin{equation}
 OR =\frac{287/112}{375/208}=\frac{2.5625}{1.802885}=1.42
- (\#eq:cramerv)
+ (\#eq:oddsr2)
 \end{equation}
 $$
+
 #### Interpreting the odds ratio
 
 The numerator shows that the odds of exposure for those with the outcome compared to without are 2.56. The denominator shows that the odds of no exposure for for those with the outcome compared to without are 1.80. So, dividing the 2.56 by 1.80, the resulting odds ratio is 1.42 and could be interpreted in a couple of ways:
@@ -919,11 +946,29 @@ The results include "sample estimates:" which looks like a confirmation of the 1
 
 Kiara explains that the p-value for the odds ratio has the same broad meaning as the p-value for the chi-squared, but instead of being based on the area under the curve for the chi-squared distribution, it is based on the area under the curve for the log of the odds ratio, which is approximately normally distributed. The odds ratio can only be a positive number, which results in a right-skewed distribution, which the log function can transform to something close to normal.
 
-Likewise, Kiara explains, the 95% confidence interval has a similar meaning to the 95% confidence intervals computed in Chapter 4. In this case, the odds ratio is 1.42 in the sample and likely falls between 1.078 and 1.875 in the population that the sample came from. So, in the sample, home owners have 42% higher odds of thinking people should prove they want to vote compared to people home renters. In the population, home owners have 7.8% to 87.4% higher odds of thinking people should prove they want to vote compared to people home renters (OR = 1.42; 95% CI: 1.078 - 1.873).
+Likewise, Kiara explains, the 95% confidence interval has a similar meaning to the 95% confidence intervals computed in Chapter 4. In this case, the odds ratio is 1.42 in the sample and likely falls between 1.078 and 1.875 in the population that the sample came from. So, in the sample, home owners have 42% higher odds of thinking people should prove they want to vote compared to people home renters. In the population, home owners have 7.8% to 87.4% higher odds of thinking people should prove they want to vote compared to people home renters (OR = 1.42; 95% CI: 1.078 - 1.873). 
 
 ### Unlocking achievement 7: Check your understanding
 
 Describe what Cramer's V, $\phi$, and $OR$ are and how they differ. 
+
+## Achievement 8: Understanding the options for failed chi-squared assumptions
+
+Before they are done for the day, Leslie also wants to discuss the assumptions of chi-squared and what to do when each one is violated. Kiara is fine with this although she thinks the expected cell size being less than 5 in a lot of cells is going to be the most likely assumption to cause problems. These topics do not go together very well, but they go ahead anyway. Leslie lists the assumptions again and they discuss each one:
+
+### Violating the assumption that the variables must be nominal or ordinal (usually nominal) 
+
+Kiara says this one is easy! Use a different statistical test. Chi-squared is only appropriate for categorical variables. 
+
+### Violating the assumption of expected values of 5 or higher in at least 80% of groups 
+
+The sampling distribution for the chi-squared statistic approximates the actual chi-squared distribution but does not capture it completely accurately. When a sample is large, the approximation is better and using the chi-squared distribution to determine statistical significance works well. However, for very small samples, the approximation is not great, so a different method of computing the p-value is better. The methods most commonly used is the **Fisher's Exact Test**. Essentially, the Fisher's Exact Test computes a different p-value for the $\chi^2$ statistic [@field2013discovering]. In R, the Fisher's Exact Test can be conducted with the `fisher.test()` function. The process of NHST and the interpretation of the results are the same as for the $\chi^2$, just with a different method of computing the p-value to reject or keep the null hypothesis. 
+
+### Violating the independent observations assumption
+
+Leslie then asks what happens if the observation of independent assumptions is violated. Kiara looks at her with no expression and says "It depends," and then starts laughing. Seriously though, there are a few ways observations can be non-independent, Kiara explains. If the data were collected in order to examine non-independent observations, for example, some characteristic of the same set of people before and after an intervention, or whether two siblings share some characteristic or opinion, **McNemar's test** is a good alternative to the $\chi^2$ test, but only when both of the variables have two categories [@mccrum2008correct]. McNemar's test is available in R with the `mcnemar.test()` function. If there are three or more dependent groups with a binary outcome **Cochran's Q-test** is an option [@mccrum2008correct] and is available in R in the <span style="font-family:Lucida Console,  monospace;font-weight:bold">nonpar</span> package. If the data were collected in a sloppy way and this resulted in a few people being surveyed twice for example, it is probably best to clean the data as much as possible and stick to using descriptive statistics and graphs.  
+
+Leslie is finding all of these different tests to be a little overwhelming. How will she ever remember which test to use! Kiara reassures her that *most* of what she will need to do as a data scientist will be among the descriptive statistics and inferential tests they have already covered and plan to talk about in the upcoming weeks. She also explains that almost all of the inferential tests she is going to use can follow the same NHST process she used with the chi-squared test. The things that usually differ from test-to-test are the test statistic and the underlying distribution used to get the p-value. Leslie feels a little better but is still nervous. Nancy lets her know that the next set of tests they will learn involve beer. That sounds less difficult and Leslie relaxes a little. 
 
 ## Chapter summary
 
@@ -958,6 +1003,10 @@ Standardized residuals show the standardized difference between observed an expe
 #### Achievement 7 recap: Computing and interpreting effect sizes to understand the strength of a significant chi-squared relationship 
 
 Chi-squared is an _omnibus_ test, which means that it shows whether or not there is a relationship between variables but gives no indication of how strong the relationship is. Cramer's $V$, $\phi$, or an odds ratio can provide this information for significant chi-squared statistical tests.
+
+#### Achievement 8 recap: Understanding the options for failed chi-squared assumptions
+
+When chi-squared assumptions fail there are options including recoding data to combine groups, choosing a different statistical test, or using descriptive statistics and graphs without a chi-squared analysis. Which options are most useful depends on which assumption(s) failed and how they failed.
 
 ### Chapter exercises   
 
@@ -1011,14 +1060,16 @@ Use the data from this chapter to better understand who holds the two different 
 4) (**A2 - A5**) Use the NHST process and test whether or not there is a relationship between opinion on ease of voting and: sex, marital status, exmployment status, and political party. 
 5) (**A6**) For any significant chi-squared results, use standardized residuals to identify which groups have higher frequencies than expected and discuss the differences between observed and expected for these groups  
 6) (**A7**) For any significant chi-squared results, compute, report, and interpret Cramer's V 
-7) Add a prolog and comments to your code
+7) (**A8**) Check the assumptions and report whether they were met
+8) Add a prolog and comments to your code
 
 #### Chapter exercises: Hacker edition
 
 Complete #1-5 from the coder edition, then:
 
-6) (**A6**) For any significant chi-squared results, compute, report, and interpret Cramer's V. In addition, for significant and results where both variables are binary, compute and interpret odds ratios and their 95% confidence intervals. 
-7) (**A2**) Create a grouped bar graph for each of the analyses and describe how the graph and your results are consistent or not. 
+6) (**A6**) For any significant chi-squared results, compute, report, and interpret Cramer's V. In addition, for significant and results where both variables are binary, compute and interpret odds ratios and their 95% confidence intervals 
+7) (**A2**) Create a grouped bar graph for each of the analyses and describe how the graph and your results are consistent or not 
+8) (**A7**) Write a brief discussion of whether the the assumptions for chi-squared were met in this analysis
 8) Add a prolog and comments to your code
 
 #### Instructor's note
@@ -1027,13 +1078,13 @@ Solutions to exercises can be found on the book website, along with *Ideas for G
 
 ### BOXES
 
-#### Leslie's stats stuff: why $\phi$ is used for 2-by-2 tables (#ch5leslie)
+#### Leslie's stats stuff: why $\phi$ is used for 2-by-2 tables {#ch5leslie}
 
 <img align = "left" src = "graphics/leslie.gif" style="PADDING-RIGHT: 10px"> 
 
 When used in 2-by-2 tables, $\phi$ will always be between 0 to 1 and the value can be interpreted as the strength of association, similar to $V$ and the same as the **correlation coefficient**, which will be introduced in Section \@ref(corr). In tables that are larger, the value of $\phi$ can go above 1 and there is no meaningful way to interpret the value. 
 
-#### Kiara's reproducibility resource: specifying arguments in code (#ch5kiara)
+#### Kiara's reproducibility resource: specifying arguments in code {#ch5kiara}
 
 <img align = "left" src = "graphics/kiara.gif" style="PADDING-RIGHT: 10px">
 
@@ -1041,7 +1092,8 @@ Kiara senses an opportunity to teach Leslie about coding practices that improve 
 
 The `CrossTable()` command requires two arguments, an $x$ and a $y$. Check the help documentation to see these arguments:
 
-```{r kiara.fig, echo = FALSE, fig.cap="CrossTable help documentation."}
+```{r crosstabdoc, echo = FALSE, fig.cap="CrossTable help documentation."}
+
 knitr::include_graphics("graphics/chap5-crosstable-documentation.JPG")
 ```
 
@@ -1081,7 +1133,7 @@ CrossTable(x = vote.cleaned$ease.vote,
            y = vote.cleaned$race)
 ```
 
-After the $x$ and $y$ arguments, the documentation shows a lot of other options that can be specified in order to include (or not include) certain things in the output or to conduct analyses in a specific way. The defaults are shown under the **Usage** heading in Figure \@ref(fig:kiara.fig). In this Figure it looks like the **expected** values will not show by default given the `expected = FALSE`, but this can be changed to override the default by adding `expected = TRUE` to the code. It also appears that the proportions for the row (`prop.r`), column (`prop.c`), and out of the total (`prop.t`), are all included by default along with something called `prop.chisq`. To clean up the output of `CrossTable()`, decide on which pieces of information are useful (usually row OR column proportions, but not both, should be included) and change the rest to get clean and useful output, like this:
+After the $x$ and $y$ arguments, the documentation shows a lot of other options that can be specified in order to include (or not include) certain things in the output or to conduct analyses in a specific way. The defaults are shown under the **Usage** heading in Figure \@ref(fig:crosstabdoc). In this Figure it looks like the **expected** values will not show by default given the `expected = FALSE`, but this can be changed to override the default by adding `expected = TRUE` to the code. It also appears that the proportions for the row (`prop.r`), column (`prop.c`), and out of the total (`prop.t`), are all included by default along with something called `prop.chisq`. To clean up the output of `CrossTable()`, decide on which pieces of information are useful (usually row OR column proportions, but not both, should be included) and change the rest to get clean and useful output, like this:
 
 ```{r}
 # chi-squared examining ease of voting and race-eth category
@@ -1100,4 +1152,88 @@ This output has observed frequencies, observed row proportions, expected frequen
 
 Taking a little time to specify arguments in code can improve the readability of output and ensure that whatever was intended actually happens regardless of the order arguments are entered.
 
+#### Leslie's stats stuff: the chi-squared goodness-of-fit test {#ch5leslie2}
 
+Leslie reads some more about the chi-squared goodness-of-fit test, which is different from the chi-squared test they have been working on. The one used so far tests whether there is a relationship between two categorical variables. There is another chi-squared test for comparing the values across a single categorical variable to values from a hypothesized or population variable. Leslie reads this about three times before she turns to Kiara for help. Kiara looks it over and remembers using this before when trying to determine if her sample was a good representation of the population. She thinks Leslie might benefit from a concrete example. Kiara explains that they could compare the observed values of the race-ethnicity variable to what they would expect to see in each category if race-ethnicity was the same as in the US. This one variable chi-squared is called the goodness-of-fit chi-squared test. The test statistic is still $\chi^2$ and the chi-squared distribution is still used in the same way. The test statistic itself is computed the same way, although this time the expected values are the hypothesized or population values. Leslie and Kiara work through an example using NHST to organize and using the race ethnicity variable from the Pew data:
+
+**Step 1: Write the null and alternate hypotheses**
+
+H0: There is no difference between the proportions of people in each race-ethnicity category in the sample and the proportions in the population.
+
+HA: There is a difference between the proportions of people in each race-ethnicity category in the sample and the proportions in the population.
+
+**Step 2: Compute the test statistic**
+
+Kiara looks at the Wikipedia page for US demographics. She finds the distribution by 2000 census and matches it to the categories in the Pew data. The US population is: 
+
+* 69.1% White Non-Hispanic
+* 12.1% Black Non-Hispanic 
+* 12.5% Hispanic 
+* 6.3% Other
+
+To compare the distribution of race in the sample to this population distribution, they will need a vector of the frequencies in the sample to compare to these percents. The `count()` function will count the number of observations in each category: 
+
+```{r}
+# frequencies of race-ethnicity from pew data
+race.eth <- vote.cleaned %>%
+  drop_na(race) %>%
+  count(race)
+race.eth
+```
+
+Now that they have the frequency vector `race.eth$n`, they can use `chisq.test()` by entering the frequency vector and then entering the population proportions for each race-ethnicity in the same order as the values in the vector. The two arguments are `x =` for the observed vector and `p = ` for the population vector.
+
+```{r}
+# chi-squared comparing observed race-eth to population race-eth
+race.gof <- chisq.test(x = race.eth$n, p = c(.691, .121, .125, .063))
+race.gof
+```
+
+**Step 3: Calculate the probability that your test statistic is at least as big as it is if there is no relationship (i.e., the null is true)**
+
+The probability that the null hypothesis is true is `r round(race.gof$p.value, 3)`.
+
+**Step 4: If the probability that the null is true is very small, usually less than 5%, reject the null hypothesis** 
+
+A $\chi^2$ goodness-of-fit test comparing the frequencies of race-ethnicity in the Pew data to the proportions in each race-ethnicity in the population found a statistically significant difference between the observed and the population values ($chi^2$(`r race.gof$df`) = `r round(race.gof$statistic, 2)`; p = `r round(race.gof$p.value, 3)`). 
+
+**Step 5: If the probability that the null is true is not small, usually 5% or greater, retain the null hypothesis**
+
+Not applicable.
+
+Leslie thinks they should take a look at a graph to better understand these results. Nancy jumps in to help with some quick coding:
+
+```{r}
+# add percents of race-ethnicity from pew data
+race.eth.graph.data <- vote.cleaned %>%
+  drop_na(race) %>%
+  group_by(race) %>%
+  summarize(n = n()) %>%
+  mutate(sample = n/sum(n),
+         population = c(.691, .121, .125, .063)) %>%
+  gather(key = samp.or.pop, value = perc, sample, population)
+race.eth.graph.data
+```
+
+```{r}
+# Make the graph 
+race.eth.graph.data %>% 
+  ggplot(aes(x = race, y = 100*perc, fill = samp.or.pop)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  theme_minimal() +
+  scale_fill_manual(values = c("#78A678", "#7463AC"), 
+                    name = "Sample or\npopulation") +
+  labs(y = "Percent of people", x = "Race-ethnicity group")
+  
+```
+
+Leslie doesn't think the groups look all that different from each other. There are fewer White Non-Hispanic and more Hispanic and Other in the sample, but none of the differences is huge. Nancy suggests she check out the standardized residuals from the `race.gof` object. Leslie did not even know this was a thing! Nancy explains that she can find what is part of objects resulting from functions like `chisq.test()` in the help documentation [@chisqtestfunction]. In this case, the `race.gof` object resulting from the goodness-of-fit test includes `stdres`, so Leslie gives it a try:
+
+```{r}
+# standardized residuals from race.gof object
+race.gof$stdres
+```
+
+The standardized residuals are in the same order as the categories of race-ethnicity, so it appears that the proportion of White Non-Hispanic in the sample was much lower than expected (standardized residual = -3.22) while the proportion of Hispanic participants in the sample was much higher than expected (standardized residual = 2.35). Leslie is satisfied with this and writes her full interpretation: 
+
+> A $\chi^2$ goodness-of-fit test comparing the proportion of participants in race-ethnicity groups in the Pew data to the proportions in each race-ethnicity group in the US population found a statistically significant difference between the observed sample and the population values ($/chi^2$(`r race.gof$df`) = `r round(race.gof$statistic, 2)`; p = `r round(race.gof$p.value, 3)`). Standardized residuals indicated there were fewer White Non-Hispanic participants and more Hispanic participants in the sample than would be expected based on the population proportions.
