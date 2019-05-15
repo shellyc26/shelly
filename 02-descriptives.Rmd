@@ -1,4 +1,4 @@
-# The R team computes and reports descriptive statistics
+# The R team computes and reports descriptive statistics (Shelly Test)
 
 ## Achievements to unlock
 
