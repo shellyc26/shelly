@@ -1,0 +1,1689 @@
+# Linear regression
+
+## Achievements to unlock
+
+The correlation analyses were ok but Leslie is interested in being able to explain or predict something rather than just report relationships. Chelsea creates an outline for learning about *linear regression* analyses: 
+
+* Achievement 1: Exploratory data analysis before developing a linear regression model 
+* Achievement 2: Exploring the statistical model for a line 
+* Achievement 3: Computing the slope and intercept in a simple linear regression using ordinary least squares 
+* Achievement 4: Slope interpretation and significance (b, p-value, CI) 
+* Achievement 5: Model significance and model fit 
+* Achievement 6: Checking assumptions and conducting diagnostics 
+* Achievement 7: Adding variables to the model 
+
+Follow Chelsea, Bobbi, and Leslie through the examples and exercises to test some relationships.
+
+## The unintended pregnancy problem
+
+### Insurance coverage of contraception and the Affordable Care Act
+
+Bobbi is taking a policy class and they are reading about the national *Affordable Care Act* (ACA) and, specifically, the *contraceptive mandate* in the ACA that requires employers to provide employees with insurance that covers contraception. Bobbi learned that, prior to the ACA, Title VII of the Civil Rights Act from 1964 required employers with 15 or more employees to provide contraceptive coverage *if* they cover other preventive drugs and services. Some states had legal exemptions for employers who claimed religious or moral beliefs or practices were in conflict with providing contraceptive coverage. As of 2010, 21 states had policies with clauses that allowed exemptions to covering contraception on religious or moral grounds. 
+
+### Lawsuits over the ACA contraceptive coverage mandate
+
+After the ACA implemented the contraception mandate, some companies fought to obtain an exception to the mandate. A lawsuit filed by the chain of craft stores called Hobby Lobby argued that they should not be required to provide employees with something they are opposed to for religious reasons. Hobby Lobby won the case in the United States Supreme Court and the company does not have to provide employees with contraception coverage. Ever since the implementation of the ACA and the contraception mandate, companies like Hobby Lobby and state and local policymakers have been working to limit and challenge the mandate the mandate. 
+
+### Exemptions to the ACA contraceptive coverage mandate
+
+Bobbi was wondering how exemptions influence rates of unintended pregnancy since contraception is one of the main ways used to avoid becoming pregnant. She read that recent reductions in unintended pregnancy in the United States are attributed in part to contraception availability and education. She has also read that unintended pregnancy rates in the US are higher among younger women, women living in poverty, women with less education, women in a cohabitating opposite-sex unmarried couple, non-Hispanic black women, and women who were mainline protestant. 
+
+### Using data to examine unintended pregnancy and contraceptive coverage
+
+Chelsea thinks this is a great question to demonstrate the linear regression model and works with Bobbi to find some data. Because many of the challenges to the 1964 law were at the state level, they start by looking for state rates of unintended pregnancy for 2010, before the ACA contraceptive mandate was implemented. Bobbi thinks it might be useful to examine these data and information on the characteristics usually associated with unintended pregnancy using maps of the states. The first map she creates shows the number of unintended pregnancies for every 1,000 women between the ages of 15 and 44, or the *unintended pregnancy rate*. The map shows states with higher rates in darker colors, while states with lower rates are lighter. 
+
+```{r echo = FALSE, warning=FALSE, message=FALSE, fig.cap = "Unintended pregnancies per 1,000 women ages 15-44 in each state, 2010"}
+library(rvest)
+library(tidyverse)
+library(htmltab)
+library(tabulizer)
+library(stringr)
+
+pregURL <- "https://data.guttmacher.org/states/table?state=AL+AK+AZ+AR+CA+CO+CT+DE+DC+FL+GA+HI+ID+IL+IN+IA+KS+KY+LA+ME+MD+MA+MI+MN+MS+MO+MT+NE+NV+NH+NJ+NM+NY+NC+ND+OH+OK+OR+PA+RI+SC+SD+TN+TX+UT+VT+VA+WA+WV+WI+WY&dataset=data&topics=188+189+190+191+192"
+preg <- htmltab(doc = pregURL, header = 1)
+names(preg) <- c("region", "unintend.preg2010","perc.unin.preg.abort",
+                 "perc.unin.preg.birth", "perc.unintend", "unintend.rate")
+# remove commas
+preg$unintend.preg2010 <- 
+  preg$unintend.preg2010 %>%
+  gsub(",","", .)
+
+# remove subscripts
+preg$unintend.preg2010 <- 
+  preg$unintend.preg2010 %>%
+  gsub(" 2","", .)
+preg$perc.unin.preg.abort <- 
+  preg$perc.unin.preg.abort %>%
+  gsub(" 2","", .)
+preg$perc.unin.preg.birth <- 
+  preg$perc.unin.preg.birth %>%
+  gsub(" 2","", .)
+preg$perc.unintend <- 
+  preg$perc.unintend %>%
+  gsub(" 2","", .)
+preg$unintend.rate <- 
+  preg$unintend.rate %>%
+  gsub(" 3","", .)
+
+# make numeric
+preg[c(2:6)] <- lapply(preg[c(2:6)], as.numeric)
+
+# show a US map of the unintended rates and percents
+library(ggplot2)
+
+us <- map_data("state")
+
+preg <- preg %>% 
+  mutate(region=tolower(region))
+
+pregMap <- ggplot()
+pregMap <- pregMap + geom_map(data=us, map=us,
+                    aes(x=long, y=lat, map_id=region),
+                    fill="#ffffff", color="#ffffff", size=0.15)
+pregMap <- pregMap + geom_map(data=preg, map=us,
+                    aes(fill=unintend.rate, map_id=region),
+                    color="#ffffff", size=0.15)
+pregMap <- pregMap + scale_fill_continuous(low='#E6E6FA', high='#88398a', 
+                                 guide='colorbar', name = "Unintended\npreg per 1k")
+pregMap <- pregMap + labs(x=NULL, y=NULL)
+pregMap <- pregMap + coord_map("albers", lat0 = 39, lat1 = 45) 
+pregMap <- pregMap + theme(panel.border = element_blank())
+pregMap <- pregMap + theme(panel.background = element_blank())
+pregMap <- pregMap + theme(axis.ticks = element_blank())
+pregMap <- pregMap + theme(axis.text = element_blank())
+
+
+
+```
+
+
+```{r echo = FALSE, warning=FALSE, message=FALSE, fig.cap = "States with a policy to exempt employers from providing insurance with contraceptive coverage"}
+# http://www.ncsl.org/research/health/insurance-coverage-for-contraception-state-laws.aspx
+# Exemptions in 2012
+# reviewed laws https://nwlc.org/resources/contraceptive-equity-laws-your-state-know-your-rights-use-your-rights-consumer-guide/ and they all go back to pre-2010 when the ACA started the contraceptive mandate
+region <- tolower(c("Arizona", "Arkansas", "California", "Connecticut", "Delaware", "Hawaii", "Illinois", "Maine", "Maryland", "Massachusetts", "Michigan", "Missouri", "Nevada", "New Jersey", "New Mexico", "New York", "North Carolina", "Oregon", "Rhode Island", "Texas", "West Virginia"))
+exemption <- c("Yes")
+exemptions2012 <- data.frame(region, exemption)
+
+# merge pregnancy and policy variables
+contraceptAll <- merge(preg, exemptions2012, by = "region", all = TRUE)
+
+# add "No" to exemption variable
+contraceptAll$exemption <- as.character(contraceptAll$exemption)
+contraceptAll$exemption[is.na(contraceptAll$exemption)] <- "No"
+
+exemptMap <- ggplot()
+exemptMap <- exemptMap + geom_map(data=us, map=us,
+                    aes(x=long, y=lat, map_id=region),
+                    fill="#ffffff", color="#ffffff", size=0.15)
+exemptMap <- exemptMap + geom_map(data=contraceptAll, map=us,
+                    aes(fill=exemption, map_id=region),
+                    color="#ffffff", size=0.15)
+exemptMap <- exemptMap + scale_fill_manual(values = c('#C6ACD4','#88398a'), 
+                                           name = "Employer\nexemption")
+exemptMap <- exemptMap + labs(x=NULL, y=NULL)
+exemptMap <- exemptMap + coord_map("albers", lat0 = 39, lat1 = 45) 
+exemptMap <- exemptMap + theme(panel.border = element_blank())
+exemptMap <- exemptMap + theme(panel.background = element_blank())
+exemptMap <- exemptMap + theme(axis.ticks = element_blank())
+exemptMap <- exemptMap + theme(axis.text = element_blank()) 
+
+
+
+```
+
+```{r echo = FALSE, fig.cap = "Percent of residents in state living below poverty level, 2010."}
+# poverty data 2010
+povURL <- "https://www.infoplease.com/business-finance/poverty-and-income/percent-people-poverty-state-2002-2010"
+pov <- htmltab(doc = povURL, header = 1)
+pov <- pov[2:52, c(1,10)]
+names(pov) <- c("region", "perc.poverty2010")
+pov$perc.poverty2010 <- as.numeric(pov$perc.poverty2010)
+pov <- pov %>% 
+  mutate(region=tolower(region))
+
+# poverty map
+
+povMap <- ggplot()
+povMap <- povMap + geom_map(data=us, map=us,
+                    aes(x=long, y=lat, map_id=region),
+                    fill="#ffffff", color="#ffffff", size=0.15)
+povMap <- povMap + geom_map(data=pov, map=us,
+                    aes(fill=perc.poverty2010, map_id=region),
+                    color="#ffffff", size=0.15)
+povMap <- povMap + scale_fill_continuous(low='#E6E6FA', high='#88398a', 
+                                 guide='colorbar', name = "Percent below\npoverty")
+povMap <- povMap + labs(x=NULL, y=NULL)
+povMap <- povMap + coord_map("albers", lat0 = 39, lat1 = 45) 
+povMap <- povMap + theme(panel.border = element_blank())
+povMap <- povMap + theme(panel.background = element_blank())
+povMap <- povMap + theme(axis.ticks = element_blank())
+povMap <- povMap + theme(axis.text = element_blank())
+
+```
+
+```{r echo = FALSE, fig.cap = "Percent of residents in state cohabitating with someone of the opposite sex, 2010."}
+# cohabitating data 2010
+# https://www.census.gov/prod/cen2010/briefs/c2010br-14.pdf big for connecting
+library(tabulizer)
+cohabURL <- "https://www.census.gov/prod/cen2010/briefs/c2010br-14.pdf"
+tableCohab <- extract_tables(file = cohabURL, pages = 16,
+                                 output = 'data.frame', method = "stream")
+cohab <- tableCohab[[1]]
+cohab <- cohab[13:63, 1:2]
+names(cohab) <- c("region", "perc.cohab")
+cohab$perc.cohab <- substr(cohab$perc.cohab, 1, 4)
+cohab$perc.cohab <- gsub(" ", "", cohab$perc.cohab)
+cohab$region <- gsub("\\.","", cohab$region)
+cohab$region <- trimws(cohab$region)
+cohab$perc.cohab <- as.numeric(cohab$perc.cohab)
+
+cohab <- cohab %>%
+  mutate(region = tolower(region))
+
+
+
+
+cohabMap <- ggplot()
+cohabMap <- cohabMap + geom_map(data=us, map=us,
+                    aes(x=long, y=lat, map_id=region),
+                    fill="#ffffff", color="#ffffff", size=0.15)
+cohabMap <- cohabMap + geom_map(data=cohab, map=us,
+                    aes(fill=perc.cohab, map_id=region),
+                    color="#ffffff", size=0.15)
+cohabMap <- cohabMap + scale_fill_continuous(low='#E6E6FA', high='#88398a', 
+                                 guide='colorbar', name = "Percent\ncohabitate")
+cohabMap <- cohabMap + labs(x=NULL, y=NULL)
+cohabMap <- cohabMap + coord_map("albers", lat0 = 39, lat1 = 45) 
+cohabMap <- cohabMap + theme(panel.border = element_blank())
+cohabMap <- cohabMap + theme(panel.background = element_blank())
+cohabMap <- cohabMap + theme(axis.ticks = element_blank())
+cohabMap <- cohabMap + theme(axis.text = element_blank())
+
+```
+
+
+```{r echo = FALSE, warning=FALSE, message=FALSE, fig.cap = "Characteristics of state residents."}
+
+# use tabulizer package to import percent religion data from pages 144-147 of the pdf
+religionURL <- "http://assets.pewresearch.org/wp-content/uploads/sites/11/2015/05/RLS-08-26-full-report.pdf"
+religionTables <- extract_tables(file = religionURL, pages = 144:147,
+                                 output = 'data.frame', method = "stream")
+
+# tables 1 and 2 contain 2007 and 2014 percentages by state
+religion1 <- as.data.frame(religionTables[[1]])
+religion2 <- as.data.frame(religionTables[[2]])
+
+# tables 3 and 4 do not have the same variable names as 
+# tables 1 and 2, so add names from table 1 before converting to data frame
+names(religionTables[[3]]) <- names(religionTables[[1]]) 
+religion3 <- as.data.frame(religionTables[[3]])
+names(religionTables[[4]]) <- names(religionTables[[1]]) 
+religion4 <- as.data.frame(religionTables[[4]])
+
+# combine tables 1 and 2, 3 and 4
+# then all four
+religion12 <- as.data.frame(rbind(religion1, religion2))
+religion34 <- as.data.frame(rbind(religion3, religion4))
+religion <- as.data.frame(rbind(religion12, religion34))
+
+# remove non-relevant rows
+religion <- religion[c(7:24, 31:54, 61:86, 93:126), 1:18]
+names(religion) <- c("region", "year", "evangelical",
+                     "mainline", "black.protestant", "catholic",
+                     "mormon", "orthodox.christian", "jehovahs.witness",
+                     "other.christian", "jewish", "muslim", 
+                     "buddhist", "hindu", "other.world.rel",
+                     "other.faith", "unaffiliated", "dont.know.ref")
+
+# fill down
+library(zoo)
+religion$region <- trimws(religion$region)
+religion$region[religion$region == ""] <- NA
+religion$region <- na.locf(religion$region, na.rm = FALSE)
+
+# replace * and n/a with NA
+religion[religion == "*"] <- NA
+religion[religion == "n/a"] <- NA
+
+# subset the 4 most common religions
+religion <- religion[ , c(1:4, 6, 17)]
+
+# aggregate 2014 and 2007 to get closer to 2010 value
+religion[c(3:6)] <- lapply(religion[c(3:6)], as.numeric)
+religion2010 <- aggregate(. ~ region, religion, mean)
+
+# make categorical religion variable
+religion2010$top.religion <- colnames(religion2010[3:6])[apply(religion2010[3:6], 1, which.max)]
+
+# lower case region variable
+religion2010 <- religion2010 %>%
+  mutate(region = tolower(region))
+
+# delaware is misspelled, fix
+religion2010$region[religion2010$region == "delware"] <- "delaware"
+
+contraceptAll <- merge(preg, religion2010, by = "region", all = TRUE)
+
+# get four colors
+pal <- colorRampPalette(c('#E6E6FA','#88398a'))
+
+relMap <- ggplot()
+
+relMap <- relMap + geom_map(data=us, map=us,
+                    aes(x=long, y=lat, map_id=region),
+                    fill="#ffffff", color="#ffffff", size=0.15)
+relMap <- relMap + geom_map(data=contraceptAll, map=us,
+                    aes(fill=top.religion, map_id=region),
+                    color="#ffffff", size=0.15)
+relMap <- relMap + scale_fill_manual(values = pal(4), 
+                                           name = "Religious\naffiliation")
+relMap <- relMap + labs(x=NULL, y=NULL)
+relMap <- relMap + coord_map("albers", lat0 = 39, lat1 = 45) 
+relMap <- relMap + theme(panel.border = element_blank())
+relMap <- relMap + theme(panel.background = element_blank())
+relMap <- relMap + theme(axis.ticks = element_blank())
+relMap <- relMap + theme(axis.text = element_blank())
+
+
+require(gridExtra)
+grid.arrange(pregMap, povMap, exemptMap, relMap, cohabMap, ncol=2)
+
+```
+
+Bobbi, Chelsea, and Leslie look at the maps and notice some similarity between the unintended pregnancy rates and poverty, but there does not seem to be much of a pattern with the other maps. Chelsea thinks there may be a higher unintended pregnancy rate in states where Evangelical is the most common religious affiliation, but it is not entirely clear. Bobbi suggests they get started on some more formal analyses in order to determine whether there are any relationships between unintended pregnancy and the four other variables shown. 
+
+## Achievement 1: Exploratory data analysis before developing a linear regression model
+
+Chelsea is ready to jump right into the modeling, but Bobbi slows her down. Before they can examine relationships between variables, there is data importing, data management, and data exploration to do first. In this case, the data are on websites in html and pdf tables, which both required a few extra steps to import.
+
+### Importing and merging data sources 
+
+Because the data sources are in complicated formats, Bobbi decides to limit the data management and cleaning to a few variables that would demonstrate all the concepts for linear regression modeling. She decides on the variables shown in the maps: percent of people living in poverty, percent of state residents living with someone of the opposite-sex (cohabitation), which states have an exemption to the contraceptive mandate policy, and the most practiced religion in each state. Bobbi is concerned that Leslie will get lost in the complex data importing and management, so she provides the code to Chelsea who finishes formatting and annotating it so that Leslie can review it when she's ready (see pullout boxes).
+
+The one variable Bobbi leaves for Leslie is the exemption policy variable. Leslie finds data from the National Conference of State Legislatures on which states allow businesses to exempt contraceptive coverage. Because it is not in a table or other format that is easy to import, Leslie types in the states with exemptions and creates a data frame with a region variable for the states and an exemption variable to specify which states exempt contraceptive coverage.
+
+```{r}
+# http://www.ncsl.org/research/health/insurance-coverage-for-contraception-state-laws.aspx
+# Exemptions in 2012
+# reviewed laws https://nwlc.org/resources/contraceptive-equity-laws-your-state-know-your-rights-use-your-rights-consumer-guide/ and they all go back to pre-2010 when the ACA started the contraceptive mandate
+region <- c("arizona", "arkansas", "california", 
+            "connecticut", "delaware", "hawaii", 
+            "illinois", "maine", "maryland", 
+            "massachusetts", "michigan", "missouri", 
+            "nevada", "new jersey", "new mexico", 
+            "new york", "north carolina", "oregon", 
+            "rhode island", "texas", "west virginia")
+exemption <- c("Yes")
+exemptions2012 <- data.frame(region, exemption)
+```
+
+After typing in her own data for this variable and running Chelsea's code from the data importing pullout boxes, Leslie merges all the data frames and summarizes the results:
+
+```{r}
+# merge pov, cohab, preg, exemptions2012, religion2010
+pregCov <- merge(preg, pov, by = "region", all = TRUE)
+pregCov <- merge(pregCov, cohab, by = "region", all = TRUE)
+pregCov <- merge(pregCov, exemptions2012, by = "region", all = TRUE)
+pregCov <- merge(pregCov, religion2010, by = "region", all = TRUE)
+
+# summarize pregCov data
+summary(pregCov)
+```
+
+### Cleaning the data frame 
+
+It looks pretty good overall, however, the contraception coverage exemption variable she typed in shows only the value of "Yes" for 21 states and is `NA` for the rest of the states. The variable is also a factor. To recode the variable so it has two values, Yes and No, Leslie converts it to a character variable, recodes the `NA` to "No" for the rest of the states, and converts it back to a factor. 
+
+Leslie also notices that the top.religion variable seems to be a character variable when it should be a factor, so she converts it and checks the summary again.
+
+```{r}
+# change NA to "No" for exemption variable
+pregCov$exemption <- as.character(pregCov$exemption)
+pregCov$exemption[is.na(pregCov$exemption)] <- "No"
+pregCov$exemption <- as.factor(pregCov$exemption)
+
+# change religion to factor
+pregCov$top.religion <- as.factor(pregCov$top.religion)
+
+# check summary again
+summary(pregCov)
+```
+
+The summary looks great, Bobbi thinks it is time to move on to examining the data. Leslie is interested in makings some maps like the ones Bobbi made, but Bobbi wants to focus on graphs and statistics that provide more specific context relevant for developing a linear regression model. Before they move along, Chelsea creates a short map-making tutorial for Leslie to work on later (see pullout box). 
+
+### Using a scatterplot to explore the relationship
+
+While the maps and descriptive statistics from the summary function are a good place to start getting to know the data and develop some ideas about what might be happening, linear regression is about examining relationships between variables. Specifically, linear regression examines how one or more variables can be used to predict or explain some continuous outcome variable. In this case poverty, cohabitation, religion, and contraception policy may help to predict or explain unintended pregnancy rate at the state level.
+
+Given prior research and how similar the maps looked, Bobbi and Leslie decide to start by examining whether unintended pregnancy rate can be explained or predicted by percentage of state residents living in poverty. Since they already have basic descriptive information from the `summary()` command, Bobbi suggests they start with making a graph of the relationship. 
+
+Leslie remembers how relationships between two continuous variables are often examined using a scatterplot. Using what she knows about the ggplot tools from prior chapters, she creates a scatterplot of unintended pregnancy rate and percent of people living in poverty. Bobbi explains that she should put the outcome variable, unintended pregnancy rate, on the y-axis and the predictor variable, poverty, on the x-axis. Bobbi notes that in graphs to explore data for a linear model, the outcome should always be on the y-axis for reasons that will become clear soon. 
+
+```{r fig.cap = "Relationship between unintended pregnancy rate and poverty in 50 states\nand the District of Columbia (2010)"}
+# unintended pregnancy and poverty at the state level
+ggplot(data = pregCov, aes(x = perc.poverty2010, y = unintend.rate)) +
+  geom_point(size = 2, colour = "gray") + 
+  theme_minimal() +
+  ylab("State unintended pregnancy rate") + 
+  xlab("State percent living in poverty")                          
+```
+
+The plot seems to show that, as poverty rate increases, unintended pregnancy rate also increases. Leslie remembers the correlation coefficient and suggests that these two variables appear to have a positive correlation. 
+
+Bobbi suggests that Leslie use `geom_smooth()` to add a line to the plot and get a better understanding of the relationship between the variables. Leslie uses `geom_smooth()` to add the line. In the help documentation for `geom_smooth()` she finds that the `method = "lm"` argument adds a line to the plot that represents the linear regression model for the relationship between the variables. Since they are working toward conducting a linear regression analysis, she uses this option to update the plot showing a regression line:
+
+```{r fig.cap="Relationship between unintended pregnancy rate and poverty in 50 states\nand the District of Columbia (2010)."}
+#unintended pregnancy and poverty at the state level
+ggplot(d = pregCov, aes(x = perc.poverty2010, y = unintend.rate)) +
+         geom_point() + 
+  geom_smooth(method = "lm", se = FALSE, colour = "#88398a") + 
+  geom_point(size = 2, colour = "gray") +
+  theme_minimal() +
+  ylab("State unintended pregnancy rate") + 
+  xlab("State percent living in poverty")     
+
+```
+
+The line goes up from left to right, demonstrating a positive relationship between poverty and unintended pregnancy. This indicates that Leslie was right in thinking that there was a positive correlation between the two variables. 
+
+### Using a correlation coefficient to explore the relationship 
+
+Bobbi suggests she could confirm the correlation using the `cor()` command. Leslie wonders about using `cor.test()` instead, but since they are exploring the data and not conducting a statistical test yet, Bobbi thinks `cor()` is a better idea. Bobbi also reminds Leslie that, so far, they are working with a population. Since the `cor.test()` command is testing for a statistically significant relationship in a *sample* in order to generalize to a *population*, it is not needed here. Leslie tries the command:
+
+```{r}
+# correlation between poverty and unintended pregnancy
+( pregPovCor <- cor(x = pregCov$perc.poverty2010,
+                    y = pregCov$unintend.rate, 
+                    use = "complete") )
+```
+
+The correlation coefficient is positive and moderate (r = `r round(pregPovCor, 2)`). Bobbi summarizes what they know so far about the relationship between the unintended pregnancy rate and the percent living in poverty in states:
+
+* First, from the maps, both seem to be higher in southern states with a few exceptions.  
+
+* Second, the summary command for the full data frame showed that the mean number of unintended pregnancies per 1,000 women age 15 - 44 in the state (i.e., the unintended pregnancy rate) is `r round(mean(pregCov$unintend.rate, na.rm = T), 1)` and the mean percent of state residents living in poverty is `r round(mean(pregCov$perc.poverty2010, na.rm = T), 1)`%. 
+
+* Third, the relationship between unintended pregnancy rate and percent in poverty is positive; states with more poverty have higher rates of unintended pregnancy (r = `r round(pregPovCor, 2)`). 
+
+### Explore the data by comparing means across groups
+
+Before they move on to the next step, Bobbi suggests they examine the other bivariate relationships between unintended pregnancy rate and whether or not states have an exemption to the contraceptive mandate, cohabitation, and religion. Leslie suggests the `compmeans()` command from the descr package to compare the means of unintended pregnancy rate across groups for the two categorical variables of religion and contraceptive mandate. She writes the code to conduct the bivariate exploratory analyses:
+
+```{r}
+library(descr)
+
+# comparing mean unintended preg rate across groups
+( pregByExempt <- compmeans(x = pregCov$unintend.rate, 
+                            f = pregCov$exemption, plot = F) )
+( pregByReligion <- compmeans(x = pregCov$unintend.rate, 
+                              f = pregCov$top.religion, plot = F) )
+
+# correlation between preg rate and cohabitation
+( pregCohabCor <- cor(x = pregCov$perc.cohab, 
+                       y = pregCov$unintend.rate,
+                    use = "complete") )
+```
+
+They find that there is a notably higher mean unintended pregnancy rate in states that allow exemption to the contraceptive mandate ($m_{exempt}$ = `r round(pregByExempt[2], 1)`) compared to states without an exemption ($m_{not}$ = `r round(pregByExempt[1], 1)`). The highest mean unintended pregnancy rate ($m_{Evangelical}$ = `r round(pregByReligion[2], 1)`) is in states where Evangelicals are the most common religious affiliation, although it is not much higher than the mean unintended pregnancy rate in Catholic states ($m_{Catholic}$ = `r round(pregByReligion[1], 1)`). Finally, the correlation between for cohabitation and unintended pregnancy rate is negative and relatively weak (r = `r round(pregCohabCor, 2)`). 
+
+### Exploring the data with boxplots
+
+Leslie is interested in examining the relationship between unintended pregnancy rate and the contraception coverage exemption. She remembers the fancy box plots from Chapter 3 and gets out her old code from graphing firearm types and homicides. She changes the data frame name and variables to examine pregnancy rate and contraceptive exemption policy:
+
+```{r fig.cap = "Unintended pregnancy rate by exemption policy in states (2010)"} 
+
+# examining the distribution of unintended pregnancy by exemption
+ggplot(pregCov, aes(x = exemption, y = unintend.rate, fill = exemption)) +
+  geom_boxplot(stat = "boxplot") +
+  labs(x = "State allows exemption from contraceptive mandate", 
+       y = "Mean unintended pregnancy rate") +
+  theme_minimal() +
+  scale_fill_manual(values=c('#C6ACD4','#88398a'), guide=FALSE) 
+```
+
+Leslie thinks the difference looks relatively large but notices that the y-axis is limited to a fairly small range of values, so the difference may not be as big as it appears. She changes the y-axis to extend to zero, which still shows some difference:
+
+```{r fig.cap = "Unintended pregnancy rate by exemption policy in states (2010)"}
+# boxplot showing full range on y-axis
+ggplot(pregCov, aes(x = exemption, y = unintend.rate, fill = exemption)) +
+  geom_boxplot(stat="boxplot") +
+  labs(x = "State allows exemption from contraceptive mandate", 
+       y = "Mean unintended pregnancy rate") +
+  theme_minimal() +
+  scale_fill_manual(values=c('#C6ACD4','#88398a'), guide=FALSE) +
+  ylim(0, 60)
+```
+
+### Unlocking achievement 1: Check your understanding
+
+Combine the code above and the code from the *Chelsea's Clever Code* boxes to import all the data sources and build the pregCov data frame. Complete the exploratory data analysis by creating a scatterplot with unintended pregnancy rate on the y-axis and percentage of cohabitating opposite-sex couples on the x-axis. Create a box plot examining unintended pregnancy rate and top religious affiliation in each state. Interpret the plots. Based on the bivariate analyses and the plots, describe which variables are likely to be related to unintended pregnancy rate in this data set. 
+
+## Achievement 2: Exploring the statistical model for a line
+
+### The equation for a line
+
+Leslie is familiar with simple linear regression modeling. She knows that linear models use the concept of a line to explain and predict things about relationships among variables. She reminds Chelsea and Bobbi that, to build and use linear models, it is useful to think about the equation a line:
+
+\[y = mx + b\]
+
+Where:
+
+* m is the slope of the line 
+* b is the y-intercept of the line, or the value of y when x = 0 
+* x and y are the coordinates of each point along the line 
+
+In statistics, the intercept is often represented by $c$ or $b_0$ and the slope is often represented by $b_1$. Rewriting the equation for a line with these options would look like this:
+
+\[y = b_0 + b_1x\] 
+
+Or 
+
+\[y = c + b_1x\] 
+
+Leslie remembers that occasionally she has seen a $\beta$ rather than a b, however, typically Greek letters are only used for _population_ values so when working with samples the lower-case $b$ is more appropriate. 
+
+### Using the equation for a line
+
+Leslie, Bobbi, and Chelsea then discuss how the equation for a line is useful in two ways, to try and explain values of the outcome ($y$) in the sample and to predict values of the outcome ($y$) outside the sample. Leslie suggests testing out how the model works with a simple example and writes down the equation for the line with a slope of 2 and an intercept of 3:
+
+\[y = 3 + 2x\]
+
+She makes up a scenario where this model predicts the number of gallons of clean drinking water per person per week needed to survive. In this case, $x$ would be the number of weeks and $y$ would represent the gallons of water needed to survive. Consider a person who hears from their landlord that there is a major repair needed with the pipes and the water supply in the building will not be safe for drinking for up to 4 weeks. Based on the equation, how many gallons of drinking water would be needed to survive?
+
+Leslie starts by re-writing the equation using the names of the variables of interest to clarify the meaning:
+
+\[gallons = 3 + 2 * weeks\]
+
+She then substitutes the value of 4, for the 4 weeks without drinking water, into the equation:
+
+\[gallons = 3 + 2*4\]
+
+Keeping in mind the *order of operations* from Chapter 1, she solves the right-hand side of the equation, giving her the number of gallons of drinking water she will need for 4 weeks:
+
+\[gallons = 11 \]
+
+Now that she has shown Chelsea and Bobbi a simple example, Leslie explains a few terms used for the different parts of the equation: 
+
+* The y variable on the left-hand side of the equation is called the _dependent_ or _outcome_ variable. 
+
+* The x variable(s) on the right-hand side of the equation is/are called the _independent_ or _predictor_ variable(s). 
+
+\[outcome = b_0 + b_1*predictor\] 
+
+So, in the previous example, `weeks` was the _predictor_ variable and `gallons of water` was the *outcome* variable. 
+
+### The distinction between deterministic and stochastic
+
+Bobbi is ready to move on but Leslie has one more term to add to the equation. Leslie suggests the equation for a line so far is *deterministic*. A deterministic equation has one precise value for $y$ for each value of $x$ or each value of whatever is shown on the right hand side of the formula. This is true for some relationships. For example, many people have heard of the equation from physics $e = mc^2$. In this equation, e represents *energy*, m represents *mass* and c represents the *speed of light*. The laws of physics dictate that this equation will give an exact value for energy given a specific mass traveling at the speed of light squared. 
+
+Leslie explains that social science is not deterministic; it is *stochastic*. It is unusual in social science to be able to predict something exactly. Most of the time there is some variability in an outcome that the predictor variables cannot explain. *Stochastic* models include some randomness or variability that cannot be explained. This unexplained variability in the outcome is represented by adding an *error* term to the equation, like this: 
+
+\[outcome = b_0 + b_1*predictor + error\]
+
+Consider the water example. It is unlikely that every person would drink exactly 11 gallons over 4 weeks. If a person is larger or smaller or active or inactive they may need to drink a different amount of water. This *error* or $e$ in the equation accounts for the variability in the outcome that is not explained by the predictor. This equation is the *simple linear regression model*.
+
+### Unlocking achievement 2: Check your understanding
+
+Write out the general form of a simple linear regression model where income is explained by years of education. 
+
+## Achievement 3: Computing the slope and intercept in a simple linear regression
+
+Leslie goes on to explain that, in the case of simple linear regression, _simple_ does not mean _easy_, instead it is the term used for a regression model with only _one predictor_. For example, Leslie suggests that a simple linear regression model could be used to examine the relationship between the percentage of people living in poverty in a state can and the unintended pregnancy rate in the state. To understand this relationship between one predictor and an outcome, she would use a _simple linear regression model_. 
+
+### Sampling from a data frame 
+
+Bobbi explains that, like the t-test and chi-squared in prior chapters, linear regression is appropriate for examining the relationships in a sample to understand what is likely to be happening in the population. Since the pregCov data set is the entire population of states in the US (and the District of Columbia), Leslie takes a sample of the states to use for practicing linear regression. She starts by setting a seed (see Chapter 4 pullout box about seed values) and taking a sample of 30 states. 
+
+```{r}
+# set seed and take sample of 30 states
+# assign sample to a new object name
+set.seed(143)
+pregSamp <- pregCov[sample(nrow(pregCov), size = 30, 
+                           replace = FALSE), ]
+
+```
+
+### Exploring the relationship with a scatterplot
+
+Bobbi copies the `ggplot()` commands from the plot above and graphs the 30 state sample data.
+
+```{r fig.cap = "Relationship between unintended pregnancy rate and poverty in 30 states (2010)."}
+# graph 30 states relationship between poverty and unintended pregnancy
+ggplot(data = pregSamp, aes(x = perc.poverty2010, y = unintend.rate)) +
+         geom_point() + 
+  geom_smooth(method = "lm", se = FALSE, colour = "#88398a") + 
+  geom_point(size = 2, colour = "gray") +
+  theme_minimal() +
+  ylab("State unintended pregnancy rate") + 
+  xlab("State percent living in poverty")
+```
+
+### Understanding residuals 
+
+The linear regression line in the plot is based on the values of the intercept and slope that are the best at minimizing the distances between all the points and the regression line. These distances are called _residuals_ and are the leftover information that the line does not explain. 
+
+```{r fig.cap = "Visualizing residuals in the relationship between poverty and unintended pregnancy."}
+# followed this tutorial https://drsimonj.svbtle.com/visualising-residuals
+# add predicted values and residuals to the data
+pregSamp$predicted <- predict(lm(unintend.rate ~ perc.poverty2010, 
+                                 data = pregSamp,
+                                 na.action = na.exclude))
+pregSamp$residuals <- residuals(lm(unintend.rate ~ perc.poverty2010, 
+                                   data = pregSamp,
+                                   na.action = na.exclude))
+
+#create graph
+ggplot(data = pregSamp, aes(x = perc.poverty2010, y = unintend.rate)) +
+  geom_smooth(method = "lm", se = FALSE, color = "lightgrey") +
+  geom_segment(aes(xend = perc.poverty2010, yend = predicted), alpha = .2) +
+  # > Color adjustments made here...
+  geom_point(colour = "#88398a") +  # Color mapped here
+  theme_minimal() +
+  ylab("State unintended pregnancy rate") + 
+  xlab("State percent living in poverty")
+```
+
+The vertical lines show the information that the regression line is not explaining. 
+
+### Computing the slope of the line 
+
+The formula to compute the slope uses the difference between each observation and the mean values of x and y, like this:
+
+\[
+b=\frac{{\sum_{i=1}^n}(x_i-\bar{x})(y_i-\bar{y})}{{\sum_{i=1}^n}(x_i-\bar{x})^2}
+\]
+
+Where: 
+
+* $i$ is an individual observation, in this case a state 
+* $n$ is the sample size, in this case 30 
+* ${x}_i$ is the value of percent in poverty for state $i$ 
+* $\bar{x}$ is the mean value of percent in poverty for the sample 
+* $\bar{y}$ is the mean value of unintended pregnancy rate for the sample 
+* $\sigma$ is the symbol for sum 
+
+So, Bobbi explains, the formula is adding up the product of differences between poverty and unintended pregnancy each state and the mean values for these variables. Then, this value is divided by the summed squared differences between the value of poverty for each state and the mean poverty in the sample. Once the slope is computed, the intercept can be determined by plugging in the slope and the mean values of $x$ and $y$. Because this way of computing the slope and intercept relies on the squared differences and works to minimize the residuals overall, it is often called **Ordinary Least Squares** or **OLS** regression.
+
+### Estimating the linear regression model in R
+
+Chelsea states that if the electricity went off the slope and intercept of a line could still be calculated by hand using the OLS method without too much trouble, as long as the sample size was relatively small. Leslie is glad to have electricity and R to do the work for her, however, and asks Chelsea what command works best to find the equation for the line. Chelsea introduces the `lm()` command, which Leslie recognizes from plotting a line through the scatterplot. The `lm` stands for *linear model*.
+
+Leslie looks up the help documentation for the `lm()` command and find that it takes two arguments, the `formula =` and the `data =`. There is also an `na.action =` option that Bobbi recommends in order to deal with missing values. The `formula =` argument is where to put the regression model of interest, in this case unintend.rate explained by perc.poverty2010. The `data =` argument is the same as usual in requiring the name of the data frame for analysis. The `na.action =` argument is used to specify treatment of missing values with na.exclude being the option for excluding observations with missing values. Leslie uses `lm()` and fills in the two arguments to find the slope and the intercept of the line shown in the graphs:
+
+```{r}
+# linear regression of unintended pregnancy by poverty
+# in a sample of 30 states
+pregByPov <- lm(formula = unintend.rate ~ perc.poverty2010, 
+                data = pregSamp, na.action = na.exclude)
+summary(pregByPov)
+```
+
+### Navigating the linear regression output
+
+The output shows a lot of things! First Leslie sees a y-intercept of `r pregByPov$coefficients[1]`. Chelsea explains that the y-intercept is the value of $y$ when $x$ is zero. So, the model would predict a state with 0% of people living in poverty to have a unintended pregnancy rate of `r pregByPov$coefficients[1]`. The slope is `r pregByPov$coefficients[2]`. The slope is the change in $y$ for every one-unit increase in $x$. So, if poverty goes up by 1% in a state, the unintended pregnancy rate would change by `r pregByPov$coefficients[2]`. Bobbi writes the regression equation: 
+
+* unintended rate = `r pregByPov$coefficients[1]` - `r pregByPov$coefficients[2]` * percent in poverty 
+
+Leslie uses the regression model to predict unintended pregnancy rate for a state with 10% of the population in poverty:
+
+* unintended rate = `r pregByPov$coefficients[1]` - `r pregByPov$coefficients[2]` * 10
+
+Based on the linear regression model, a state with 10% of people living in poverty would have `r round(pregByPov$coefficients[2]*10, 2)` unintended pregnancies per 1,000 women aged 15-44.
+
+<br><br>
+
+### Unlocking achievement 3: Check your understanding
+
+Pick a state from the data frame and enter its observed value for percent living in poverty into the regression equation. Compute the unintended pregnancy rate. Compare it to the actual unintended pregnancy rate for the state chosen. 
+
+
+## Achievement 4: Slope interpretation and significance (b, p-value, CI)
+
+Leslie is concerned about how exact the predicted values are compared to the spread of the data in the graphs. Chelsea reminds her about the confidence interval, which shows the range of values where the true value of a statistic likely lies. Leslie looks back at the output from the `lm()` command and does not see any confidence intervals. Chelsea reminds her that the 95% confidence interval for a statistic is the statistic plus or minus the standard error ($se$) times the z-score of 1.96. 
+
+### Using the model to make predictions 
+
+Leslie sees the standard errors in the output and starts to do the math by hand to find the confidence interval. Chelsea stops her and lets her know that R will do the math instead using the `predict()` command. The `predict()` command finds a predicted value of the outcome based on the regression model. It can be used to find the predicted values for all observations, or for a specific value of the independent variable. In this case, for with 10% living in poverty, the predicted value for unintended pregnancy rate would be:
+
+```{r}
+# use predict to find predicted value of y for 10% poverty
+predPregRate <- predict(object = pregByPov, 
+                        newdata = data.frame(perc.poverty2010 = 10),
+                        interval="confidence") 
+predPregRate                          
+```
+
+So, the unintended pregnancy rate in a state with 10% of people living in poverty is `r predPregRate[1]` with a confidence interval for the prediction (sometimes called a prediction interval) of `r predPregRate[2]` to `r predPregRate[3]`. The confidence interval shows where the true value of the statistic likely lies *if the sample is a good representation of the population*. In this case, the likely true unintended pregnancy rate in a state with 10% of people living in poverty is between `r predPregRate[2]` and `r predPregRate[3]`.
+
+Chelsea wants to show Leslie how the `predict()` command predicts $y$ for all the observed values of $x$:
+
+```{r}
+# use predict to find predicted value for all observed x
+predPregRateAll <- predict(object = pregByPov, 
+                           interval="confidence") 
+predPregRateAll  
+```
+
+Leslie thinks it is interesting to have the predicted values for the 30 states and looks up the actual unintended pregnancy rate for state 49, West Virginia. She finds the observed value is `r pregSamp$unintend.rate[row.names(pregSamp) == 49]` but the predicted value is `r round(predPregRateAll[row.names(predPregRateAll) == 49][1], 1)`. Leslie thinks the predicted value seems pretty far from the observed value for West Virginia. Chelsea assures her that they will look more closely at how well the model fits the data as soon as they finish with the interpretation. 
+
+### Computing confidence intervals for the slope and intercept
+
+Chelsea explains that a general confidence interval might be useful and can also be computed for the intercept and slope using the `confint()` command:
+
+```{r}
+# confidence interval for regression parameters
+ciPregByPov <- confint(pregByPov)
+ciPregByPov
+```
+
+The slope of the line that is the best fit for the sample data is `r round(pregByPov$coefficients[1], 2)`, but in the population the likely value of the slope of the line for the relationship between unintended pregnancy and poverty is between `r round(ciPregByPov[2, 1], 2)` and `r round(ciPregByPov[2, 2], 2)`. 
+
+### Interpreting the statistical significance of the slope
+
+Leslie notices that the original output for the linear model did not include the confidence interval, but did include a p-value for the slope and a p-value for the intercept. She asks Chelsea about the p-value. Chelsea explains that the statistical significance of the slope in linear regression is tested using a one-sample t-test where the hypothesized value of the slope is 0. So, the slope of `r round(pregByPov$coefficients[1], 1)` is compared to the hypothesized 0 with the null hypothesis of: _The slope of the line is equal to 0_. 
+
+The one sample t-test formula is the same as in Chapter 6:
+
+\[
+t=\frac{\bar{x}-\mu}{\frac{s}{\sqrt{n}}}
+\]
+
+If the t-test is statistically significant at whatever threshold chosen (usually .05), Cheslea explains that Leslie can reject the null hypothesis and conclude that the slope is significantly different from 0. The output shows the t-statistic computed from the formula and the associated p-value: 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+summary(pregByPov)
+```
+
+In this case, the t value column shows a t-statistic of `r round(summary(pregByPov)$coefficients[2,3], 1)` and a p-value of  `r round(summary(pregByPov)$coefficients[2,4], 2)` for the slope of `r round(pregByPov$coefficients[2], 2)`. Leslie set the cutoff at .05 prior to conducting the analysis, so the reported p-value is below the cutoff. Leslie concludes that the slope *IS* statistically significantly different from 0. Since the slope is for the $x$ or *predictor* variable, Leslie writes:
+
+> The percent of state residents living in poverty is a statistically significant predictor of state unintended pregnancy rate (b = `r round(pregByPov$coefficients[2], 2)`; p = `r round(summary(pregByPov)$coefficients[2,4], 2)` in our sample. The likely value of the slope in the population is likely between `r round(ciPregByPov[2, 1], 2)` and `r round(ciPregByPov[2, 2], 2)`.
+
+### Interpreting the value of the slope 
+
+Chelsea wants to go one step further in interpreting the slope. Because the value of the independent variable, poverty, would be substituted into the equation and multiplied by the slope, there is more that can be said about the value of the slope. For every 1% increase in people living in poverty, the unintended pregnancy rate increases by 1.08. Consider, for example, a state with 10% of people living in poverty. Using the regression model, the unintended pregnancy rate would be predicted to be: 
+
+* unintended pregnancy rate = `r round(pregByPov$coefficients[1], 2)` + `r round(pregByPov$coefficients[2], 2)`*poverty 
+
+* unintended pregnancy rate = `r round(pregByPov$coefficients[1], 2)` + `r round(pregByPov$coefficients[2], 2)`*10 
+
+* unintended pregnancy rate = `r round(pregByPov$coefficients[1] + pregByPov$coefficients[2]*10, 2)`
+
+Another state with 11% poverty would have a predicted unintended pregnancy rate of:
+
+* unintended pregnancy rate = `r round(pregByPov$coefficients[1], 2)` + `r round(pregByPov$coefficients[2], 2)`*poverty 
+
+* unintended pregnancy rate = `r round(pregByPov$coefficients[1], 2)` + `r round(pregByPov$coefficients[2], 2)`*11 
+
+* unintended pregnancy rate = `r round(pregByPov$coefficients[1] + pregByPov$coefficients[2]*11, 2)`
+
+Because the slope is 1.08, the value of unintended pregnancy rate increases by 1.08 for each 1% increase in people living in poverty. The final interpretation of the slope includes this information as well:
+
+> The percent of state residents living in poverty is a statistically significant predictor of state unintended pregnancy rate (b = `r round(pregByPov$coefficients[2], 2)`; p = `r round(summary(pregByPov)$coefficients[2,4], 2)` in our sample. For every 1% increase in people living in poverty, the unintended pregnancy rate increases by 1.08 per 1,000 women ages 15-44. The likely value of the slope in the population is likely between `r round(ciPregByPov[2, 1], 2)` and `r round(ciPregByPov[2, 2], 2)`.
+
+### Unlocking achievement 4: Check your understanding
+
+A state wants to lower the unintended pregnancy rate by 5% and decides to try to reduce the percent of people living in poverty as a way to reduce unintended pregnancy. Based on the linear model, how much would the state have to reduce the percent living in poverty in order to reduce the unintended pregnancy rate by 5%?
+
+## Achievement 5: Model significance and model fit
+
+Leslie notices that there is another p-value toward the bottom of the output for the linear regression that is not for the intercept or the slope. Chelsea explains that this p-value is from a test-statistic that measures how much better the regression line is at getting close to the data points compared the mean value of the outcome. Essentially, is the regression line notably better than the dashed line at getting close to the data points?
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Relationship between unintended pregnancy rate and poverty."}
+ggplot(data = pregSamp, aes(x = perc.poverty2010, y = unintend.rate)) +
+         geom_point() + 
+  geom_smooth(method = "lm", se = FALSE, colour = "#88398a") + 
+  geom_point(size = 2, colour = "gray") + 
+  theme_minimal() +
+  ylab("State unintended pregnancy rate") + 
+  xlab("State percent in poverty")+
+  geom_hline(yintercept=mean(pregSamp$unintend.rate, na.rm = TRUE), 
+             linetype="dashed", size = 1, color = "gray") 
+```
+
+Chelsea explains that, like the t-statistic is the test statistic for a t-test, the F-statistic is the test statistic for linear regression. She says the F-statistic is used to determine whether the solid line showing the regression model is better overall at getting close to the data points than the dotted line showing the mean of the outcome. 
+
+### Understanding the F-statistic
+
+The F-statistic is a ratio of explained information (in the numerator) to unexplained information (in the denominator). If a model explains more than it leaves unexplained, the numerator is larger and the F-statistic is greater than 1. F-statistics that are much greater than 1 are explaining a lot more variation than they leave unexplained. Large F-statistics are more likely to be statistically significant. Chelsea writes out how the F-statistic is computed:
+
+\[
+F = \frac{\frac{\sum_{i=1}^n({\hat{y_i}-\bar{y}})^2}{k-1}}{\frac{\sum_{i=1}^n({y_i - \hat{y_i}})^2}{n-k}}
+\]
+
+She explains that, in this equation:
+
+* i is an individual state
+* n is the sample size, or total number of states 
+* k is the number of parameters in the model; the slope and intercept are parameters
+* $y_i$ is the outcome of unintended pregnancy rate for state i
+* $\hat{y_i}$ is the predicted value of unintended pregnancy for state i
+
+Chelsea tells Leslie that the numerator of the statistic is basically how much the predicted values differ from the mean observed value, _on average_. This is divided by how much the predicted values differ from the actual observed values, _on average_. Chelsea reiterates that the F-statistic is how much a predicted value differs from the mean value on average (explained variance) divided by how much an observed value differs from the predicted value on average (unexplained variance).
+
+Chelsea notes that the F-statistic is always positive due to the squaring of the terms in the numerator and denominator. As a result, the F distribution starts at zero and goes to the right, similar to the chi-squared distribution. The shape of the F distribution depends on the the number of parameters in the statistical model and the sample size. Chelsea shows Leslie and Bobbi a few different versions of the F distribution with different numbers of parameters and sample sizes. She explains that the F-statistic is usually written with two degrees of freedom numbers. The first number in the parentheses after the F is the degrees of freedom for the numerator. This value is one less than the number of parameters, often written `k-1`. The second number in the parentheses after an F-statistic is the degrees of freedom for the denominator, or `n-k`. 
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "F distribution."}
+# plotting help for F distribution from https://rpubs.com/monoboy/f-test
+ggplot(data.frame(x=c(0,5)), aes(x=x)) +
+  stat_function(fun=df, args=list(df1=1, df2=27), colour="#88398a", size = 1) +
+     stat_function(fun=df, args=list(df1=2, df2=50), colour="blue", size = 1) +
+  stat_function(fun=df, args=list(df1=5, df2=100), colour="orange", size = 1) +
+     stat_function(fun=df, args=list(df1=10, df2=200), colour="gray", size = 1) +
+  annotate("segment", x=3, xend=3.5, y=1.6, yend=1.6, colour="#88398a") +
+     annotate("segment", x=3, xend=3.5, y=1.4, yend=1.4, colour="blue") +
+     annotate("segment", x=3, xend=3.5, y=1.2, yend=1.2, colour="orange") + 
+     annotate("segment", x=3, xend=3.5, y=1.0, yend=1.0, colour="gray") + 
+  annotate("text", x=4, y=1.6, label="F(1, 27)") +
+     annotate("text", x=4, y=1.4, label="F(2, 50)") +
+     annotate("text", x=4, y=1.2, label="F(5, 100)") + 
+     annotate("text", x=4, y=1.0, label="F(10, 200)") +
+      theme_minimal() 
+```
+
+The more the model explains the variation in the outcome, the larger the F statistic gets. Like t-statistics and chi-squared statistics, large values of F are less likely to occur when there is no relationship in the population. 
+
+### Degrees of freedom and the F-statistic
+
+Leslie asks about the two numbers in parentheses after the F in the graph legend. In the case of the relationship between unintended pregnancy and poverty, there are two parameters (intercept and slope) and the sample size is 30. The first number in the parentheses after the F is the degrees of freedom for the numerator in the calculation for F. The numerator has k - 1 degrees of freedom, where k is the number of parameters. The second number in the parentheses after the F is the degrees of freedom for the denominator in the calculation for F. The denominator has n - k degrees of freedom, where n is the sample size and k is the number of parameters. So, the F statistic is F(1, 28) = `r round(summary(pregByPov)$fstatistic[1], 2)`. 
+
+```{r echo = FALSE, warning=FALSE, message=FALSE, fig.cap = "F distribution and location of F for model of unintended pregnancy by poverty."}
+# F distribution and F stat for unintend preg model
+ggplot(data.frame(x = c(0,10)), aes(x = x)) +
+  stat_function(fun=df, args=list(df1=1, df2=27), colour="#88398a", size = 1) +
+  geom_vline(xintercept=summary(pregByPov)$fstatistic[1], colour="#88398a", size = 1) + 
+  theme_minimal() + xlab("F") + ylab("Probability density") 
+  
+```
+
+Just like with the t-statistic and chi-squared, the probability of an F-statistic this large or larger is the area under the curve starting at the line and going right `r round(summary(pregByPov)$fstatistic[1], 2)`. There is really very little, if any, space under the curve from the value of F to the right, which is consistent with the tiny p-value of `r round(1-pf(summary(pregByPov)$fstatistic[1], summary(pregByPov)$fstatistic[2], summary(pregByPov)$fstatistic[3]), 3)`. Leslie interprets this as a  `r round(100*(1-pf(summary(pregByPov)$fstatistic[1], summary(pregByPov)$fstatistic[2], summary(pregByPov)$fstatistic[3])), 1)`% chance that an F-statistic this large would occur if there were no relationship between poverty and unintended pregnancy at the state level. Essentially, the F-statistic and the associated p-value suggest a statistically significant association between poverty and unintended pregnancy at the state level.
+
+### Understanding the $R^2$ measure of model fit
+
+Chelsea agrees but suggests that they review one additional piece of information before writing an interpretation of the model. The measure that tells how well the model fits is the $R^2$ or R-squared. The $R^2$ is computed by squaring the value of the correlation between the 30 observed values of unintended pregnancy in the 30 states and the values of unintended pregnancy predicted for the 30 states by the model. When the model predicts values that are very close to the observed values, the correlation is high and the $R^2$ is high. 
+
+The $R^2$ is the percent of the variation in the outcome that the model explains and is reported as a measure of **model fit**. For the relationship between poverty and unintended pregnancy the $R^2$ is `r round(summary(pregByPov)$r.squared, 2)`. To get the percentage, multiply by 100 for `r round(100*summary(pregByPov)$r.squared, 1)`% of the variation in state unintended pregnancy rates is explained by the percentage of people living in poverty.
+
+Leslie sees another $R^2$ labeled *Adjusted R-squared*---or ${R}^2_{adj}$---in the output. Chelsea explains that the value of $R^2$ tends to increase with each additional variable added to the model, whether the variable actually improves the prediction or explanation of the outcome or not. The ${R}^2_{adj}$ penalizes the value of ${R}^2_{adj}$ a small amount for each additional variable added to the model to ensure that the ${R}^2_{adj}$ only increases when the additional predictors in a model explain a notable amount of the variation in the outcome. Essentially, Chelsea explains, the ${R}^2_{adj}$ keeps analysts from just adding all the variables they have in order to get the highest possible value for model fit. The ${R}^2_{adj}$ is more commonly reported than the $R^2$.
+
+### Reporting linear regression results 
+
+Now that they have been through the process, Bobbi summarizes the things that should be reported following any simple linear regression analysis: 
+
+- an interpretation of the value of the slope (b)  
+- the significance of the slope (t and p)  
+- the significance of the model (F and p)  
+- the fit of the model ($R^2$ or ${R}^2_{adj}$)  
+
+Altogether, model interpretation would be:
+
+> A simple linear regression analysis found a statistically significant relationship between poverty and unintended pregnancy (F(1, 28) = `r round(summary(pregByPov)$fstatistic[1], 2)`; p = `r round(1-pf(summary(pregByPov)$fstatistic[1], summary(pregByPov)$fstatistic[2], summary(pregByPov)$fstatistic[3]), 3)`) with `r round(100*summary(pregByPov)$r.squared, 1)`%  of the variation in state unintended pregnancy rates explained by the percentage of state residents living in poverty. The relationship between poverty and unintended pregnancy was positive and significant (b = `r round(pregByPov$coefficients[2], 2)`; p = `r round(pregByPov$coefficients[6], 2)`); for every 1% increase in percent living in poverty, the state unintended pregnancy rate increased by `r round(pregByPov$coefficients[2], 2)`. 
+
+### Unlocking achievement 5: Check your understanding 
+
+Take a new sample of 30 states from the original pregCov data frame using a different seed. Use the `lm()` command to create a new linear regression model on the new sample. Interpret the results.
+
+## Achievement 6: Checking assumptions and conducting diagnostics
+
+### The six assumptions of simple linear regression
+
+Simple linear regression has several assumptions to meet in order for the results to be considered unbiased:
+
+* Both variables are continuous 
+* Both variables are normally distributed 
+* The relationship between the two variables is linear (linearity) 
+* The variance is constant with the points distributed equally around the line (homoscedasticity) 
+* The residuals are independent 
+* The residuals are normally distributed 
+
+### Checking the normality assumption 
+
+Leslie recognizes the first four assumptions from correlation analyses and gets to work checking them. Both variables are continuous, so the first assumption is met. She uses histograms to check the normality assumption: 
+
+```{r fig.cap = "Distribution of percent in poverty for states"}
+# check normality of poverty variable
+ggplot(pregSamp, aes(x = perc.poverty2010)) + 
+  geom_histogram(fill = "#88398a", col = "grey") + 
+  theme_minimal() + 
+  labs(x = "Percent in poverty",
+       y = "States")
+
+```
+
+The small sample size makes it difficult to see the shape of the histogram clearly, so Leslie modifies the bin size using an option for the histogram:
+
+```{r fig.cap = "Distribution of percent in poverty for states"}
+# check normality of poverty variable
+ggplot(pregSamp, aes(x = perc.poverty2010)) + 
+  geom_histogram(fill = "#88398a", col = "grey", breaks = seq(0, 30, by = 3)) + 
+  theme_minimal() + 
+  labs(x = "Percent in poverty",
+       y = "States")
+
+```
+
+The poverty data do not seem quite normal, but not too far off. There are fewer states with high percentages of poverty than there are states with lower percentages of poverty.  
+
+```{r fig.cap = "Distribution of unintended pregnancy rate for states"}
+# check normality of pregnancy variable
+ggplot(pregSamp, aes(x = unintend.rate)) + 
+  geom_histogram(fill = "#88398a", col = "grey", breaks = seq(20, 70, by = 4)) + 
+  theme_minimal() + 
+  labs(x = "Unintended pregnancy rate",
+       y = "States")
+
+```
+
+The distribution of unintended pregnancy rate is also not quite normal. Given that these histograms are close but not quite normal, it may be worth checking normality with QQ-plots to see how far these two variables are from being normally distributed:
+
+```{r fig.cap="QQ-plot showing distribution of percent in poverty for states."}
+# QQ-plot of preg rate variable to check normality
+ggplot(pregSamp, aes(sample = perc.poverty2010)) + 
+  stat_qq(color = "#88398a") + 
+  geom_abline(intercept = mean(pregSamp$perc.poverty2010, na.rm = TRUE), 
+              slope = sd(pregSamp$perc.poverty2010, na.rm = TRUE)) +
+  theme_minimal() + 
+  labs(x="Theoretical normal distribution",
+       y="Observed values") 
+```
+
+```{r fig.cap = "QQ-plot showing distribution of unintended pregnancy rate for states."}
+# QQ-plot of preg rate variable to check normality
+ggplot(pregSamp, aes(sample = unintend.rate)) + 
+  stat_qq(color = "#88398a") + 
+  geom_abline(intercept = mean(pregSamp$unintend.rate, na.rm = TRUE), 
+              slope = sd(pregSamp$unintend.rate, na.rm = TRUE)) +
+  theme_minimal() + 
+  labs(x="Theoretical normal distribution",
+       y="Observed values") 
+```
+
+The QQ-plots show some deviation from normality, but are not nearly as non-normal as the plots of water access from the previous chapter. Bobbi thinks they are close enough to normal that this assumption can be considered met. 
+
+### Checking the linearity assumption 
+
+The *linearity* assumption is met if a scatterplot of the two variables shows a relationship that falls along a line. The earlier plot showing gray points and a purple straight line drawn through the data suggests that this assumption may be met. When graphed, the gray points fall generally along the straight purple line. However, unlike the graph of water access and and female education in the previous chapter, the data points seem to not follow the line as well. Using a _Loess curve_, we can see the actual relationship between the two variables without constraining the line to be straight. In this case, a gray Loess curve shows deviation from a linear relationship. 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Relationship between unintended pregnancy rate and poverty."}
+ggplot(data = pregSamp, aes(x = perc.poverty2010, y = unintend.rate))  + 
+  geom_smooth(se = FALSE, colour = "gray40") +
+  geom_smooth(method = "lm", se = FALSE, colour = "#88398a") + 
+  geom_point(size = 2, colour = "gray") + 
+  theme_minimal() + 
+  labs(y = "State unintended pregnancy rate",
+       x = "State percent in poverty") 
+```
+
+The Loess curve shows quite a bit of deviation from linearity in this relationship, particularly in the left half of the graph. Bobbi concludes that the linearity assumption is not met.
+
+### Checking the homoscedasticity assumption 
+
+The next assumption is the equal distribution of points around the line, demonstrating equal variation in the outcome across the range of the predictor variable. This is often called the assumption of homoscedasticity. In a plot, homoscedasticity would look like all the points were relatively evenly spread out above around the line from the left side of the graph to the right side. In the plot below, the points seem closer to the line on the far left and then are more spread out around the line starting near 12.5% poverty. 
+
+```{r fig.cap="Relationship of poverty and unintended pregnancy in states."}
+# check homosced of plot of poverty and unintended preg
+ggplot(data = pregSamp, aes(y = unintend.rate, x = perc.poverty2010/100)) + 
+  geom_smooth(method = "lm", se = FALSE, colour = "#88398a") + 
+  geom_point(size = 2, colour = "gray") + 
+  theme_minimal() + 
+  labs(y = "Unintended pregnancy rate",
+       x = "Percent living in poverty") +
+  scale_x_continuous(labels = scales::percent)
+
+```
+
+Bobbi reminds Leslie that the Breusch-Pagan can be used to test the null hypothesis that the variance is constant. In R, the `bptest()` command can be used:
+
+```{r}
+# testing for equal variance
+library(lmtest)
+constVarTest <- bptest(formula = pregByPov)
+constVarTest
+```
+
+The Breusch-Pagan test statistic has a high p-value associated with it ($BP$ = `r round(constVarTest$statistic, 2)`; $p$ = `r round(constVarTest$p.value, 2)`), indicating that the null hypothesis that the variance is constant would be retained. The null hypothesis was that the variance is constant, so Leslie concludes that the assumption of constant variance is met. 
+
+### Testing the independence of residuals assumption 
+
+The two final assumptions to test were not tested in correlation analysis and so are new for linear regression. Chelsea explains that both of the last two assumptions are about residuals and reminds Leslie that residuals are the distances between each data point and the regression line. Conceptually, she explains, residuals are the variation in the data that the regression line does not explain. 
+
+The first assumption for residuals is that the residuals are independent or unrelated to each other. Residuals that are independent are residuals that do not follow a pattern. Chelsea explains that a pattern in the residuals suggests that the regression model is doing better for certain types of observations and worse for others. 
+
+Chelsea introduces the $Durbin-Watson$ test, which can be used to determine whether the model violates the assumption of independent residuals. The null hypothesis for the $Durbin-Watson$ test is that the residuals are independent; the alternative hypothesis is that the residuals are not independent. A $Durbin-Watson$ or $D-W$ statistic of 2 indicates perfectly independent residuals.
+
+There are a few packages that contain a $Durbin-Watson$ test command. Chelsea suggests using the lmtest package:
+
+```{r}
+# test independence of residuals
+dwtest(formula = pregByPov)
+```
+
+The $D-W$ statistic is near 2 and the $p-value$ is high, so Leslie concludes that the null hypothesis is not rejected. Since the null hypothesis is that the residuals are independent, she finds that this assumption is met. 
+
+### Testing the normality of residuals assumption 
+
+The last assumption to check is normality of residuals. Chelsea explains that, if the residuals are normally distributed, this means that the regression line is far above a few points, far below a few others, and relatively near most of the points. If the residuals are skewed, that would mean that the regression line is either far above more than it is below or vice-versa. That is, it does a better job at explaining either the higher values of the outcome or the lower values of the outcome. 
+
+Leslie checks normality using a histogram and QQ-plot as usual. Chelsea lets her know that the pregByPov model object include residuals to use in the plot: 
+
+```{r fig.cap="Histogram showing distribution of residuals for model of unintended pregnancy by poverty."}
+# check residual plot of poverty and unintended preg
+ggplot(pregByPov$model, aes(x = pregByPov$residuals)) + 
+geom_histogram(fill = "#88398a", col = "grey", breaks = seq(-20, 20, by = 3)) + 
+  theme_minimal() + 
+  labs(x = "Residuals",
+       y = "States") 
+```
+
+```{r fig.cap="QQ-plot showing distribution of residuals for model of unintended pregnancy by poverty"}
+# QQ-plot of residuals to check normality
+ggplot(pregByPov$model, aes(sample = pregByPov$residuals)) + 
+  stat_qq(color = "#88398a") + 
+  geom_abline(intercept = mean(pregByPov$residuals, na.rm = TRUE), 
+              slope = sd(pregByPov$residuals, na.rm = TRUE)) +
+  theme_minimal() + 
+  labs(x="Theoretical normal distribution",
+       y="Observed residuals") 
+
+```
+
+Both graphs suggest some non-normality in the distribution of residuals. The histogram suggests that there are some very large positive residuals without corresponding large negative residuals. The QQ-plot suggests residuals are below the values you'd expect from a normal distribution at both ends, but above in the middle. 
+
+### Interpreting the results of the assumption checking
+
+Leslie notes that the linear regression analysis meets some and fails some of the assumptions. The assumptions it meets are: continuous variables, normality, homoscedasticity, and independence of residuals. The model fails the assumptions of linearity and normally distributed residuals. Because it does not meet all the assumptions, Leslie knows that the model is considered biased and should be interpreted with caution. Specifically, a biased model is not usually considered generalizable to other observations outside the sample. 
+
+### Using model diagnostics to find outliers and influential values
+
+Chelsea explains that they are not quite done checking model quality. In addition to testing *assumptions*, she says that model *diagnostics* are useful for determining whether there are any observations that are outliers or influential observations that may be having some impact on the model. An *outlier* is an observation with unusual values. A *regression outlier* has an unusual value of the outcome given its value(s) of predictor(s). An *influential observation* changes the slope of the regression line. 
+
+There are several measures to help identify outliers and influential observations: standardized residuals, df-betas, Cook's distance, and leverage. One good strategy for identifying the truly problematic observations is to identify those that observations that are outliers or influential observations by on two or more of these four measures. 
+
+#### Using standardized residuals to find outliers 
+
+Chelsea says that *standardized residuals* are z-scores for the residual values. Leslie remembers that the residuals are the distances between the observed and predicted values of the outcome. Z-scores over 1.96 or below -1.96 (often rounded to 2 for ease) are two standard deviations or more away from the mean of the measure. Standardized residuals can be computed using the `rstandard()` command on the model object, which adds standardized residuals to the data frame as a new variable. After adding standardized residuals to the data frame, Chelsea suggests that Leslie find the states with large standardized residuals by examining the subset of states where the absolute value (`abs()`) of the residuals is greater than 2. 
+
+```{r}
+# get standardized residuals and add to data frame
+standardized <- data.frame(rstandard(pregByPov))
+pregSamp <- merge(pregSamp, standardized, by = "row.names")
+names(pregSamp)[names(pregSamp) == 'rstandard.pregByPov.'] <- 'standardized'
+
+# get a subset of states with standardized residuals > 2
+subset(pregSamp, abs(pregSamp$standardized)>2)
+```
+
+Leslie finds that two states in the sample have large standardized residuals, Delaware and Hawaii. 
+
+#### Using df-betas to find influential values
+
+Chelsea explains that the next measure, *df-beta*, removes each observation from the data frame, conducts the analysis again, and compares the intercept and slope for the models with and without the observation. Observations with high df-beta values, usually with a cutoff of greater than two, may be influencing the model. Using the same strategy as with the standardized residuals, Leslie starts to identify states with high df-betas. Chelsea reminds here that the df-beta are different for slope and intercept, so she will have to use subsetting and choose the part of the `pregByPov` object with the intercept and slope separately. Bobbi helps her out with the coding: 
+
+```{r}
+# get dfbetas and add to data frame
+# there will be one new variable per parameter
+pregSamp$dfbetaIntercept <- dfbeta(pregByPov)[ , 1]
+pregSamp$dfbetaPoverty <- dfbeta(pregByPov)[ , 2]
+
+# get subset of states with dfbetas > 2 for intercept and slope
+subset(pregSamp, abs(pregSamp$dfbetaIntercept) > 2)
+subset(pregSamp, abs(pregSamp$dfbetaPoverty) > 2)
+
+```
+
+Leslie finds that the df-betas for the intercept show four states with values greater than two, New Jersey, New York, Vermont, and West Virginia. There are no states with large df-betas for the slope and there is no overlap with the states identified by the standardized residuals as problematic, Delaware and Hawaii.
+
+#### Using Cook's Distance to find influential values 
+
+Leslie asks Chelsea about the next measure of influence, Cook's Distance. Chelsea says it is often shortened to Cook's D and is computed in a very similar way to the df-beta. That is, each observation is removed and the model is re-estimated without it. Cook's D then combines the differences between the models with and without an observation for *all the parameters* together instead of one at a time like the df-betas. Chelsea explains that cutoff for a high Cook's D value is usually 4/n. 
+
+```{r}
+# cooks distance
+# greater than 4/n is some influence
+# 4/26 is 4/26 = .15
+pregSamp$cooks <- cooks.distance(pregByPov)
+subset(pregSamp, pregSamp$cooks > 4/26)
+```
+
+None of the states show up as having high Cook's D. 
+
+#### Using Leverage to find influential values 
+
+Finally, Chelsea says, leverage is the influence that the observed value of the outcome has on the predicted value of the outcome. Specifically, leverage is the amount the predicted value of the outcome would change if the observed value of the outcome was changed by one unit. Leverage values range between 0 and 1. To determine which leverage values indicate influential observations, a cutoff of 2*(k+1)/n is often used. Chelsea says the leverage values to find influential states are computed by using the `hatvalues` command. She explains that the predicted value of $y$ is often depicted as $\hat{y}$, which looks like a $y$ wearing a little hat.
+
+```{r}
+# leverage values
+# identify those that are greater than 2(k+1)/n 
+# 2(k+1)/n = 2(1+1)/30 = .13 
+pregSamp$leverage <- hatvalues(pregByPov)
+subset(pregSamp, pregSamp$leverage > .13)
+```
+
+Leslie finds that Wyoming and Connecticut have high leverage values. None of the states are outliers on more than one measures. 
+
+### Summarizing outliers and influential values
+
+Although for this model, there are no problematic states, Leslie thinks it would be useful to have all the states identified by these four measures in a single list or table to more easily see all the states that seem to be problematic. Chelsea suggests writing some code to pull them all into a single subset. Leslie gives it a try:
+
+```{r}
+# sum the number of times observations were outliers/influential
+pregSamp$outlierInfl <- as.numeric(pregSamp$leverage > .13) + 
+                     as.numeric(pregSamp$cooks > .15) +
+                     as.numeric(abs(pregSamp$standardized) > 2) + 
+                     as.numeric(abs(pregSamp$dfbetaIntercept) > 2) +
+                     as.numeric(abs(pregSamp$dfbetaPoverty) > 2)
+
+# subset those with 2 or more measures indicating outlier/influential
+subset(pregSamp, pregSamp$outlierInfl >= 2)
+```
+
+As she expects, Leslie finds that there are no states that show up more than once among the measures of outlying and influential observations. When an observation is identified as an outlier or influential value, it is worth looking at the data to see if there is anything that seems unusual. In this case, the mean value of unintended pregnancy rate is `r mean(pregSamp$unintend.rate, na.rm = T)`. One of the states identified as a possible outlier was Hawaii, with the observed value of unintended pregnancy rate of 61 per 1,000, which is the second highest rate of the sample. Other states may have been identified as outliers for other reasons.
+
+Although the rate for Hawaii is very high, Chelsea suggests that it does not seem like a data entry mistake. Had the review of Hawaii's data revealed a suspicious number like 99% of people in poverty or 0 unintended pregnancies, this could signify a data collection, data entry, or data management error. In the case of some sort of error, the observation could either be corrected or removed from the data frame and the model would then be re-estimated (with all the assumptions and diagnostics checked again!).
+
+### Unlocking achievement 6: Check your understanding  
+
+Check the assumptions and perform diagnostics on the model you created from the sample data in the Unlocking achievement 5 activity. Summarize your results. 
+
+## Achievement 7: Adding variables to the model
+
+### Adding a binary variable to the model 
+
+Chelsea notes that poverty accounted for `r round(100*summary(pregByPov)$r.squared, 1)`% of the variation in unintended pregnancy rate in states, leaving `r round(100*(1-summary(pregByPov)$r.squared), 1)`% to explain. Bobbi decides it is time to add in the policy variable she was originally interested in to see if states that exempt insurers from mandatory contraception coverage help to explain unintended pregnancy rates. 
+
+Bobbi expects that adding this variable to the regression model will help to explain unintended pregnancy rate given the bivariate results and the box plot showing the higher mean unintended pregnancy rate for states with contraceptive mandate exemptions. She shows Leslie that adding a variable requires changing the formula, but everything else remains the same. Bobbi also suggests naming the new regression object something different since it includes different variables now. Leslie adds exempt onto the end of the regression object name, for a new regression object called *pregByPovExempt*. Leslie thinks she could probably do a better job at naming, but leaves it for now.
+
+```{r}
+# linear regression unintended pregnancy by poverty
+# in a sample of 30 states
+pregByPovExempt <- lm(formula = unintend.rate ~ perc.poverty2010 +
+                        exemption, data = pregSamp)
+summary(pregByPovExempt)
+```
+
+### Interpreting the multiple regression model results
+
+Bobbi interprets the results of this new model, which indicates that percent living in poverty and having a contraception mandate exemption both significantly help to explain the state unintended pregnancy rate ($F(1, 27)$ = `r round(summary(pregByPovExempt)$fstatistic[1], 2)`; $p$ = `r round(1-pf(summary(pregByPov)$fstatistic[1], summary(pregByPovExempt)$fstatistic[2], summary(pregByPovExempt)$fstatistic[3]), 3)`) with `r round(100*summary(pregByPovExempt)$adj.r.squared, 1)`%  of the variation in state unintended pregnancy rates explained by the model. The relationship was between poverty and unintended pregnancy was positive and significant ($b$ = `r round(pregByPovExempt$coefficients[2], 2)`; $p$ = `r round(pregByPovExempt$coefficients[6], 2)`); for every 1% increase in percent living in poverty, the state unintended pregnancy rate increased by `r round(pregByPovExempt$coefficients[2], 2)`. The relationship was between exemption policy and unintended pregnancy was positive and significant ($b$ = `r round(pregByPovExempt$coefficients[3], 2)`; $p$ = `r round(summary(pregByPovExempt)$coefficients[,4], 2)`). States with contraceptive exemption had  `r round(pregByPovExempt$coefficients[3], 2)` more unintended pregnancies per 1,000 women age 15-44 than states without the exemption. 
+
+### Using the multiple regression model 
+
+Leslie is a little confused, so Chelsea shows her the regression model:
+
+* unintended pregnancy rate = `r round(pregByPovExempt$coefficients[1], 2)` + `r round(pregByPovExempt$coefficients[2], 2)` \* percent poverty + `r round(pregByPovExempt$coefficients[3], 2)` \* exempt)
+
+* Substituting in an example state with 10% poverty and a contraceptive exemption:
+
+* unintended pregnancy rate = `r round(pregByPovExempt$coefficients[1], 2)` + `r round(pregByPovExempt$coefficients[2], 2)` \* 10 + `r round(pregByPovExempt$coefficients[3], 2)` \* 1)
+
+* unintended pregnancy rate = `r round(pregByPovExempt$coefficients[1] + pregByPovExempt$coefficients[2]*10 + pregByPovExempt$coefficients[3]*1, 2)`
+
+Substituting in an example state with 10% poverty and *no* contraceptive exemption:
+
+* unintended pregnancy rate = `r round(pregByPovExempt$coefficients[1], 2)` + `r round(pregByPovExempt$coefficients[2], 2)` \* 10 + `r round(pregByPovExempt$coefficients[3], 2)` \* 0)
+
+* unintended pregnancy rate = `r round(pregByPovExempt$coefficients[1] + pregByPovExempt$coefficients[2]*10 + pregByPovExempt$coefficients[3]*0, 2)`
+
+Chelsea explains that a state with 10% poverty and a contraceptive exemption would have `r round(pregByPovExempt$coefficients[1] + pregByPovExempt$coefficients[2]*10 + pregByPovExempt$coefficients[3]*1, 2)` unintended pregnancies per 1,000 women, while a state with 10% poverty and *no* exemption would have `r round(pregByPovExempt$coefficients[1] + pregByPovExempt$coefficients[2]*10 + pregByPovExempt$coefficients[3]*0, 2)` unintended pregnancies per 1,000 women. Bobbi thinks a graph might help to demonstrate. 
+
+### Visualizing the multiple regression model 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE,fig.cap="Relationship between unintended pregnancy rate and poverty in states with and without contraceptive exemption policies."}
+library(broom)
+ggplot(d = pregSamp, aes(x = perc.poverty2010, y = unintend.rate, color = exemption)) +
+         geom_point() + 
+  geom_line(data = augment(pregByPovExempt), aes(y = .fitted, color = exemption)) +
+  geom_point(size = 2) + 
+  theme_minimal() + 
+  scale_color_manual(values = c('#d9a4da', '#88398a'), name = "Employer\ncontraception\ncoverage\nexemption") +
+  ylab("State unintended pregnancy rate") + 
+  xlab("State percent in poverty")
+```
+
+The top line represents the predicted values of unintended pregnancy rate for states with a contraception coverage exemption. The bottom line represents the predicted values for states without the exemption. The slopes of the lines are the same, but the are `r round(pregByPovExempt$coefficients[3], 2)` apart. Leslie suggests that it looks like continuous variables in the model influence the slope of the line, while categorical variables in the model influence the intercept. Bobbi is impressed. This is exactly right. Chelsea suggests examining the model with a categorical variable that has more categories just to see how it looks. Bobbi has the top.religion variable ready to go. This variable measures which religion is practiced by the highest percentage of people in each state. 
+
+Leslie is a little concerned since the sample they are working with is just 30 states. She thinks she heard something about not including too many variables when the sample size is small. Chelsea confirms that there should be about 10 observations for each coefficient in the model. She says they will make an exception just to demonstrate how a categorical variable with more categories works in a regression model. 
+
+### Adding a multi-category categorical variable to the model
+
+Bobbi removes the exemption variable and adds the religion variable to the model. The religion variable has four categories: Catholic, Evangelical, Mainline Protestant, and Unaffiliated. Before adding it to the model, Bobbi checks the frequencies: 
+
+```{r}
+# top religions in the sample of 30 states
+table(pregSamp$top.religion)
+```
+
+There is only one state in the *Mainline Protestant* group. One observation is not enough to identify a pattern and base a statistical result on. There are two possible strategies when a group is too small on its own: combine the group with another group or drop the group. Bobbi decides to drop the group in this case. She drops the group by using a subset command within the `lm()` command:
+
+```{r}
+# linear regression unintended pregnancy by poverty and religion
+# in a sample of 30 states
+pregByPovRel <- lm(formula = unintend.rate ~ perc.poverty2010 +
+                        top.religion, 
+                   data = subset(pregSamp, top.religion != "mainline"))
+summary(pregByPovRel)
+```
+Leslie notices that only Evangelical and Unaffiliated are included in the model and asks Bobbi what happened to the Catholic group. Bobbi explains that, when a categorical variable is added to a model, one of the groups is assigned to be a *reference group*. The reference group does not have its own coefficient. Instead, the predicted values for the reference group are the values calculated from the regression equation when the both the other groups are zero. Bobbi writes the equation and plots the model:
+
+* unintended pregnancy rate = `r round(pregByPovRel$coefficients[1], 2)` + `r round(pregByPovRel$coefficients[2], 2)` \* poverty + `r round(pregByPovRel$coefficients[3], 2)` \* evangelical + `r round(pregByPovRel$coefficients[4], 2)` \* unaffiliated)
+
+
+```{r echo = FALSE, warning=FALSE, message=FALSE, fig.cap="Relationship between unintended pregnancy rate and poverty in states with different widely practiced religions"}
+ggplot(d = subset(pregSamp, top.religion != "mainline"), aes(x = perc.poverty2010, 
+                                                             y = unintend.rate, 
+                         color = top.religion)) +
+         geom_point() + 
+  geom_line(data = augment(pregByPovRel), aes(y = .fitted, color = top.religion)) +
+  geom_point(size = 2) + 
+  theme_minimal() + 
+  scale_color_manual(values = c('#ca80cb', '#88398a', '#e8c9e9'), name = "Most\npracticed\nreligion") +
+  ylab("State unintended pregnancy rate") + 
+  xlab("State percent in poverty")
+```
+
+Leslie gets it now. She notes that neither of the religion groups had statistically significant coefficients in the model, so it does not appear that the major religion in a state helps to explain the state unintended pregnancy rate. She also notices that the adjusted $R^2$ for the model with religion was the same ($R_{adj}^2$ = `r round(summary(pregByPovRel)$adj.r.squared,2)`) as for the model with only poverty ($R_{adj}^2$ = `r round(summary(pregByPov)$adj.r.squared,2)`). So, after poverty was already in the model, adding religion to the model did not explain any additional variation in the unintended pregnancy rate.
+
+However, Leslie also notices that the model with the exemption policy variable explains `r round(summary(pregByPovExempt)$adj.r.squared,2)`% of the variation in unintended pregnancy, which is higher than the other models. Since this seems to be the best model for explaining unintended pregnancy rates, she tells Chelsea and Bobbi she is going to check assumptions and conduct diagnostics for practice. 
+
+### No multicollinearity assumption for multiple regression 
+
+Since they are about finished with linear regression modeling, Bobbi stops Leslie for a short detour to tell her about one additional assumption that must be checked when there are multiple *continuous* variables in a model. To demonstrate, Bobbi develops a model with poverty, contraception exemption policy, and percent of opposite-sex couples cohabitating:
+
+```{r}
+# linear regression unintended pregnancy by poverty, policy, cohabitation
+# in a sample of 30 states
+pregByPovExemptCo <- lm(formula = unintend.rate ~ perc.poverty2010 +
+                        exemption + perc.cohab, data = pregSamp,
+                        na.action = na.exclude)
+summary(pregByPovExemptCo)
+```
+
+Bobbi explains that, in addition to the assumptions checked with the earlier model, when a model has more than one continuous predictor, there is an assumption of _no perfect multicollinearity_. Multicollinearity is when two variables are highly correlated and therefore are very similar to one another. When two variables are similar to one another, they are both bringing the same information into the regression model. This redundancy can be a problem for model estimation, so variables that are too similar should not be in a model together. 
+
+#### Using correlation to check multicollinearity
+
+There are several ways to check for multicollinearity. The first is to examine correlations between any continuous variables in a model before estimating the model. In this case, percent living in poverty and percent opposite-sex couples cohabitating are continuous. The correlation between these is computed using the `cor()` command:
+
+```{r}
+# correlation poverty and cohabitation
+cor(x = pregSamp$perc.poverty2010, y = pregSamp$perc.cohab)
+```
+
+The two variables are not highly correlated (r = `r cor(x = pregSamp$perc.poverty2010, y = pregSamp$perc.cohab)`), so there is no problem with multicollinearity based on the correlation coefficient. If the absolute value of the correlation coefficient were .7 or higher, this would indicate a large amount of shared variance between the two variables and a problem with multicollinearity.
+
+#### Using variance inflation factors (VIF) to check multicollinearity 
+
+The other way to identify problems with multicollinearity is through the use of *Variance Inflation Factor* or *VIF* statistics. The *VIF* statistics are calculated by running a separate regression model for each of the predictors where the predictor is the outcome and everything else in the model stays a predictor. With this model, for example, the VIF for the `perc.poverty2010` variable would be computed by running this model:
+
+perc.poverty2010 = exemption + perc.cohab 
+
+The $R^2$ from this linear regression model would be used to determine the VIF by substituting it into this formula: 
+
+\[
+VIF_{perc.poverty2010}=\frac{1}{1-R^2}
+\]
+
+The result will be one if there is no shared variance at all. If there is any shared variance, the VIF will be greater than one. If the VIF is large, this indicates that perc.poverty2010 shares a lot of variance with the exemption and cohabitation variables. A VIF of 2.5, for example, would indicate that the $R^2$ was .60 and so 60% of the variation in the perc.poverty2010 was explained by exemption and cohabitation. While there is no consistent cutoff recommended for the size of a VIF, 2.5 is often used. 
+
+Bobbi shows Leslie the `vif()` command to check VIF values for the model above:
+
+```{r}
+# VIF for model with poverty 
+library(car)
+vif(pregByPovExemptCo)
+```
+
+The VIF values are quite small, especially given that the lower limit of the VIF is one. There is no problem with multicollinearity with this model. The model meets the assumption of no perfect multicollinearity. Bobbi explains to Leslie that the rest of the assumption checking and diagnostics are conducted and interpreted in the same way as they were for the simple linear regression model. 
+
+### Unlocking Achievement 7: Check your understanding
+
+Add the exemption variable to the model you created in the Unlocking achievement 6 activity. Create a graph showing the parallel regression lines for the states with and without a contraceptive mandate exemption policy. 
+
+## Chapter summary
+
+### Achievements unlocked in this chapter: Recap
+
+After reading this chapter and following along, Leslie (and you) learned and practiced: 
+
+#### Achievement 1 recap: Exploratory data analysis before developing a linear regression model 
+
+Prior to conducting a regression analysis, it is useful to examine how the two variables are related to one another using correlation analysis and a scatterplot for continuous predictors and comparing means and box plots for categorical predictors. These *exploratory data analysis* tools provide some early indication of whether the relationship appears to linear, how strong it might be, and whether it looks like a positive or negative relationship.
+
+#### Achievement 2 recap: The statistical model for a line 
+
+A linear regression model is based on the equation for a line: 
+
+\[y = mx + b\]
+
+Where:
+
+* m is the slope of the line 
+* b is the y-intercept of the line, or the value of y when x = 0 
+* x and y are the coordinates of each point along the line 
+
+In statistics, the intercept is often represented by $c$ or $b_0$ and the slope is often represented by $b_1$. Rewriting the equation for a line with these options would look like this:
+
+\[y = b_0 + b_1x\] 
+
+Or 
+
+\[y = c + b_1x\] 
+
+#### Achievement 3 recap: Computing the slope and intercept in a simple linear regression 
+
+The slope and the intercept are computed using the `lm()` command.  
+
+#### Achievement 4 recap: Slope interpretation and significance (b, p-value, CI) 
+
+The value of the slope indicates how much the outcome goes up or down with a one unit increase in the predictor variable. The p-value for the slope is the result of a one-sample t-test comparing the slope to zero; if the p-value is below some threshold (usually .05), the slope is considered statistically significantly different from zero. 
+
+The confidence interval for the slope indicates where the slope likely lies in the population. 
+
+#### Achievement 5 recap: Model significance and model fit 
+
+The coefficient of determination, or $R^2$, is interpreted as the percentage of variance in the outcome that is explained by the model. The ${R}^2_{adj}$ penalizes the $R^2$ for each variable in the model, resulting in a lower value that is considered a more accurate reflection of how well the model explains the variability in the outcome. 
+
+Model significance is determined using the F-statistic, which is a ratio of explained variance to unexplained variance. When the F-statistic is large, that indicates there is more explained variance relative to unexplained and the model is likely reflecting a true relationship. 
+
+#### Achievement 6 recap: Checking assumptions and conducting diagnostics  
+
+Statistical tests rely on underlying assumptions about the characteristics of the data. When these assumptions are not met, the results may not reflect the true relationships among the variables. The variable type can be checked by examining the two variables to be sure they are continuous. Histograms and QQ-Plots can be used to determine if the variables are normally distributed. A scatterplot with a Loess curve is useful for examining linearity. A scatterplot and Breusch-Pagan test can aid in identifying problems with constant variance. Residual independence is tested using the Durbin-Watson statistic and residual normality can be examined with the histogram and QQ-plot. 
+Outliers and influential values can be identified using standardized residuals, df-betas, Cook's D, and Leverage values. Observations that are identified as problematic by more than one measure should be examined and, if the data appear unreliable for the observation, the observation can be fixed or dropped before re-estimating and testing the model.
+
+#### Achievement 7 recap: Adding variables to the model 
+
+Continuous and categorical variables can be added to a regression model. A sample size of at least 10 observations per coefficient is recommended. Categorical variables added to a model will influence the y-intercept, while continuous variables will influence the slope. If two or more continuous variables are in the model, there is an additional assumption of no perfect multicollinearity which can be checked with correlation coefficients or VIF statistics.
+
+### Chapter exercises
+
+The coder and hacker exercises are an opportunity to apply the skills from this chapter to a new scenario or a new data set. The coder edition will evaluate your application of the commands learned in this chapter (and earlier chapters) to similar scenarios to those in the chapter; the hacker edition will evaluate your use of the procedures from this chapter in new scenarios, usually going a step beyond what was explicitly explained. 
+
+Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 multiple choice questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 multiple choice questions correctly on your first try the rest correctly on your first or second try.
+
+Q1: Which of the follow is not an assumption for simple linear regression? 
+
+a. Normally distributed variables 
+b. Multicollinearity* 
+c. Linear relationship 
+d. Constant variance 
+e. Normally distributed residuals 
+
+Q2: Continuous predictors influence the ______ of the regression line, while categorical predictors influence the _____________?
+
+a. slope, intercept* 
+b. intercept, slope 
+c. $R^2$, p-value 
+d. p-value, $R^2$
+
+Q3: Which of the following is true about the adjusted $R^2$? 
+
+a. It is usually larger than the $R^2$ 
+b. It is only used when there is just one predictor  
+c. It is usually smaller than the $R^2$ * 
+d. It is used to determine whether residuals are normally distributed   
+
+Q4: Significance for the coefficients (b) is determined by... 
+
+a. An F-test 
+b. An $R^2$ test 
+c. A correlation coefficient
+d. A t-test* 
+
+Q5: The $R^2$ is the squared correlation of which two values? 
+
+a. y and the predicted values of y* 
+b. y and each continuous x 
+c. b and t 
+d. b and se
+
+#### Chapter exercises: Coder edition 
+
+Depending on your score in the knowledge check, choose either the coder or hacker edition of the chapter exercises. Use the data from this chapter and the appropriate tests to examine male and female education and water access.
+
+1) Create the pregCov data frame as shown in this chapter 
+2) Use this code to import and clean a variable for percent of state population that is black:
+```{r eval = FALSE}
+# percent black data 2010
+library(htmltab)
+library(tidyverse)
+blackURL <- "https://en.wikipedia.org/wiki/List_of_U.S._states_by_African-American_population"
+black <- htmltab(doc = blackURL, header = 1, which = 2)
+black <- black[ , c(1,3)]
+names(black) <- c("perc.black2010", "region")
+black$perc.black2010 <- as.numeric(gsub("%", "", black$perc.black2010))
+
+black <- black %>%
+  mutate(region = tolower(region))
+```
+3) Merge the pregCov and the percent black data by the region variable.
+4) Take a sample of 30 states using a seed value of 143. 
+5) Make a table of descriptive statistics for all the variables in the data from except for region. Be sure to use appropriate statistics for each variable. 
+6) (**A1**) Use a scatterplot and correlation coefficient to examine the relationship between unintend.rate and perc.black2010. 
+7) (**A2**) Write out the statistical form of the model for predicting unintended pregnancy rate by percent black residents.
+8) (**A3**) Use `lm()` to run the model corresponding to the formula you wrote out in #6. 
+9) (**A4**) Interpret the slope for black. Include whether it is statistically significant (and how you know). Compute and interpret the 95% confidence interval for the slope.
+10) (**A5**) Report and interpret model significance and model fit.
+11) (**A6**) Check the assumptions and conduct diagnostics. Interpret what you find including examining any states that appear problematic during diagnostics.
+12) (**A7**) Add the poverty and exemption variables to the model. Compare model fit. Check the assumptions of the new model. 
+13) Write a paragraph comparing the two models and report which of the two models you find to be better at explaining the data (and why you chose the model you chose). 
+
+#### Chapter exercises: Hacker edition
+
+Complete #1 through #11 of the coder edition, then complete the following:
+
+12) Find data on the mean years of educational attainment in each state for 2010. Import the data and add it to the data frame. Use the appropriate exploratory analyses to examine the relationship between state mean years education and unintended pregnancy rate.
+13) (**A7**) Add the education variable and the exemption variable to the model that includes black. Check the assumptions and perform diagnostics for the new model. 
+14) Write a paragraph comparing the two models and report which of the two models you find to be better at explaining the data (and why you chose the model you chose). 
+
+
+### BOX(ES)
+
+#### (BOX) Chelsea's clever code: Creating maps in R 
+
+<img align = "left" src = "avatars/chelsea.gif" style="PADDING-RIGHT: 10px">
+
+Chelsea introduces Leslie to the `map_geom()` for `ggplot()`. The `map_geom()` has several available pre-made maps to use including a map of the US showing states. To create a US map of the states, access the state map using the `map_data()` command from the ggplot2 package. The `map_data()` command allows access to maps including US counties, France, Italy, New Zealand, US states, USA, and two versions of a world map. 
+
+```{r}
+# use ggplot2 to show a US map of the unintended rates and percents
+library(ggplot2)
+
+# load in the US state map information
+us <- map_data("state")
+```
+
+Chelsea creates the most basic version of the state map to start with. The arguments are drawing information from the region map assigned to the `map_id =` argument.
+
+```{r}
+# create a basic map
+ggplot() + geom_map(data = us, map = us,
+                    aes(x = long, y = lat, map_id = region))
+```
+
+Chelsea continues to add more features to the map, starting with a white background:
+
+```{r}
+# fill the map with white using #ffffff RGB code
+# make the state borders also white using the #ffffff code for the color argument
+ggplot() + geom_map(data = us, map = us,
+                    aes(x = long, y = lat, map_id = region),
+                    fill = "#ffffff", color = "#ffffff", size = .15)
+
+```
+
+Chelsea then adds a new `geom_map()` layer to the map with the unintended pregnancy data frame and unintended pregnancy rate:
+
+```{r}
+# add a new layer with the pregnancy data using purple shades
+ggplot() + geom_map(data = us, map = us,
+                    aes(x = long, y = lat, map_id = region),
+                    fill = "#ffffff", color = "#ffffff", size = .15 ) +  
+  geom_map(data = preg, map = us,
+           aes(fill = unintend.rate, map_id = region),
+           color="#ffffff", size = 0.15) + 
+  scale_fill_continuous(low='#E6E6FA', high='#88398a',
+                        guide='colorbar', 
+                        name = "Unintended\npregnancy\nper 1,000")
+
+```
+
+This is closer but still not exactly right. The background gray grid and axis labels should be removed and the map looks a little squished. Chelsea adds a few more options:
+
+```{r}
+# use scale_fill_continuous to change the colors to purple
+# use labs to remove the x and y axis labels
+ggplot() + geom_map(data = us, map = us,
+                    aes(x = long, y = lat, map_id = region),
+                    fill = "#ffffff", color = "#ffffff", size = .15 ) +  
+  geom_map(data = preg, map = us,
+                    aes(fill = unintend.rate, map_id = region),
+                    color="#ffffff", size = .15) + 
+  scale_fill_continuous(low = '#E6E6FA', high = '#88398a', 
+                                 guide='colorbar', 
+                        name = "Unintended\npregnancy\nper 1,000") + 
+  labs(x=NULL, y=NULL)
+```
+
+Chelsea asks if Bobbi did something to how the map is laid out since the previous maps looked more stretched out. Bobbi explains that there are several ways to project a map of something that is on a sphere. One of the projections that is widely used for a United States map is the albers projection. Bobbi adds this projection using `coord_map("albers")` and removes all the background stuff using `theme()`:
+
+```{r fig.cap="Unintended pregnancies per 1,000 women age 15-44 in each state, 2010."}
+# changing projection to albers
+# remove background stuff
+# add title
+ggplot() + geom_map(data = us, map = us,
+                    aes(x = long, y = lat, 
+                        map_id = region),
+                    fill = "#ffffff", color = "#ffffff", size = .15 ) +  
+  geom_map(data = preg, map = us,
+                    aes(fill = unintend.rate, map_id = region),
+                    color="#ffffff", size = .15) + 
+  scale_fill_continuous(low = '#E6E6FA', high = '#88398a', 
+                                 guide='colorbar', 
+                        name = "Unintended\npregnancies\nper 1,000") + 
+  labs(x=NULL, y=NULL) + 
+  coord_map("albers", lat0 = 39, lat1 = 45) + 
+  theme(panel.border = element_blank(), panel.background = element_blank(),
+                           axis.ticks = element_blank(), axis.text = element_blank())
+
+```
+
+Chelsea is excited to finally get the map looking good and keeps the code to use in future maps! 
+
+#### [BOX] Chelsea's clever code: Importing and cleaning data from online html tables 
+
+<img align = "left" src = "avatars/chelsea.gif" style="PADDING-RIGHT: 10px">
+
+After she installs the htmltab package, Chelsea writes a short amount of code to bring in a table of unintended pregnancy variables from the Guttmacher Institute website. She uses the URL for the table after she chooses the variables of interest on the website:
+
+```{r}
+# open the htmltab package
+library(htmltab)
+
+# assign the URL of the table to an object
+pregURL <- "https://data.guttmacher.org/states/table?state=AL+AK+AZ+AR+CA+CO+CT+DE+DC+FL+GA+HI+ID+IL+IN+IA+KS+KY+LA+ME+MD+MA+MI+MN+MS+MO+MT+NE+NV+NH+NJ+NM+NY+NC+ND+OH+OK+OR+PA+RI+SC+SD+TN+TX+UT+VT+VA+WA+WV+WI+WY&dataset=data&topics=188+189+190+191+192"
+
+# use the htmltab command to assign the table at the URL
+# to an object
+# specify how many rows at the top of the table are the 
+# table header and not the data rows using the header argument
+# there is one row that is not data so header = 1
+preg <- htmltab(doc = pregURL, header = 1)
+```
+
+Chelsea is surprised at how easy and fast it is to bring in a table from a web page. She notices a new data frame in the Environment tab. The data frame contains 51 observations and 6 variables. When she clicks on the data frame, Chelsea notices that the names of the variables are very long and contain spaces, which is not great for using in analysis. She also notices that the variables appear to be all imported as character type, which does not seem correct. As usual, Chelsea thinks, there is data management to be done before the data are ready for analysis. 
+
+Chelsea starts with renaming the variables and changing the variable types to numeric for all variables except the state name. She then removes the commas in the *Number of unintended pregnancies* variable since the commas will be a problem when converting from character to numeric variable type. Leslie writes some code using the `names()` data management commands from prior chapters and a new command `gsub()` that substitutes one value for another. 
+
+The `gsub` command replaces some text, called `pattern =`, with other text called `replacement =`. In this case Chelsea wants to replace all commas. She starts with the `pattern =` option of the command and uses `pattern = ","`. The replacement is nothing, which is specified in the argument as two quotation marks with nothing between them, `replacement = ""`. The final argument for gsub is `x =` which is the variable for replacement, in this case it is the unintended pregnancies variable `x = preg$unintend.preg2010`.
+
+```{r}
+# add variable names
+names(preg) <- c("region", "unintend.preg2010","perc.unin.preg.abort",
+                 "perc.unin.preg.birth", "perc.unintend", "unintend.rate")
+
+# remove commas by substituting each comma with nothing
+# x is the variable for the substitution
+preg$unintend.preg2010 <- gsub(pattern = ",", replacement = "", 
+                               x = preg$unintend.preg2010)
+```
+
+Chelsea notices a strange issue in the unintend.preg2010 variable. In several places there is a space and a number after the main number. For example, the number of unintended pregnancies in Arizona appears to be *61000 2*, which is not a meaningful value. Chelsea looks back at the table on the web page and notices that there are subscripts for some values in the table and these appear to be imported into R as a space and a number. She also notices that these subscripts appear on all five of the numeric variables she imported. Since she would have to remove subscripts five times if she did each one separately, Chelsea decides to try using `lapply()` and writing a short function that removes them all. Her function should do three things: remove the subscript number, remove the space before the number, and change the variable to numeric.
+
+Chelsea uses the `gsub()` command as the main part of the function. In this case Chelsea wants to replace all instances where a space was followed by a number. She starts with the `pattern =` option of the command and uses `pattern = " ([0-9])"` where the ([0-9]) indicates that any numeric value between 0-9 would fit the criteria. The replacement is nothing, which is specified in the argument as two quotation marks with nothing between them, `replacement = ""`. 
+
+Once the replacement is made, the variable can be converted to numeric using `as.numeric`. 
+
+The `gsub()` command results are converted using `as.numeric()` and the process of replacement and conversion are both included in a function so they can be applied to all relevant variables. The variables to apply the function to are all variables except for state. To specify that state is not included, the first argument of `lapply` can be either `x = preg[-1]` to eliminate the first variable or `x = preg[2:6]` to include the 2nd through 6th variables. Chelsea finishes up writing the code and tries it out:
+
+```{r}
+# clean variables 2 - 6
+preg[2:6] <- lapply(preg[2:6], function(x) 
+  {as.numeric(gsub(pattern = " ([0-9])", replacement = "", x)) } )
+```
+
+It works well and the data are ready to go. The poverty data are also in an html table, so Chelsea uses a similar strategy to import and clean the poverty variable:
+
+```{r}
+# open the htmltab library
+library(htmltab)
+
+# assign the URL for poverty data to a new object
+povURL <- "https://www.infoplease.com/business-finance/poverty-and-income/percent-people-poverty-state-2002-2010"
+
+# use the htmltab command to bring in the data
+# the header argument is the number of rows without data
+# in this case only the first row has no data so header = 1
+pov <- htmltab(doc = povURL, header = 1)
+
+# the data for 2010 is in the last column (column 10)
+# the states are in rows 2 through 52
+# subset the data for rows 2:52 and columns 1 and 10
+pov <- pov[2:52, c(1,10)]
+
+# add variable names
+names(pov) <- c("region", "perc.poverty2010")
+
+# make the percent variable numeric
+pov$perc.poverty2010 <- as.numeric(pov$perc.poverty2010)
+
+# make the states lower case
+pov <- pov %>% 
+  mutate(region=tolower(region))
+```
+
+#### [BOX] Chelsea's clever code: Importing and managing data from tables in online pdfs
+
+<img align = "left" src = "avatars/chelsea.gif" style="PADDING-RIGHT: 10px">
+
+Chelsea finds that two of the variables for the analysis are available in tables in pdf documents online. First, the census has information on the percentages of state residents who are cohabitating in a table in a pdf document on the US Census website. Data on religion is available from the Pew Research website. The tabulizer package is useful for extracting tables from these online pdf documents. 
+
+Chelsea starts with the cohabitation variable on the US Census website. First she uses the `extract_tables()` command from the tabulizer package to bring in the data, subsetting commands to choose the first table and the rows (13 - 63) and columns (1 and 2) of interest. Finally she names the variables to be consistent with the other variables in the data frame so far.
+
+<br><br><br>
+
+```{r}
+# use the tabulizer package
+library(tabulizer)
+
+# find cohabitating data 2010 on page 16 of the document
+# https://www.census.gov/prod/cen2010/briefs/c2010br-14.pdf 
+# assign the URL to an object and import the object using the
+# extract_tables command
+cohabURL <- "https://www.census.gov/prod/cen2010/briefs/c2010br-14.pdf"
+tableCohab <- extract_tables(file = cohabURL, pages = 16,
+                                 output = 'data.frame', method = "stream")
+
+# assign the first table on the page to the object cohab
+cohab <- tableCohab[[1]]
+
+# subset the table to the first two columns and the relevant rows 13-63
+cohab <- cohab[13:63, 1:2]
+
+# rename the variables
+names(cohab) <- c("region", "perc.cohab")
+```
+
+The data need some additional cleaning to be useful. The region variable shows the name of each state followed by a serious of dots. The `gsub()` command can be used to replace the dots with nothing. The `trimws()` can then remove any extra white spaces included after the dots are removed.
+
+```{r}
+# remove extra dots in the region variable
+# trim spaces 
+cohab$region <- gsub(pattern = "\\.", replace = "", x = cohab$region)
+cohab$region <- trimws(cohab$region)
+
+# make state names lower case
+cohab <- cohab %>%
+  mutate(region = tolower(region))
+```
+
+The cohabitating variable seems to include percentages from two of the columns in the pdf. The first percentage in each cell is the correct one. To pull out the first percentage, Chelsea uses the `substr()` command. This command uses the options of `start =` and `stop =` to isolate parts of a string. In this case, the first four characters in each cell contain the percentage cohabitating, so the first four characters are isolated using `start = 1` to start at the first character and `stop = 4` to stop after the fourth character.
+
+Once the first 4 characters are retained, Chelsea removes the extra space in the middle of the percentage using the `gsub()` command and replacing the space with nothing.
+
+```{r}
+# clean the percentage cohabitating variable with the
+# substr command
+# take the first through the fourth characters in each cell (start = 1, stop = 4)
+cohab$perc.cohab <- substr(x = cohab$perc.cohab, start = 1, stop = 4)
+
+# remove extra spaces in the perc.cohab variable
+# convert it to numeric
+cohab$perc.cohab <- gsub(pattern = " ", replace = "", x = cohab$perc.cohab)
+cohab$perc.cohab <- as.numeric(cohab$perc.cohab)
+```
+
+The perc.cohab variable looks great. Chelsea examines the religion variable and decides it would be more useful to have percentages for each religion and then a single variable with the name of the religion that has the highest percentage of followers in each state. She looks at the Pew Internet & American Life website and find religion data from 2007 and 2014. There is no value for 2010. As an estimate, she decides to use the mean of the 2007 and 2014 percentages as an estimate of 2010 values.
+
+Chelsea works through the challenges of managing this data into a good format, which includes some new commands she leaves for Leslie to examine. 
+
+```{r}
+# use tabulizer package to import percent religion data from pages 144-147 of the pdf
+religionURL <- "http://assets.pewresearch.org/wp-content/uploads/sites/11/2015/05/RLS-08-26-full-report.pdf"
+religionTables <- extract_tables(file = religionURL, pages = 144:147,
+                                 output = 'data.frame', method = "stream")
+
+# tables 1 and 2 contain 2007 and 2014 percentages by state
+religion1 <- as.data.frame(religionTables[[1]])
+religion2 <- as.data.frame(religionTables[[2]])
+
+# tables 3 and 4 do not have the same variable names as 
+# tables 1 and 2, so add names from table 1 before converting to data frame
+names(religionTables[[3]]) <- names(religionTables[[1]]) 
+religion3 <- as.data.frame(religionTables[[3]])
+names(religionTables[[4]]) <- names(religionTables[[1]]) 
+religion4 <- as.data.frame(religionTables[[4]])
+
+# combine tables 1 and 2, 3 and 4
+# then all four
+religion12 <- as.data.frame(rbind(religion1, religion2))
+religion34 <- as.data.frame(rbind(religion3, religion4))
+religion <- as.data.frame(rbind(religion12, religion34))
+
+# remove non-relevant rows
+religion <- religion[c(7:24, 31:54, 61:86, 93:126), 1:18]
+names(religion) <- c("region", "year", "evangelical",
+                     "mainline", "black.protestant", "catholic",
+                     "mormon", "orthodox.christian", "jehovahs.witness",
+                     "other.christian", "jewish", "muslim", 
+                     "buddhist", "hindu", "other.world.rel",
+                     "other.faith", "unaffiliated", "dont.know.ref")
+
+# clean up the extra spaces and add NA to blank cells
+religion$region <- trimws(religion$region)
+religion$region[religion$region == ""] <- NA
+
+# use the zoo package and `na.locf` to fill cells with NA
+library(zoo)
+religion$region <- na.locf(religion$region, na.rm = FALSE)
+
+# replace * and n/a with NA
+religion[religion == "*"] <- NA
+religion[religion == "n/a"] <- NA
+
+# subset the 4 most common religions
+religion <- religion[ , c(1:4, 6, 17)]
+
+# aggregate 2014 and 2007 to get closer to 2010 value
+religion[c(3:6)] <- lapply(religion[c(3:6)], as.numeric)
+religion2010 <- aggregate(. ~ region, religion, mean)
+
+# make categorical religion variable
+religion2010$top.religion <- colnames(religion2010[3:6])[apply(religion2010[3:6], 1, which.max)]
+
+# lower case region variable
+religion2010 <- religion2010 %>%
+  mutate(region = tolower(region))
+
+# delaware is misspelled, fix
+religion2010$region[religion2010$region == "delware"] <- "delaware"
+
+```
+
+This is some very advanced data management, so Leslie feels a little lost, but is glad to have an example. When she asks if there is any easier way to bring in this data, Chelsea texts her a favorite comic: 
+
+<img align = "center" src = "graphics/data_no_comic.JPG">
+
+
+> Gamification ideas for Chapter 8: Performance on student work in the achieving things, are you a coder or hacker, and chapter exercises in this chapter could be included as part of earning a continuous data analysis badge. Combine scores from this chapter and chapters 6, 7, 10, and 11. Set thresholds for earning a bronze, silver, or gold badge. Integrate badge earnings into Blackboard or other platforms students use to share their portfolios and achievements with prospective employers or degree programs. Conduct an R graphing challenge where students have to answer a research question in a short presentation without talking and using only graphs. Award points for clear and appropriate graphs, good storytelling, use of multiple graph types, use of unusual graph types (e.g., maps), and graph formatting skills.
+
+

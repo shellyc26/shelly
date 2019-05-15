@@ -1,0 +1,947 @@
+# An introduction to multinomial and ordinal logistic regression
+
+## Achievements to unlock
+
+Linear and binary logistic regression are the most common regression models used in social science, however, neither of these methods is appropriate when a categorical outcome has more than two categories. Work with Leslie, Chelsea, and Bobbi to learn about regression models for categorical variables with more than two categories: 
+
+*	Achievement 1: Exploratory data analysis for the multinomial regression model
+*	Achievement 2: Estimating and interpreting a multinomial logistic regression model
+*	Achievement 3: Checking assumptions for multinominal logistic regressio
+*	Achievement 4: Exploratory data analysis for ordinal regression
+* Achievement 5: Estimate an ordinal regression model
+* Achievement 6: Check assumptions for ordinal regression 
+
+Follow Chelsea, Bobbi, and Leslie through the examples and exercises to test some relationships.
+
+## The diversity in STEM problem
+
+Leslie is super excited about all of her new R skills and is starting to think about changing her career path. She has read a lot about the lack of diversity in STEM (Science, Technology, Engineering, and Math) fields and is excited about the opportunity to contribute to increasing diversity. However, she is also hesitant to go into a field where she is not valued or where it is difficult to advance. She asks Chelsea and Bobbi if they can examine diversity in STEM careers. She is particularly interested in how many women go into computer science, math, and engineering and how satisfied they are with their careers once they are in the field compared with those who go into other fields.
+
+Chelsea identifies some 2017 data from the National Science Foundation (NSF). The NSF surveyed a national sample of college graduates about their careers. The three of them look through the data and find a few variables of interest. First, the n2ocmlst variable is a list of job codes for the last job each participant had. The categories include:
+
+* Computer and mathematical scientists 
+* Biological, agricultural and other life scientists 
+* Physical and related scientists 
+* Social and related scientists 
+* Engineers 
+* S&E related occupations 
+* Non-S&E Occupations 
+* Logical Skip 
+
+In terms of job satisfaction there are several variables in the data that measured different sorts of job satisfaction including level of satisfaction with: opportunities for advancement, benefits, intellectual challenge, degree of independence, location, level of responsibility, salary, security, and contribution to society. Leslie is interested in all of these types of job satisfaction but decides to focus on salary, contribution to society, and opportunities for advancement to start. Chelsea reminds Leslie that the percent of women in STEM has actually decreased in college programs and in the field since the mid-90s, so it might be worth including age as a variable in the models to confirm this trend. Bobbi likes this idea, too, since it will give Leslie a chance to learn and practice interpreting continuous and categorical predictors. 
+
+Chelsea notices that they are running out of time before the new semester begins and suggests that they stick to a basic introduction to these two models. Bobbi and Leslie agree and they get to work.
+
+### Data management 
+
+Before beginning analysis, Leslie examines the data to see what sorts of data management will be needed. The data are in a SAS export file, so she uses the `sasxport.get()` command from the Hmisc program to import the data:
+
+```{r}
+# load the STEM career data
+library(Hmisc)
+stem <- sasxport.get("data/epcg17.xpt")
+```
+
+For the first research question about the extent of diversity in STEM careers, Leslie is interested in two career categories in particular, *computer and mathematical scientists* and *engineers.* She decides to recode the career categories variable into three categories total: computer and mathematical scientists and engineers, other types of scientists, non-science careers. 
+
+```{r}
+# recode job category variable
+library(plyr)
+stem$job.cat <- revalue(stem$n2ocprmg, 
+                        c("1" = "CS & Eng",
+                          "2" = "Other Sci", 
+                          "3" = "Other Sci",
+                          "4" = "Other Sci",
+                          "5" = "CS & Eng",
+                          "6" = "CS & Eng",
+                          "7" = "Non science",
+                          "8" = NA))
+table(stem$job.cat)
+```
+
+For the satisfaction variables (satadv, satsal, satsoc), Leslie finds that they are all coded with the following five categories:
+
+* 1: Very satisfied 
+* 2: Somewhat satisfied 
+* 3: Somewhat dissatisfied 
+* 4: Very dissatisfied 
+* L: Logical Skip 
+
+She decides to use her function-writing skills to change all three variables at once:
+
+```{r}
+# Write a function to recode
+rec.satis <- function(x){
+  return(revalue(x,
+          c("1" = "Very satisfied",
+            "2" = "Somewhat satisfied",
+            "3" = "Somewhat dissatisfied",
+            "4" = "Very dissatisfied",
+            "L" = NA)))
+}
+
+# recode and rename
+stem$satis.advance <- rec.satis(stem$satadv)
+stem$satis.salary <- rec.satis(stem$satsal)
+stem$satis.contrib <- rec.satis(stem$satsoc)
+
+```
+
+With the outcome variables ready, Leslie then examines the predictors. She renames the gender variable to be called sex, renames the categories to be male and female, and re-orders the variable so that female is the first group and will therefore be the reference group in analyses:
+
+```{r}
+# recode gender variable to sex
+stem$sex <- revalue(stem$gender, c("M" = "Male",
+                                   "F"= "Female"))
+
+# re-order to have male first for ref group
+print(levels(stem$sex))
+stem$sex <- factor(stem$sex, levels(stem$sex)[c(2,1)])
+print(levels(stem$sex))
+```
+
+Finally, an examination of the age variable shows that it is an integer data type. While this works for most things, R does treat integer data types differently in some situations. Leslie suggests recoding the age variable to be numeric:
+
+```{r}
+# recode age to numeric
+class(stem$age)
+stem$age <- as.numeric(stem$age)
+class(stem$age)
+```
+
+The data appear to be all cleaned up and ready to go. Bobbi suggests they limit the data frame to the variables of interest to make it easier to work with.  
+
+```{r}
+# subset variables from stem 
+stem.small <- subset(stem, select = c("job.cat", "sex", "age", "satis.advance", "satis.salary", "satis.contrib"))
+```
+
+
+## Achievement 1: Exploratory data analysis for the multinomial model
+
+Leslie's computer is running really slowly with the more than 80 thousand cases. She decides to take a sample to work on. She uses the dplyr package to sample 200 cases from each of the three job types:
+
+```{r}
+# take a sample of 600 cases
+library(dplyr)
+set.seed(143)
+stem.samp <- data.frame(stem.small %>% group_by(job.cat) %>% sample_n(size = 200))
+
+# check work
+summary(stem.samp)
+```
+
+### Visualizing employment in computer science, math, and engineering by sex and age
+
+Leslie starts with a few plots to get a better idea of the data. Since she is interested in how sex and age are related to employment in the engineering and computer science and mathematics fields, she starts with some bivariate graphs. First she looks at the distribution of sex across job types:
+
+```{r fig.cap = "Percent of each job type by sex among college graduates in 2017." }
+# open ggplot2 
+library(ggplot2)
+
+# plotting distribution of sex within job type
+ggplot(data = subset(stem.samp, !is.na(job.cat)), 
+       aes(x = sex)) +
+  geom_bar(aes(y = ..prop.., group = 1)) +
+  theme_minimal() + ylab("Percent within group") + xlab("Sex") +
+   facet_grid(~job.cat) +
+  scale_y_continuous(labels = scales::percent)
+```
+
+This plot shows that computer science, math, and engineering is about 80% male and about 20% female. While this is interesting, Leslie also wants to know, out of all females, what percent goes into each job type:
+
+```{r fig.cap = "Percent of each sex that are employed in each job type among college graduates in 2017."}
+# plotting distribution of job type by sex
+ggplot(data = subset(stem.samp, !is.na(job.cat)), 
+       aes(x = job.cat)) +
+  geom_bar(aes(y = ..prop.., group = 1)) +
+  theme_minimal() + ylab("Percent within group") + xlab("Job category") +
+   facet_grid(~sex) +
+  scale_y_continuous(labels = scales::percent)
+
+```
+
+It looks like about 20% of computer science, math, and engineering jobs are filled by women while under 10% of women choose this field. She knew the percent of women in the field was low, but the difference between the percent of women who choose the field compared to the percent of men who choose the field was a little bit of a surprise. 
+
+She then examines the distribution of age across the three fields:
+
+```{r fig.cap = "Job type by age among college graduates in 2017."}
+# plotting distribution of job type and age
+ggplot(data = subset(stem.samp, !is.na(job.cat)), aes(y = age, x = job.cat)) +
+  geom_jitter(aes(color = job.cat), alpha = .3) +
+  geom_boxplot(aes(fill = job.cat), alpha = .8) +
+  scale_fill_manual(values = c("dodgerblue2","#88398a", "gray40"), guide = FALSE) +
+  scale_color_manual(values = c("dodgerblue2","#88398a", "gray40"), guide = FALSE) +
+  theme_minimal() + xlab("Job type")
+
+```
+
+While the age range for all the data appears similar across the three job types, it looks like the computer science, math, and engineering field employs younger people on average than the other two fields. Leslie wonders if the distribution of age varies by sex. That is, is the difference in age distribution across job types the same for male and female employees, or are there more young men in the computer science, math, and engineering fields, as research might suggest. She adds facets to the graph to check: 
+
+```{r fig.cap = "Job type by age among college graduates in 2017."}
+# plotting distribution of job type and age
+ggplot(data = subset(stem.samp, !is.na(job.cat)), 
+       aes(y = age, x = job.cat, fill = sex)) +
+  geom_jitter(aes(color = sex), alpha = .3) +
+  geom_boxplot(aes(fill = sex), alpha = .8) +
+  scale_fill_manual(values = c("dodgerblue2","#88398a")) +
+  scale_color_manual(values = c("dodgerblue2","#88398a"), guide = FALSE) +
+  theme_minimal() + xlab("Job type")
+
+```
+
+In all three fields the distribution of age shows a higher percent of males at the older end of the age range with somewhat fewer at the younger end of the age range. This difference is bigger in the other science and non-science fields. Leslie wants to see the graphs by sex to get a better picture of what is going on:
+
+```{r fig.cap = "Job type by age among college graduates in 2017."}
+# plotting distribution of job type and age
+ggplot(data = subset(stem.samp, !is.na(job.cat)), 
+       aes(y = age, x = sex, fill = job.cat)) +
+  geom_jitter(aes(color = job.cat), alpha = .3) +
+  geom_boxplot(aes(fill = job.cat), alpha = .8) +
+  scale_fill_manual(values = c("dodgerblue2","#88398a", "gray40")) +
+  scale_color_manual(values = c("dodgerblue2","#88398a", "gray40"), guide = FALSE) +
+  theme_minimal() + xlab("Sex")
+
+```
+
+This graph shows a little different picture, with a much lower median age for males employed in computer science, math, and engineering than in the other two job types, while the age distribution for females does not show as much of a difference across the three job types.
+
+### Checking bivariate statistical associations between job type, sex, and age
+
+In addition to visualizing potential differences by sex, Leslie remembers that the `CreateTableOne()` command can be used to explore bivariate associations. For associations between two categorical variables in the table, the p-value shown is for a chi-squared test. For the continuous variable of age, Leslie checks and finds that it is not normally distributed. She adds `nonnormal = 'age'` to the `print()` command, which results in a Kruskal-Wallis test comparing age across the groups. 
+
+```{r}
+# open tableone package
+library(tableone)
+
+# make a table of statistics to examine job.cat
+table.desc <- CreateTableOne(data = stem.samp, strata = 'job.cat',
+               vars = c('sex', 'age'))
+print(table.desc, showAllLevels = TRUE, nonnormal = 'age')
+```
+
+
+It appears that the visual differences in the graphs corresponded to statistically significant differences from chi-squared and Kruskal-Wallis tests. The median age for female college graduates in computer science, math, or engineering is nearly 5 years lower than the median age in the other two job categories. Non-science has a higher percentage of females compared to males, while computer science, math, and engineering has the lowest.
+
+### Unlocking achievement 1: Check your understanding 
+
+Review the tableone table created in the last step and complete a more detailed summary of the statistics in this table. Include the frequencies, percents, medians, and ranges. Be sure to interpret the percents correctly, they are tricky!
+
+## Achievement 2: Estimating and interpreting a multinomial logistic regression model 
+
+Leslie starts organizing a model using sex and age to predict job type. She also plans to add an interaction term since there were some clearly different patterns between male and female job type, at least at the younger end of the age range. She plans to examine the three things that are important to report with every model:
+
+* Model significance: Is the model significantly better than some baseline at explaining the outcome? 
+* Model fit: How well does the model capture the relationships in the underlying data? 
+* Predictor values and significance: What is the size, direction, and significance of the relationship between each predictor and the outcome?
+
+### Multinomial model significance
+
+Leslie remembers that the NHST process is useful in organizing the process of computing and testing model significance and starts by writing her null and alternate hypotheses.
+
+#### NHST Step 1: Write the null and alternate hypotheses
+
+H0: A multinomial model including sex and age **is not helpful** in explaining job type for college graduates. 
+
+HA: A multinomial model including sex and age **is helpful** in explaining job type for college graduates.
+
+#### NHST Step 2: Compute the test statistic 
+
+The `multinom()` command from the nnet package is one of several commands that can be used to estimate a multinomial model. Like the linear and binary logistic models from prior chapters, the `multinom()` command requires a formula for the statistical model and the name of the data source where the variables are. Bobbi has been looking at the help documentation and notices that there is an options for the command that saves the data used in the model as part of the model object. In the binary logistic regression model, this was needed in order to computer model fit. She suggests that Leslie add the `model = TRUE` argument. Leslie gives it a try:
+
+```{r}
+# load the nnet package 
+library(nnet)
+
+# estimate the model and print its summary
+job.type.mod <- multinom(formula = job.cat ~ age + sex  + age*sex, 
+                         data = stem.samp, 
+                         model = TRUE)
+summary(job.type.mod)
+```
+
+The `summary()` command for `multinom()` does not include a test statistic, but this value can be computed from two pieces of information. Similar to logistic regression, model significance is determined based on a chi-squared statistic found by taking the difference between the *null deviance* and the *residual deviance*. Deviance is a measure of the lack of fit of a model. The null deviance is the lack of fit in a model with null, or no, predictors while the residual deviance is the lack of fit for the model with the predictors. The residual deviance should be lower than the null deviance because adding variables should reduce the lack of fit. In this case, the null deviance is not printed in the summary information and a look at the model object in the environment pane finds no null deviance entry. 
+
+To get the null deviance in order to compute model significance, Chelsea suggests estimating a model with no predictors in it. Bobbi has done this before and shows Leslie some code to get a null model:
+
+```{r}
+# multinomial null model
+job.type.mod.null <- multinom(formula = job.cat ~ 1, 
+                              data = stem.samp, 
+                              model = TRUE)
+summary(job.type.mod.null)
+```
+
+Once Leslie has the null and residual deviance for the null model and the full model, she remembers that it is just a matter of finding the difference between the two. The difference value follows a chi-squared distribution and can be used with the degrees of freedom to find a p-value for model significance. To determine the p-value from a chi-squared, Leslie also needs the degrees of freedom, which corresponds to the number of parameters in the model. This turns out to be trickier than she expected to do using code. Bobbi suggests that she could just count the number of parameters in her null and full models by hand, but Leslie is determined to produce reproducible code that she can use for other models in the future. She spends some time figuring out how to count the parameters in the null and ull models. After examining the model object in the environment pane and the summary output, she determines that counting the number of coefficients in the printed with the `summary()` command is the easiest way to go. She uses the `length()` command to count the number of entries that are coefficients in the summary output. Subtracting the length of the null model from the full model gives the difference in the number of parameters between the two, which is the degrees of freedom number she needs. 
+
+Finally, Leslie uses the `pchisq()` command to determine the p-value. This command takes a chi-squared value and a degrees of freedom value and uses them to compute a p-value. Chelsea reminds her to add the `lower.tail = FALSE` option to this command since the chi-squared distribution only has one tail and it is the upper tail (or right-side tail). Bobbi suggests they discuss one and two tail tests just to be clear about why this is a one-tailed statistic (see Box).
+
+```{r}
+# job model chi-squared 
+job.chisq <- deviance(job.type.mod.null) - deviance(job.type.mod)
+
+# degrees of freedom for chi-squared
+job.df <- length(summary(job.type.mod)$coefficients) - length(summary(job.type.mod.null)$coefficients)
+
+# pvalue for chi-squared
+job.p <- pchisq(job.chisq, job.df, lower.tail=FALSE)
+
+# put together and print
+modelsig <- round(c(job.chisq, job.df, job.p), 3)
+names(modelsig) <- c("Chi-squared", "d.f.", "p")
+modelsig
+
+```
+
+The test statistic is a $\chi^2$ of `r job.chisq` with `r job.df` degrees of freedom. 
+
+#### NHST Step 3: Compute the probability for the test statistic (p-value)
+
+The probability computed for the $\chi^2$ was `r job.p`. Leslie has started to notice that she has an idea about statistical significance before she sees the p-value. Just thinking about the chi-squared distribution and how far to the right a value of `r job.chisq` would be on the graph, it is getting more obvious when chi-squared values are large that p-values will be small. 
+
+#### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+
+The null hypothesis is rejected; a model including sex explained job type statistically significantly better ($\chi^2$(`r job.df`) = `r job.chisq`; p < .001) than a null model with no predictors. 
+
+### Multinomial model fit 
+
+Leslie asks if percent correctly predicted would be a good measure of fit for the multinomial model given that it is a lot like a binary logistic regression model. Bobbi agrees that this works and they discuss how to find this value since there are three possible categories of job type that each person could be predicted into based on the model. Bobbi sees that there is a fitted.values entry in the model object and asks Leslie to print the first few lines so they can examine what these values are. 
+
+```{r}
+# print first six rows of fitted values
+head(job.type.mod$fitted.values)
+```
+
+Leslie looks over the values and notes that they seem to be the predicted probability for each person to be in each of the three job type groups. She uses the same strategy from the binary logistic models to check the model fit. Specifically, she compares the predicted job type with the observed job type for the 600 people in the sample:
+
+```{r}
+# observed vs. predicted category for each observation
+fit.n <- table(observed = job.type.mod$model$job.cat, 
+               predicted = predict(job.type.mod))
+fit.n
+
+# observed vs. predicted category for each observation
+fit.perc <- prop.table(table(observed = job.type.mod$model$job.cat, 
+               predicted = predict(job.type.mod)), margin = 2)
+fit.perc
+```
+
+She finds looks like the model was best at predicting the computer science, math, and engineering job type with 45.2% of the observations in this category correctly predicted. The non-science was predicted with 40.7% accuracy and the other science was predicted with 40.2% accuracy. Overall, the model predicted job type correctly for 253 out of 600 observations (42.2%). Given that the sample included 200 people from each job type, without any other information, we would guess that everyone was in a single category and would be right for 200, or 33.3%, of the observations. So, although the overall correctness seemed a little low, it was higher than the baseline probability.
+
+Leslie is curious about the distribution of the predicted probabilities across the categories. She creates a boxplot to examine the spread of the predicted probabilities for the three job types:
+
+```{r}
+# make data frame predicted probs and job type
+probs.job <- data.frame(job.cat = job.type.mod$model$job.cat, 
+                           age = job.type.mod$model$age,
+                           sex = job.type.mod$model$sex, 
+                           Predicted.CSE = job.type.mod$fitted.values[, 1],
+                           Predicted.Other = job.type.mod$fitted.values[, 2],
+                           Predicted.Non = job.type.mod$fitted.values[, 3]
+                           )
+head(probs.job)
+
+# melt data frame so long
+library(reshape2)
+probs.job.long <- melt(probs.job,  id.vars = c("job.cat", "age", "sex"), value.name = "probability")
+
+# graph probabilities
+ggplot(data = probs.job.long, aes(y = probability, x = variable)) +
+  geom_jitter(aes(color = variable), alpha = .3) +
+  geom_boxplot(aes(fill = variable), alpha = .8) +
+    facet_wrap(~ job.cat, nrow = 2) + coord_flip() +
+  scale_fill_manual(values = c("dodgerblue2","deeppink", "gray40"), guide = FALSE) +
+  scale_color_manual(values = c("dodgerblue2","deeppink", "gray40"), guide = FALSE) +
+  theme_minimal() 
+
+```
+
+### Multinomial model predictor interpretation
+
+So far Leslie knows that the model is statistically significant and that it fits moderately well with computer science, math, and engineering prediction being the best overall. The last thing she wants to examine is the predictor fit and significance. 
+
+#### Predictor significance 
+
+The `summary()` output did not include any indication of whether or not each predictor (age, sex) was statistically significantly associated with job type. To get statistical signficance and more interpretable values, Bobbi suggests that Leslie exponentiate the coefficients and confidence intervals to get the odds ratios and 95% confidence interval around the odds ratios. Leslie is having some trouble with the exponentiation of the confidence intervals. The command `exp(confint(job.type.mod))` is resulting in a 2 part set of confidence intervals. Bobbi works with the code for a few minutes and comes up with a solution using subsetting to get the right values from the model object:
+
+```{r}
+# together
+or.ci <- data.frame(otherOR = t(exp(coef(job.type.mod)))[,1],
+                    otherCIlo = exp(confint(job.type.mod))[1:4, 1, 1],
+                    otherCIhi = exp(confint(job.type.mod))[1:4, 2, 1],
+                    nonOR = t(exp(coef(job.type.mod)))[,2],
+                    nonCIlo = exp(confint(job.type.mod))[1:4, 1, 2],
+                    nonCIhi = exp(confint(job.type.mod))[1:4, 2, 2])
+or.ci
+
+```
+
+#### Predictor interpretation
+
+The new data frame shows several significant odds ratios. The first three columns of numbers are the odds ratios and confidence intervals for the job type of other science, while columns four through six are for the non-science job type odds ratios and confidence intervals. Leslie tries her hand at interpreting the odds ratios and confidence intervals. Bobbi reminds her that the outcome variable with multiple categories now has a reference group. In this case the reference group is computer science, math, and engineering job type. The odds ratios are interpreted with respect to this reference group. This works ok for the continuous variable of age, but gets a little tricky for the categorical variable of sex where there are now two reference groups to consider. Leslie thinks about it and then writes the following:
+
+The age row starts with the odds ratio of `r round(or.ci[2,1],2)` with confidence interval `r round(or.ci[2,2],2)` - `r round(or.ci[2,3],2)`. So, for every one year increase in age, the odds of being in an other science job are `r round(or.ci[2,1],2)` times higher than being in a computer science, math, or engineering job (95% CI: `r round(or.ci[2,2],2)` - `r round(or.ci[2,3],2)`). Likewise, for every one year increase in age, the odds of being in a non-science job are `r round(or.ci[4,1],2)` times higher than being in a computer science, math, or engineering job (95% CI: `r round(or.ci[2,5],2)` - `r round(or.ci[2,6],2)`). 
+
+Compared to males, the odds of females being in an other science job are `r round(or.ci[3,1],2)` times higher than being in a computer science, math, or engineering job (95% CI: `r round(or.ci[3,2],2)` - `r round(or.ci[3,3],2)`). Also, compared to males, females have `r round(or.ci[3,4],2)` times higher odds of being in non-science jobs compared to computer science, math, and engineering (95% CI: `r round(or.ci[3,5],2)` - `r round(or.ci[3,6],2)`).
+
+The interaction between age and sex was significant for other science jobs compared to computer science jobs. For females, for every one year increase in age there was a `r 100*round(1 - or.ci[4,1],2)`% decrease in odds of an other science job compared to a computer science, math, and engineering job. The interaction was not statistically significant for non-science jobs compared to computer science, math, and engineering. 
+
+This looks good to Bobbi. Overall it seems that females have higher odds than males of being in other science or non-science compared to being in computer science, math, or engineering. Likewise, the older someone gets, the more likely they are in other or non-science compared to computer science, math, or engineering. It seems that computer science, math, and engineering job types are most likely to be held by young males. 
+
+### Unlocking achievement 2: Check your understanding
+
+Pick two of the odds ratios in the model to interpret without looking at Leslie's interpretation. When you are finished, compare your interpretation with Leslie's interpretation.
+
+## Achievement 3: Checking assumptions for multinominal logistic regression
+
+There are two assumptions to meet for multinomial logistic regression: independence of observations and the independence of irrelevant alternatives (IIA) assumption. 
+
+### Independence of observations 
+
+Chelsea reminds Leslie that the independence of observations assumption requires that the observations in the data be independent of each other. Data sets that include spouses, siblings, neighbors, or multiple observations on the same people would not meet this assumption. Since these data are from a random sample of college graduates, this assumption is met.
+
+### Independence of irrelevant alternatives assumption (IIA)
+
+Chelsea has to look this one up. She finds that this assumption requires that the categories of the outcome be independent of one another. For example, the relative probability of choosing a job in the **computer science, math, and engineering** field compared to the **other science** field cannot depend on the existence of  **non-science** jobs. This assumption can be tested by taking a subset of the data that include two of the outcome and estimating binary logistic regression models with the same predictors. These model results can then be compared with the multinomial model results to see if the relationship are consistent. 
+
+Bobbi reads that the test used for this assumption is the Hausman-McFadden test, which has the null and alternate hypotheses:
+
+H0: The IIA assumption is met. 
+
+HA: The IIA assumption is not met.
+
+Leslie finds that this test is conducted using the `hmftest()` command in the mlogit package. The `hmftest()` command requires two things: the full multinomial model and a second model estimated on a subset of the data that includes only some of the outcome variable categories. In this case, the subset could include the **computer science, math, and engineering** and **non-science** outcome categories. 
+
+Unfortunately, Leslie also finds that the multinomial model objects saved from the `multinom()` command are not in the same format as the multinomial objects from the mlogit package. She looks up the documentation for the mlogit package and finds that it requires reshaping the data before estimating the models. After several minutes of trial and error, she determines that the `mlogit.data()` command works to reshape the data with 2 options including the shape of the data, `shape = "wide"`, and the name of the outcome variable `choice = "job.cat"`. Leslie creates the reshaped data and estimates the model again:
+
+```{r}
+# load the mlogit package 
+library(mlogit)
+
+# reshape data to use with the mlogit command
+stem.samp.4mlog <- mlogit.data(data = stem.samp, 
+                               choice = "job.cat", 
+                               shape = "wide")
+
+# estimate the model and print its summary
+mlogit.job <- mlogit(formula = job.cat ~ 0 | age + sex  + age*sex, 
+                         data = stem.samp.4mlog)
+summary(mlogit.job)
+```
+
+She is pretty happy to see the same model coefficients and chi-squared statistic, so she moves on to estimate the model with a subset of data only including two of the three outcome choices:
+
+```{r}
+# estimate the model with two outcome categories and print its summary
+mlogit.job.alt <- mlogit(formula = job.cat ~ 0 | age + sex  + age*sex, 
+                         data = stem.samp.4mlog,
+                         alt.subset = c("CS & Eng", "Non science"))
+summary(mlogit.job.alt)
+```
+
+Now that the full model and the partial model have been estimated using the `mlogit()` command, they can be entered into the Hausman-McFadden test command, `hmftest()`. Leslie reminds herself that they are testing the null hypothesis that the IIA assumption is met.  
+
+```{r}
+# hmftest
+hmftest(mlogit.job, mlogit.job.alt)
+```
+
+The p-value is 1, which is much higher than .05, so the null hypothesis is retained and the IIA assumption is met. Leslie is curious to compare the larger and smaller models to get a better idea of why this is the case. She examines the output and notes that the coefficients and p-values are nearly (but not perfectly) identical, which suggests that the existence of the **other science** job type did not influence the probability of choosing **computer science, math, and engineering** compared to **non-science**. 
+
+### Full interpretation of model results
+
+> A multinomial logistic regression including age, sex, and the interaction between age and sex was statistically significantly better at predicting job type than a null model with no predictors ($\chi^2$(`r job.df`) = `r job.chisq`; p < .001). The model met its assumptions and correctly predicted the job type for 42.2% of observations. For every one year increase in age, the odds of being in an other science job are `r round(or.ci[2,1],2)` times higher than being in a computer science, math, or engineering job (95% CI: `r round(or.ci[2,2],2)` - `r round(or.ci[2,3],2)`). Likewise, for every one year increase in age, the odds of being in a non-science job are `r round(or.ci[4,1],2)` times higher than being in a computer science, math, or engineering job (95% CI: `r round(or.ci[2,5],2)` - `r round(or.ci[2,6],2)`). Compared to males, the odds of females being in an other science job are `r round(or.ci[3,1],2)` times higher than being in a computer science, math, or engineering job (95% CI: `r round(or.ci[3,2],2)` - `r round(or.ci[3,3],2)`). Also, compared to males, females have `r round(or.ci[3,4],2)` times higher odds of being in non-science jobs compared to computer science, math, and engineering (95% CI: `r round(or.ci[3,5],2)` - `r round(or.ci[3,6],2)`). 
+The interaction between age and sex was significant for other science jobs compared to computer science jobs. For females, for every one year increase in age there was a `r 100*round(1 - or.ci[4,1],2)`% decrease in odds of an other science job compared to a computer science, math, and engineering job. The interaction was not statistically significant for non-science jobs compared to computer science, math, and engineering. 
+
+### Unlocking achievement 3: Check your understanding 
+
+Revise the code for testing the IIA assumption so that the smaller model used in the Hausman-McFadden test includes the **other science** and **non-science** categories but not the computer science, math, and engineering category. Examine the coefficients and p-values for the full model and the smaller model and note differences and similarities. 
+
+## Achievement 4: Exploratory data analysis for ordinal regression
+
+Bobbi, Chelsea, and Leslie discuss how to think about job satisfaction. Leslie is not as interested in comparing satisfaction of women to the satisfaction of men with computer science, math, and engineering. She is more interested in understanding whether job satisfaction differs for women across the three job types. Bobbi suggests they take a sample of female participants from the original data frame so that they have a larger number in the sample than using just half of the 600 from the first analysis. Leslie sticks with the 200 observations per level and takes a sample of 800 female participants with 200 in each level of satisfaction for the **contribution to society** measure, which seems to her like the most important of the three satisfaction variables: 
+
+```{r}
+# sample of females from stem
+set.seed(48)
+
+# check work
+stem.samp.f <- subset(stem.small, sex == "Female")
+stem.samp.f.small <- data.frame(stem.samp.f %>% 
+                                  group_by(satis.contrib) %>% 
+                                  sample_n(size = 200))
+
+# check work
+summary(stem.samp.f.small)
+```
+
+### Visualizing satisfaction with contribution to society by job type and age
+
+There are several options for examining the proportion of female college graduates in each job type that are satisfied or dissatisfied. One is to use a stacked bar graph where each bar represents all of the observations in the category. Leslie is not sure how to do this since none of her bar graphs in the past have represented 100% of each group. Bobbi shows here the `position = "fill"` option for the `geom_bar()` command and suggests that Leslie pick colors in the same family to visually display the ordered characteristic of the variable. Leslie adds the position option and chooses the purple palette from color brewer to differentiate the groups. She also decides that the way the color fills the categories seems backwards, with the darkest color on the left and the lightest on the right; to fix this, she adds the `direction = -1` option to the `scale_fill_brewer()` command so that the purples go from lightest to darkest for left to right.
+
+```{r fig.cap = "Satisfaction with contributions to society by job type and age for female college graduates."}
+# job satisfaction in job type by sex
+ggplot(data = subset(stem.samp.f.small, !is.na(job.cat)), 
+       aes(x = job.cat, fill = satis.contrib)) +
+  geom_bar(position = "fill") + coord_flip() +
+  theme_minimal() + xlab("Job type") + 
+  scale_fill_brewer(name = "Contribution\nsatisfaction", 
+                    palette = "Purples",
+                    direction = -1) +
+  ylab("Percent") + scale_y_continuous(labels = scales::percent)
+```
+
+The bar plot shows that a higher percent of college educated females in computer science, math, or engineering are very or somewhat satisfied with their contribution to society, although the very satisfied percent is lower than for females in other science. Other science also had the lowest percent of very dissatisfied, although more were dissatisfied overall. More than half of college educated females in non-science jobs were dissatisfied with their contribution to society.
+
+```{r fig.cap = "Satisfaction with contribution to society by age among female college graduates in 2017."}
+# plotting distribution of job type and age
+ggplot(data = subset(stem.samp.f.small, !is.na(job.cat)), 
+       aes(y = age, x = job.cat, fill = satis.contrib)) +
+  geom_jitter(aes(color = satis.contrib), alpha = .3) +
+  geom_boxplot(aes(fill = satis.contrib), alpha = .8) +
+  scale_fill_brewer(name = "Contribution\nsatisfaction", 
+                    palette = "Purples",
+                    direction = -1) +
+  scale_color_brewer(name = "Contribution\nsatisfaction", 
+                    palette = "Purples",
+                    direction = -1) +
+  theme_minimal() + xlab("Job type")
+
+```
+
+College educated females in computer science, math, and engineering and in non-science jobs have an older median age among those who are very or somewhat satisfied with their contribution to society. For all three job types, the median age is youngest (or tied for youngest) among those very dissatisfied with their contribution to society. Leslie thinks that this pattern makes sense, it seems to her that careers build over time and people early in their careers may have less flexibility and depth to their work than those later in their careers. 
+
+Leslie finds all this information to be interesting but she still doesn't feel like she has the full picture. She moves on to some bivariate statistical tests before developing her models.
+
+### Bivariate statistical tests to examine job satisfaction by job type and age
+
+While chi-squared and Kruskal-Wallis are useful for examining the relationships between sex, age, and job category, the satisfaction variables are of a different type and may need to be treated differently. Specifically, the categories of satisfaction are in a logical order, so this variable is *ordinal*. The underlying concept or idea for an ordinal variable is more like a continuous variable than it is like a nominal variable. For an ordinal variable like job satisfaction, the categories have a specific logical order, similar to how the values of a continuous variable go in order from smallest to largest. The Mann-Whitney U test can be used to examine the relationship between an ordinal variable and a nominal variable. 
+
+Leslie looks back to the t-test and ANOVA chapter and correlation chapter and reminds herself that the command for the Mann-Whitney U test is `wilcox.test()` and the command for Spearman's rho is `cor.test()` with `method = Spearman` specified as part of the argument. She looks through the help documentation for `wilcox.test()` and notices that the ordinal variable will have to be converted to either a numeric data type or an interval data type. She is a little worried that converting the four categories to numeric or integer will change the order of the categories, which would not be great for analysis. Chelsea lets her know that the `ordered()` command can be used to specify an order to categories of factor data type variables so that any subsequent transformations or uses of that variable take the given order into account. 
+
+Leslie looks up the help documentation for the `ordered()` command and finds that it is quite easy to use. She wants to make sure the order reflects that, as the levels of the variable increase, satisfaction also increases. She writes a short function so that she can apply it three times with a little less text:
+
+```{r}
+# order variables function
+order.satis <- function(x){
+  return(ordered(x, levels = c("Very dissatisfied",
+                               "Somewhat dissatisfied",
+                               "Somewhat satisfied",
+                               "Very satisfied")))
+}
+
+# use function to order 3 satisfaction variables
+stem.samp.f.small$satis.advance <- order.satis(stem.samp.f.small$satis.advance)
+stem.samp.f.small$satis.salary <- order.satis(stem.samp.f.small$satis.salary)
+stem.samp.f.small$satis.contrib <- order.satis(stem.samp.f.small$satis.contrib)
+
+# examine contribution satisfaction by job type for females
+sat.chisq <- kruskal.test(as.integer(satis.contrib) ~ job.cat, 
+             data = subset(stem.samp.f.small, sex == "Female" & !is.na(job.cat)))
+sat.chisq
+
+# examine contribution satisfaction by age
+sat.rho <- cor.test(formula = ~ as.integer(satis.contrib) + age, 
+         method = "spearman", 
+         data = subset(stem.samp.f.small, sex == "Female" & !is.na(job.cat)))
+sat.rho
+```
+
+It looks like satisfaction with contribution is significantly associated with job type and age. For job type, there is a statistically significant association with satisfaction with contribution to society ($\chi^2$(`r sat.chisq$parameter`) = `r sat.chisq$statistic`; p < .001). In addition, there is a significant and weak positive correlation with contribution satisfaction ($\rho$ = `r round(sat.rho$estimate, 2)`; p < .001). So, as age goes up, satisfaction with contribution to society goes down. Leslie is ready to move on to the modeling.
+
+### Unlocking achievement 3: Check your understanding 
+
+Create and interpret graphs and bivariate statistical tests to examine the relationship between each of the predictor variables (job.cat, age) and satisfaction with salary. 
+
+## Achievement 5: Estimate an ordinal regression model 
+
+For ordinal categorical variables, a model is needed that can account for the order of the outcome variable. Leslie looks over the job satisfaction variables and decides to apply the ordinal regression model to the salary satisfaction variable. 
+
+### NHST for the ordinal regression model
+
+#### NHST Step 1: Write the null and alternate hypotheses
+
+H0: Job type and age are not helpful in explaining satisfaction with contribution to society for female college graduates. 
+
+HA: Job type and age are helpful in explaining satisfaction with contribution to society for female college graduates.
+
+#### NHST Step 2: Compute the test statistic 
+
+The ordinal regression model is estimated using the `clm()` command from the ordinal package. Like all of the regression model commands so far, the `clm()` command options include the regression formula and the data source. Leslie decides to restrict the sample to female college graduates to examine job satisfaction across job types for females instead of comparing female and male satisfaction. In this case, the formula is `satis.contrib ~ age + job.cat` to explain or predict satisfaction with the contribution to society based on age and job type:
+
+```{r}
+# ordinal logistic regression for contribution satisfaction
+library(ordinal)
+
+# model contribution satisfaction based on job type and age
+society.mod <- clm(formula = satis.contrib ~ job.cat + age, 
+                   data = stem.samp.f.small)
+summary(society.mod)
+
+```
+
+Similar to the multinomial model, the model summary includes the residual deviance but not the null deviance to compute the model $\chi^2$. Following the strategy used for the multinomial model, compute the null deviance by estimating a model with no predictors and following the steps from the multinomial model: 
+
+```{r}
+# estimate null model
+society.mod.null <- clm(formula = satis.contrib ~ 1, 
+                   data = stem.samp.f.small)
+
+# job model chi-squared 
+society.chisq <- -2*logLik(society.mod.null) - -2*logLik(society.mod)
+
+# degrees of freedom for chi-squared
+society.df <- length(society.mod$coefficients) - length(society.mod.null$coefficients)
+
+# pvalue for chi-squared
+society.p <- pchisq(society.chisq, society.df, lower.tail=FALSE)
+
+# put together and print
+modelsig.society <- round(c(society.chisq, society.df, society.p), 3)
+names(modelsig.society) <- c("Chi-squared", "d.f.", "p")
+modelsig.society
+
+```
+
+The model $\chi^2$ is `r round(society.chisq, 2)` with `r round(society.df, 0)` degrees of freedom. 
+
+#### NHST Step 3: Compute the probability for the test statistic (p-value)
+
+The p-value for $\chi^2$(`r round(society.df, 0)`) = `r round(society.chisq, 2)` is `r round(society.p, 2)`.
+
+#### NHST Steps 4 & 5: Interpret the probability and write a conclusion
+
+The p-value indicates that we reject the null hypothesis. Job type and age statistically significantly help to predict satisfaction with contribution to society for female college graduates ($\chi^2$(`r round(society.df, 0)`) = `r round(society.chisq, 2)`; p <.001). 
+
+### Ordinal logistic regression model fit
+
+```{r}
+# observed vs. predicted category for each observation
+fit.n.soc <- table('number predicted' = predict(society.mod, type = "class")$fit,
+                   'number observed' = society.mod$model$satis.contrib)
+fit.n.soc
+
+# observed vs. predicted category for each observation
+fit.perc <- prop.table(table('percent predicted' = predict(society.mod, type = "class")$fit,
+                   'percent observed' = society.mod$model$satis.contrib), margin = 2)
+fit.perc
+```
+
+The model was pretty good at predicting **very dissatisfied** with 52.5% correctly predicted and **very satisfied** with 48.5% correctly predicted, but was not as good at predicting **somewhat dissatisfied** at 7.5% correct or **somewhat satisfied** at 16.5% correct. In looking at the columns for these middle categories, it appears that the model expected 44.5% of those in the **somewhat dissatisfied** category to be in the **very dissatisfied** group. Likewise, 43.0% of those in the somewhat satisfied category were predicted into the **very satisfied** category. It seems that the model is pretty good at distinguishing satisfied from dissatisfied, but not the more subtle distinctions between somewhat and very.
+
+### Ordinal regression predictor significance and interpretation
+
+To examine significance and the interpret the relationships, Bobbi suggests using the same strategy as for the multinomial model and computing odds ratios and their 95% confidence intervals. Fortunately, this is a little easier for ordinal models than for multinomial models. 
+
+```{r}
+# odds ratios and confidence intervals
+or.soc <- exp(cbind(OR = coef(society.mod)[4:6], 
+                    confint(society.mod)))
+or.soc
+```
+
+For ordinal models, the odds ratios are called **proportional odds ratios** and are the increases or decreases in odds of being in the reference group vs. a non-reference group for each one-unit increase in the predictor. Bobbi reminds Leslie that the reference group of the outcome is the **last** category by default. In this case, the reference group is **very satisfied**. Leslie tries her hand at interpreting the odds ratios: 
+
+For every one year increase in age, the odds of being very satisfied with the contribution to society are `r round(or.soc[3,1], 2)` times higher than in the other satisfaction groups (95% CI: `r round(or.soc[3,2], 2)`-`r round(or.soc[3,3], 2)`). Female college graduates in non-science careers have `r 100*(1 - round(or.soc[2,1], 2))`% lower odds than those in computer science, math, and engineering of being very satisfied with their contribution to society compared to being in another satisfaction group. There is no statistically significant difference in the odds of being very satisfied with their contribution to society for female college graduates in other science compared to computer science, math, and engineering fields.
+
+Bobbi suggests they create a forest plot to show the odds ratios. Leslie is excited to try her forest plot skills from the logistic regression practice: 
+
+```{r}
+# get odds ratio table from society.mod
+or.soc.mod <- data.frame(or.soc)
+
+# make row names a variable
+or.soc.mod$var <- row.names(or.soc.mod)
+
+# change variable names for easier use
+names(or.soc.mod) <- c("OR", "lower", "upper", "variable")
+
+#clean variable names
+or.soc.mod$clean.varnames <- car::recode(or.soc.mod$variable, "'job.catOther Sci' = 'Other science';
+                                      'job.catNon science' = 'Non science';
+                                      'age' = 'Age'")
+
+# reorder the variable names by odds ratio size
+ggplot(data = or.soc.mod, 
+       aes(x = clean.varnames,
+           y = OR,
+           ymin = lower,
+           ymax = upper)) +
+  geom_pointrange(color = "dodgerblue1") +
+  geom_hline(yintercept = 1, lty = 2, color = "deeppink") + 
+  scale_y_log10(breaks = c(0.5, 1.0, 2.0), minor_breaks = NULL)+
+  coord_flip() +
+  xlab("Variable from contribution to society\nsatisfaction model") + 
+  ylab("Odds ratio (95% CI)") +
+  theme_minimal() 
+```
+
+
+### Unlocking achievement 5: Check your understanding 
+
+Build the ordinal regression model for satisfaction with salary predicted by job type and age. Determine whether the model is statistically significantly better than the baseline at explaining satisfaction with advancement.
+
+## Achievement 6: Check assumptions for ordinal regression
+
+### Assumption of independent observations 
+
+The independence of observations assumption requires that the observations in the data be independent of each other. Data sets that include spouses, siblings, neighbors, or multiple observations on the same people would not meet this assumption. Since these data are from a random sample of college graduates, this assumption is met.
+
+### Assumption of proportional odds 
+
+The proportional odds assumption requires that the odds for every a shift from category-to-category of the outcome are the same for each level of the predictors. So, for example, say the odds of someone being in the very dissatisfied compared to the somewhat dissatisfied were 2.5 times higher in the non-science group compared to the computer science, math, and engineering group. The proportional odds assumption would require that the odds of someone being in the somewhat dissatisfied group compared to the somewhat satisfied group would also need to be 2.5 times higher in the non-science compared to computer science, math, and engineering group. 
+
+In the ordinal package, the `nominal_test()` command tests the proportional odds assumption. The null hypothesis for this is that the proportional odds assumption is met; the alternate hypothesis is that the proportional odds assumption is not met. The assumption is checked for each predictor in the model. 
+
+```{r}
+# check proportional odds assumption
+nominal_test(society.mod)
+```
+
+The p-values are high (.46 and .64) so the null hypothesis is retained and the proportional odds assumption is met for this model.
+
+### Full interpretation of model results
+
+> An ordinal logistic regression using job type and age was better at predicting satisfaction with contribution to society among female college graduates than a baseline model including no predictors ($\chi^2$(`r round(society.df, 0)`) = `r round(society.chisq, 2)`; p <.001). The model met its assumptions and correctly predicted 260 of the 800 (32.5%) of observations. Model results indicated that, for every one year increase in age for female college graduates, the odds of being very satisfied with your contribution to society are `r round(or.soc[3,1], 2)` times higher than in the other satisfaction groups (95% CI: `r round(or.soc[3,2], 2)`-`r round(or.soc[3,3], 2)`). Female college graduates in non-science careers have `r 100*(1 - round(or.soc[2,1], 2))`% lower odds than those in computer science, math, and engineering of being very satisfied with their contribution to society compared to being in another satisfaction group. There was no statistically significant difference in the odds of being very satisfied with their contribution to society for female college graduates in other science compared to computer science, math, and engineering fields. 
+
+Leslie is excited about what has she learned about STEM careers from the multinomial and ordinal logistic regression models. Female college graduates do not go into the computer science, math, and engineering jobs at high rates. However, among those who do go into these jobs, more are somewhat or very satisfied with their contributions to society than in the other job types. In addition, female college grads who go into computer science, math, and engineering jobs have significantly higher odds of being very satisfied with their contribution to society than female college graduates who are employed in the non-science field. Leslie wants to check out models of salary and advancement satisfaction, but has made up her mind after several months of statistics and coding with her friends and mentors, and this initial evidence of job satisfaction among women in these fields, that she is ready for a career in data science. She thanks Bobbi and Chelsea for their guidance through statistics and R and the three plan to see each other again at the next R-Ladies gathering. 
+
+<center>
+<img src = "avatars/chelsea.gif" style="PADDING-RIGHT: 10px">
+<img src = "avatars/bobbi.gif" style="PADDING-RIGHT: 10px">
+<img src = "avatars/leslie.gif" style="PADDING-RIGHT: 10px">
+</center>
+
+<br><br>
+
+### Unlocking achievement 6: Check your understanding 
+
+Check the proportional odds assumption for the salary satisfaction model created in unlocking achievement 5.
+
+## Chapter summary 
+
+The linear and binary logistic regression models are useful for when the outcome of interest is continuous or a two-category categorical variable. For nominal and ordinal variables with three or more categories, another modeling strategy is needed. The multinomial logistic regression model is useful for nominal categorical outcome variables with three or more categories while the ordinal logistic regression model is useful for the ordinal categorical outcome variables with three or more categories. After estimating either model, compute and interpret model significance, model fit, and the significance and value of the relationship between each predictor and the outcome variable. Test model assumptions to ensure the model is appropriate for the data. 
+
+### Achievements unlocked in this chapter: Recap 
+
+This chapter provides an introduction to multinomial logistic regression and ordinal logistic regression. Multinomial logistic regression is useful when an outcome variable is nominal and has three or more categories. Ordinal logistic regression is useful for outcome variables that are ordinal, with a specific logical order to the categories.
+
+#### Achievement 1 recap: Exploratory data analysis for the multinomial regression model
+
+Prior to developing a multinomial model, use graphs and bivariate descriptive and inferential statistics to explore the relationship between the outcome variable and each of the predictors. use bar graphs to visualize the relationship between the outcome and a categorical predictor, while box plots aid in understanding the relationship between the outcome and continuous predictors. Chi-squared is useful to determine if a categorical predictor has a significant association with the outcome, while ANOVA, or Kruskal-Wallis might be used to test associations between the outcome and a continuous predictor depending on whether it is normally distributed or not. 
+
+#### Achievement 2 recap: Estimating and interpreting a multinomial logistic regression model 
+
+The `multinom()` command from the nnet package can be used to estimate a multinomial model that includes a nominal outcome variable with three or more categories and continuous or categorical predictors. After estimating the model, compute model fit (percent correctly predicted), model significance (chi-squared with p-value), and the value and significance of the relationships between each predictor and the outcome (odds ratios and confidence intervals).
+
+#### Achievement 3 recap: Checking assumptions for multinominal logistic regression 
+
+Multinomial logistic regression has two assumptions: (1) independent observations, and (2)  independence of irrelevant alternatives (IIA). The independent observations assumption requires that the observations in the data set be unrelated to each other. Data with related observations such as family members, spouses, co-workers, or multiple observations on individuals, would not meet this assumption. The IIA assumption requires that the categories of the outcome be independent of one another. For example, the relative probability of choosing a job in the **computer science, math, and engineering** field compared to the **other science** field cannot depend on the existence of  **non-science** jobs. The test used for this assumption is the Hausman-McFadden test.
+
+#### Achievement 4 recap: Exploratory data analysis for ordinal regression 
+
+Ordinal variables are categorical but with categories that have a specific logical order. The underlying idea of an ordinal variable is that its values lie along a continuum, so exploratory analyses may use visualization and statistics often used with more traditionally continuous variables. The relationship between the outcome and a categorical predictor can be shown with a bar graph that uses color strategically to emphasize the distribution of the ordinal variable within each category. For continuous predictors, box plots that show the underlying data can be useful to see patterns. Bivariate statistics used for non-normal continuous variables including Mann-Whitney U, Kruskal-Wallis, and Spearman's rho are good for examining associations between predictor variables and the ordinal outcome.  
+
+#### Achievement 5 recap: Estimate an ordinal regression model 
+
+The `clm()` command from the ordinal package can be used to estimate an ordinal logistic regression model that includes an ordinal outcome variable with three or more categories and continuous or categorical predictors. After estimating the model, compute model fit (percent correctly predicted), model significance (chi-squared with p-value), and the value and significance of the relationships between each predictor and the outcome (odds ratios and confidence intervals). 
+
+#### Achievement 6 recap: Check assumptions for ordinal regression
+
+The assumptions for ordinal regression include the independence of observations and the proportional odds assumption. The independence of observations requires observations to be independent of one another. The proportional odds assumption requires the relationship between the predictors and the outcome to be consistent at each level of the outcome. This assumptions can be tested using the the `nominal_test()` command which conducts a likelihood ratio test of the propotional odds assumption. 
+
+### Chapter exercises
+
+The coder and hacker exercises are an opportunity to apply the skills from this chapter to a new scenario or a new data set. The coder edition will evaluate your application of the commands learned in this chapter (and earlier chapters) to similar scenarios to those in the chapter; the hacker edition will evaluate your use of the procedures from this chapter in new scenarios, usually going a step beyond what was explicitly explained. 
+
+Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 multiple choice questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 multiple choice questions correctly on your first try the rest correctly on your first or second try.
+
+Q1: Multinomial logistic regression is used when... 
+
+a. The outcome variable is nominal with 3 or more categories* 
+b. The outcome variable is ordinal with 3 or more categories 
+c. At least one predictor is nominal with 3 or more categories 
+d. At least one predictor is ordinal with 3 or more categories 
+
+Q2: The model significance tests for multinomial and ordinal regression use which of the following test statistics? 
+
+a. Odds ratios with 95% confidence intervals 
+b. F-statistics 
+c. Chi-squared statistics*
+d. Percent correctly predicted 
+
+Q3: One way to examine model fit for multinomial and ordinal regression is to compute... 
+
+a. Odds ratios with 95% confidence intervals 
+b. F-statistics 
+c. Chi-squared statistics 
+d. Percent correctly predicted*  
+
+Q4: The assumptions for multinomial regression include... 
+a. proportional odds assumption 
+b. normally distributed outcome variable 
+c. equal group variances 
+d. independence of irrelevant alternatives* 
+
+Q4: The assumptions for ordinal regression include... 
+a. proportional odds assumption* 
+b. normally distributed outcome variable 
+c. equal group variances 
+d. independence of irrelevant alternatives 
+
+#### Chapter exercises: Coder edition 
+
+Depending on your score in the knowledge check, choose either the coder or hacker edition of the chapter exercises. Use the data from this chapter and the appropriate tests to examine additional predictors of job type and job satisfaction.
+
+1) Import the data from this chapter
+2) Create a small stem data frame including variables for job type, sex, age, race-ethnicity, and the three satisfaction variables from the chapter.
+3) Clean the variables in the small data frame. Use the strategies shown in this chapter for job type, sex, age, and the satisfaction variables. Write new code to clean the race-ethnicity variable. 
+4) Use the commands in the chapter to take a random sample of 200 participants in each job category.
+5) (**A1**) Create a graph and a table examining the relationship between race-ethnicity and job type.
+6) (**A2**) Use `multinom()` to run a multinomial model predicting job type by sex, age, and race-ethnicity. Compute model significance, model fit, and odds ratios with confidence intervals. 
+7) (**A2**) Discuss model significance and model fit.
+8) (**A2**) Interpret the model odds ratios and confidence intervals.
+9) (**A3**) Check model assumptions and interpret the results.
+10) Run the commands in the chapter to take a sample of 200 participants in each category of satis.salary. 
+11) (**A4**) Create graphs and a table to examine the relationships between salary satisfactin and the two predictors of age and job type.  
+12) (**A5**) Use `clm()` to develop an ordinal logistic regression. Compute and interpret model significance, model fit, and odds ratios with confidence intervals.
+13) (**A6**) Check model assumptions and interpret the results.
+
+#### Chapter exercises: Hacker edition 
+
+Complete the coder edition with two modifications to the models: 
+
+(1) For the multinomial model computed in #6, include the sex variable in addition to age and race-ethnicity. Add at least one interaction term.
+(2) For the ordinal model computed in #12, add an interaction term between age and sex.
+
+### BOX(ES)
+
+#### [BOX] Chelsea's clever code: Taking a random sample by group
+
+<img align = "left" src = "avatars/chelsea.gif" style="PADDING-RIGHT: 10px"> 
+
+Taking random samples from data can be a useful strategy when data sets are very large. Models can be developed on smaller samples and confirmed on larger data sets. Sometimes it is important to have enough people in some group or groups within your sample, so random sampling *by group* is needed. As usual in R, there are many many ways to take random samples by group. One way uses the **tidyverse** and allows for random samples by group throught the use of the `group_by()` and `sample_n()` commands. For example, taking a sample of 200 from each of the categories of job.cat in the stem.small data frame can be done with a few lines of code: 
+
+```{r}
+# open tidyverse 
+library(tidyverse)
+
+# set a seed
+set.seed(143)
+
+# take 200 from each job.cat
+stem.samp <- data.frame(stem.small %>% 
+                          group_by(job.cat) %>% 
+                          sample_n(size = 200))
+summary(stem.samp)
+```
+
+Note that this process has included `NA` as one of the groups of `job.cat`. There are a few ways to remove this as a group. One way is to use the subset command to limit the data frame being piped to `group_by()` so that it does not include the NA values of job.cat:
+
+```{r}
+# take 200 from each job.cat
+# subset first to remove NA from job.cat
+set.seed(143)
+stem.samp <- data.frame(subset(stem.small, !is.na(job.cat)) %>% 
+                          group_by(job.cat) %>% 
+                          sample_n(size = 200))
+summary(stem.samp)
+
+```
+
+If the goal is to take a percent from each category, the same structure can be used with `sample_frac()` instead of `sample_n()`. For example, here is the code for taking 10% from each group:
+
+```{r}
+# sample 10% of each job.cat group
+set.seed(143)
+stem.samp <- data.frame(subset(stem.small, !is.na(job.cat)) %>% 
+                          group_by(job.cat) %>% 
+                          sample_frac(size = .1))
+summary(stem.samp)
+```
+
+#### [BOX] Bobbi's stats stuff: One-tail vs. two tail tests
+
+<img align = "left" src = "avatars/bobbi.gif" style="PADDING-RIGHT: 10px"> 
+
+Some probability distributions, like the chi-squared distribution and the F distribution, have only positive values and a single "tail" that extends theoretically to positive $\infty$. For example:
+
+```{r echo = FALSE, fig.cap="Example of a chi-squared distribution."}
+# example of a chi-squared distribution
+dat<-with(density(rchisq(100000,6)),data.frame(x, y))
+ggplot(data = dat, mapping = aes(x = x, y = y)) +
+    geom_line()+
+ theme_minimal() +
+  xlab("Chi-squared statistic") + ylab("Probability")
+```
+
+```{r echo = FALSE, fig.cap="Example of an F distribution."}
+x <- seq(0,6,length=10000)
+db <- df(x, 5, 100)
+dat <- data.frame(x, db)
+qplot(x, db, data = dat, geom = "line") +
+  geom_line()+
+  theme_minimal() +
+  xlab("F statistic") + ylab("Probability") 
+```
+
+Statistical tests that rely on distributions with one tail typically have a threshold value somewhere in the tail. The threshold usually marks the point on the distribution where 5% of the area under the curve is to the right, in the tail. Statistical tests using one-tailed distributions will have positive test statistics where larger positive values tend to indicate statistical significance.
+
+There are also two-tailed distributions like the t-distribution:
+
+```{r echo = FALSE, fig.cap = "Example of a t distribution."}
+# example of a normal distribution
+dat<-with(density(rnorm(1000000, mean=0, sd=1)),data.frame(x,y))
+ggplot(data = dat, mapping = aes(x = x, y = y)) +
+    geom_line()+
+  theme_minimal() +
+  xlab("t-statistic") + ylab("Probability")
+```
+
+Two-tailed distributions can be used in two ways: to conduct two-tailed statistical tests and to conduct one-tailed statistical tests. The two-tailed test sets two thresholds, one on the right-hand side of the distribution and one on the left hand side of the distribution. The area under the curve that is to the right of the right-hand side threshold and the area under the curve that is to the left of the left-hand side threshold are added to together to be a total of 5% of the total area under the curve (if alpha is set at .05). There would therefore be 2.5% under the curve past the threshold on each side of the curve. An example of a null and alternate hypothesis for a two-tailed t-test would be:
+
+H0: Mean 1 is equal to mean 2 ($m_1$ = $m_2$) 
+
+HA: Mean 1 is not equal to mean 2 ($m_1$ =/= $m_2$)
+
+There is no language in this test that specifies whether "not equal" is due to mean 1 being greater or less than mean 2. So, the t-test could result in a positive difference if mean 1 is greater than mean 2 or a negative difference if mean 1 is less than mean 2. Either of these differences could be past the threshold for statistical significance in a two-tailed test.
+
+```{r fig.cap="Rejection region in a two-tailed test."}
+x<-seq(-5,5, 0.01)
+y<-dnorm(x,0,1)
+xddf <- data.frame(x=x,y=y)
+qplot(x,y,data=xddf,geom="line")+
+  geom_ribbon(data=subset(xddf ,x>-5 & x < -2.25),aes(ymax=y),ymin=0,
+              fill="dodgerblue2",colour=NA,alpha=0.5)+
+  geom_ribbon(data=subset(xddf ,x>2.25 & x<5),aes(ymax=y),ymin=0,
+              fill="dodgerblue2",colour=NA,alpha=0.5)+
+  scale_y_continuous(limits=c(0, .4)) + theme_minimal() + xlim(-5, 5)
+
+```
+
+For a t-statistic to be in the rejection region, it would have to be greater than 2.25 or less than -2.25. 
+
+To use a two-tailed distribution for a one-tailed test, the threshold would be set differently. If, for example, the hypotheses above stated:
+
+H0: Mean 1 is greater than mean 2 ($m_1$ > $m_2$) 
+
+HA: Mean 1 is not greather than mean 2 ($m_1$ <= $m_2$)
+
+The threshold would be set only in the upper tail of the t-distribution and the area under the curve to the right of the threshold would contain 5% of the distribution rather than the 2.5% on each side. Because the threshold is not as far to the right as it would be in a two-tailed test, a t-statistic for a one-tailed t-test could be smaller and still reach statistical significance.
+
+```{r fig.cap="Rejection region in a two-tailed test."}
+x<-seq(-5,5, 0.01)
+y<-dnorm(x,0,1)
+xddf <- data.frame(x=x,y=y)
+qplot(x,y,data=xddf,geom="line")+
+  geom_ribbon(data=subset(xddf ,x>1.5 & x<5),aes(ymax=y),ymin=0,
+              fill="dodgerblue2",colour=NA,alpha=0.5)+
+  scale_y_continuous(limits=c(0, .4)) + theme_minimal() + xlim(-5, 5)
+
+```
+
+To be in the rejection region in this distribution, the t-statistic would have to be greater than 1.5. 
+
+> Gamification ideas for Chapter 10: Performance on student work in the achievements unlocked, are you a coder or hacker, and chapter exercises in this chapter could be included as part of earning a categorical data analysis badge. Combine scores from this chapter and chapters 5 and 9. Set thresholds for earning a bronze, silver, or gold badge. Integrate badge earnings into Blackboard or other platforms students use to share their portfolios and achievements with prospective employers or degree programs. 
+
+## References
