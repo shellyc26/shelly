@@ -1315,7 +1315,7 @@ a
 
 #### Kiara's reproducibility resource: R Studio is a pane {#ch1kiara2}
 
-<img align = "left" src = "avatars/Nancy.gif" style="PADDING-RIGHT: 30px">
+<img align = "left" src = "avatars/kiara.gif" style="PADDING-RIGHT: 30px">
 
 When you open R Studio for the first time you will notice it is divided into four sections. Each of these section is a **pane** in the R Studio window. The default panes are the Source (top left), Console (bottom left), Environment & History (top right), and Files & Plots & Packages & Help & Viewer (bottom right). The panes you will use most throughout this text are the source, console, environment, history, help, and plots.
 

@@ -4,7 +4,7 @@
 
 After learning about how sampling distributions can be used to compute confidence intervals that provide insight into a population based on the characteristics of a sample, Leslie is hooked. Kiara reminds her that using information from a sample to make claims about a population is called **inference** and statistical methods used for **inference** are inferential statistics. For example, the confidence intervals for the sample mean and sample percent were ranges where the population mean or population percent likely lies. Essentially, the idea of inferential statistics is that samples can be used to understand populations.
 
-Kiara explains that this is just the beginning when it comes to inference. She and Nancy decide it is time to start teaching Leslie how to conduct commonly used inferential statistical tests in R. They decide to start with chi-squared, which is a statistical test to understand whether there is a relationship between two categorical variables. Chi-squared is one of a few **bivariate**, or two variable, tests that are widely used in statistical analyses across many fields. Kiara also mentions that, When a chi-squared test indicates that there may be a relationship between two things, there are several follow-up tests to find out more about the relationship. 
+Kiara explains that this is just the beginning when it comes to inference. She and Nancy decide it is time to start teaching Leslie how to conduct commonly used inferential statistical tests in R. They decide to start with chi-squared test of independence, which is a statistical test to understand whether there is a relationship between two categorical variables. The chi-squared test of independence is one of a few **bivariate**, or two variable, tests that are widely used in statistical analyses across many fields. Kiara also mentions that, When a chi-squared test of independence indicates that there may be a relationship between two things, there are several follow-up tests to find out more about the relationship. 
 
 Kiara puts together a list of achievements for today: 
 
@@ -635,7 +635,7 @@ What is the most common value for an _alpha_ in most fields?
 * .05 
 * .5 
 
-## Achievement 5: Using Null Hypothesis Significance Testing (NHST) to organize statistical testing
+## Achievement 5: Using Null Hypothesis Significance Testing (NHST) to organize statistical testing {#nhst}
 
 Kiara mentions to Leslie that one process to organize statistical tests like _chi-squared_ is _null hypothesis significance testing_ or NHST. Leslie asks if this is the same as the chi-square goodness-of-fit test? Kiara says no and Leslie decides she will look that up later (see Box \@ref(ch5leslie2)). Kiara writes out the steps of NHST:
 

@@ -1688,7 +1688,7 @@ Computing the correct statistics is a great start, but organizing statistics in 
 
 The coder and hacker exercises are an opportunity to apply the skills from this chapter to a new scenario or a new data set. The coder edition will evaluate your application of the commands learned in this chapter (and earlier chapters) to similar scenarios to those in the chapter; the hacker edition will evaluate your use of the procedures from this chapter in new scenarios, usually going a step beyond what was explicitly explained. 
 
-Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 questions correctly on your first try the rest correctly on your first or second try. Visit edge.sagepub.com/harris1e to complete the multiple choice questions and download the materials for the assignment.
+Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 questions correctly on your first try the rest correctly on your first or second try. Visit edge.sagepub.com/harris1e to complete the multiple choice questions and download the materials for the exercises.
 
 Q1: What is a measure of spread that is appropriate for each central tendency? 
 
