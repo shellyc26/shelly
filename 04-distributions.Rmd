@@ -521,7 +521,7 @@ These characteristics of the normal distribution can be used to describe and com
 
 Kiara explains that this information is used to create z-scores, which allow description and comparison of where an observation falls compared to the other observations for a normally distributed variable. 
 
-### Defining the z-score
+### Defining the z-score {#zscore.section}
 
 She gives Leslie the z-score formula and explains that the z-score is *the number of standard deviations an observation is away from the mean*.
 

@@ -1,4 +1,4 @@
-# The R team tries t-tests and its alternatives
+# The R team tries t-tests and their alternatives
 
 ## Achievements to unlock
 
@@ -12,7 +12,7 @@ Kiara puts together a list of achievements for the day:
 
 * Achievement 1: Understanding the relationship between one categorical variable and one continuous variable using bar graphs, frequencies, and percents 
 * Achievement 2: Comparing a sample mean to a population mean with a one sample t-test
-* Achievement 3: Comparing two sample means with an independent samples t-test
+* Achievement 3: Comparing two unrelated sample means with an independent samples t-test
 * Achievement 4: Comparing two related sample means with a dependent samples t-test 
 * Achievement 5: Computing and interpreting an effect size for significant t-tests
 * Achievement 6: Examining and checking the underlying assumptions for using the t-test 
@@ -80,7 +80,7 @@ nhanes.2016 %>%
 
 It appears that more people are within the normal range for diastolic blood pressure than are in the normal range for systolic blood pressure. Looking at these two distributions, Leslie thinks that the mean systolic blood pressure in the sample is likely higher than the 120 threshold for healthy. Kiara agrees and says that one of the t-tests they are going to talk about today will actually help to test this hypothesis.
 
-### Achievement 1: Using graphics and descriptive statistics to make a prediction
+## Achievement 1: Understanding the relationship between one categorical variable and one continuous variable using bar graphs, frequencies, and percents 
 
 Based on observing the histograms, Leslie has predicted that the mean systolic blood pressure in the sample is higher than 120. In addition to the histogram, she can check this with the mean and standard deviation:
 
@@ -108,7 +108,7 @@ Which graphs could be used to determine if the distribution of a variable is nor
 * boxplot 
 * line graph 
 
-## Achievement 2: One sample t-test
+## Achievement 2: Comparing a sample mean to a population mean with a one sample t-test {#osttest}
 
 Kiara explains that comparing the mean in the NHANES data to a hypothesized value like 120 can be done with a **one sample t-test**. The _one sample t-test_ compares a sample mean to a hypothesized or population mean. It is one of three types of t-tests:
 
@@ -177,9 +177,9 @@ After she computes the $t$-statistic Kiara mentions that there are ways to do th
 t.test(nhanes.2016$BPXSY1, mu = 120)
 ```
 
-The output contains a lot of information. The first row confirms the variable examined by the `t.test()` command. This appears correct. The second row starts with **t = 2.4491**, which is the same as the hand calculated value. The next part of the output is df = 7144. Kiara explains that, in this context, the degrees of freedom (df) are not computed using rows and columns like the chi-squared degrees of freedom. In this case, the df value is computed by subtracting 1 from the sample size. So, a df = 7144 would indicate the sample size is 7145. This is consistent with the $n$ of 7,145 from `summarize()`. The next number in the `t.test()` output is the p-value of .01435, which leads Leslie to step 3 of NHST. 
+The output contains a lot of information. The first row confirms the variable examined by the `t.test()` command. This appears correct. The second row starts with $t = 2.4491$, which is the same as the hand calculated value. The next part of the output is df = 7144. Kiara explains that, in this context, the degrees of freedom (df) are not computed using rows and columns like the chi-squared degrees of freedom. In this case, the df value is computed by subtracting 1 from the sample size. So, a df = 7144 would indicate the sample size is 7145. This is consistent with the $n$ of 7,145 from `summarize()`. The next number in the `t.test()` output is the p-value of .01435, which leads Leslie to step 3 of NHST. 
 
-##### NHST Step 3: Compute the probability for the test statistic (p-value) 
+### NHST Step 3: Compute the probability for the test statistic (p-value) 
 
 The t-statistic is 2.45. Like the chi-squared statistic, the t-statistic has a distribution made up of all the possible values of t and how probable each value is to occur. In the case of t, the distribution looks similar to a normal distribution. Nancy looks up from her phone and sees an opportunity to code. She plots a t-distribution with 7,144 degrees of freedom:
 
@@ -225,7 +225,7 @@ ggplot(data = dat, mapping = aes(x = x, y = y)) +
 
 Any value of the t-statistic that is in the shaded tales of the distribution happens less with a probability less than 5% **when the null hypothesis is true**. 
 
-##### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
 
 In this case, the t-statistic is in the rejection region, so there is sufficient evidence to reject the null hypothesis in favor of the alternate hypothesis. Even though the difference between the mean systolic blood pressure of 120.5 and the hypothesized value of 120 is small, it is statistically significant. The probability of this sample coming from a population where the mean systolic blood pressure is actually 120 is just 1.4%. This sample is likely to be from a population with a higher mean blood pressure.
 
@@ -246,7 +246,7 @@ nhanes.2016.65plus <- nhanes.2016 %>%
 t.test(x = nhanes.2016.65plus$BPXSY1, mu = 120)
 ```
 
-## Achievement 3: Independent samples t-test
+## Achievement 3: Comparing two unrelated sample means with an independent samples t-test {#indepsamp}
 
 Leslie thinks this is cool for checking to see how well your sample represents a population, but asks if the t-test can be used for anything else. Kiara explains that there are two additional types of t-test. Instead of comparing one mean to a hypothesized or population mean, the **independent samples t-test** compares the means of two groups to each other. For example, the NHANES data set includes sex measured in two categories: males and females. We might be interested in whether the mean systolic blood pressure is the same for males and females in the population. That is, do males and females in the sample come from populations where they have the same mean systolic blood pressure? 
 
@@ -327,7 +327,7 @@ t=\frac{\bar{x_1}-\bar{x_2}}{\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}}
 \end{equation}
 $$
 
-Nancy adds the standard deviation and $n$ to the summarize statistics:
+Nancy adds the variance and $n$ to the summarize statistics:
 
 ```{r}
 # compare means of systolic by sex
@@ -381,7 +381,7 @@ Leslie summarizes the interpretation:
 
 Conduct the same independent samples t-test on the sample created in the previous section of people 65+ years old. Interpret your results.
 
-## Achievement 4: Dependent samples t-test
+## Achievement 4: Comparing two related sample means with a dependent samples t-test {#depttest}
 
 Kiara mentions that sometimes the means to compare will be related. This usually happens in one of two ways, either the same people are measured twice or people are siblings or spouses or co-workers or have some other type of relationship. Leslie remembers this from learning about the assumptions of chi-squared. Kiara explains that it may seem strange to measure the same people twice, but often people will be measured before and after some sort of intervention and the measures are compared to see if they changed. 
 
@@ -437,15 +437,15 @@ nhanes.2016.cleaned %>%
 
 The distribution of differences looks close to normal and the center is near 0, but maybe not exactly 0. The mean difference is .54. If measures 1 and 2 were exactly the same for each person, the mean difference would be 0. Using the NHST process, Leslie tests to see if the .54 mean difference is significantly different from the 0 she would expect to see if the values were exactly the same for the first and second measures of systolic blood pressure on each person:
 
-#### NHST for the dependent samples t-test
+### NHST for the dependent samples t-test
 
-##### NHST Step 1: Write the null and alternate hypotheses
+#### NHST Step 1: Write the null and alternate hypotheses
 
 H0: There is no difference between measures 1 and 2 for systolic blood pressure  
 
 HA: There is a difference between measures 1 and 2 for systolic blood pressure 
 
-##### NHST Step 2: Compute the test statistic
+#### NHST Step 2: Compute the test statistic
 
 Leslie substitutes the mean, standard deviation, and sample size of the difference between the measures into the formula for the paired t-test statistic. First she needs the variance and sample size:
 
@@ -478,17 +478,17 @@ t.test(x = nhanes.2016.cleaned$systolic,
 
 The test statistic produced by `t.test()` is consistent with the one Leslie calculated by hand. Using R is so much faster, but Leslie feels good knowing she can compute the statistics correctly using the basic descriptive statistics she knows how to do. R is becoming more manageable to Leslie but she is also starting to feel better about what goes into the statistics she learned in her earlier class. The t-test is just a clever use of means and standard deviations and sample sizes...there is no magic required!
 
-##### NHST Step 3: Compute the probability for the test statistic (p-value) 
+#### NHST Step 3: Compute the probability for the test statistic (p-value) 
 
 Once again, the p-value is shown in scientific notation as $<2.2e-16$ which is well below .05. Just as Leslie suspected the probability of finding a mean difference of .54 between the two measures in the sample is much lower than 5% if there were no difference between the measures in the population that the sample came from.
 
-##### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+#### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
 
 Once again, the $t$-statistic has a low probability and is in the rejection region, so there is sufficient evidence to reject the null hypothesis in favor of the alternate hypothesis. Even though the mean difference between the first and second measures is small, it is statistically significant. The probability of the sample coming from a population where the measures are equal is very low. This sample is likely to be from a population where systolic blood pressure is not measured consistently over time. 
 
 Leslie sees the confidence interval and asks Kiara if this is the range where the difference between the first and second measures is for the population? Kiara confirms and adds one more piece of information. Because the difference statistic is calculated by subtracting the second measure of systolic blood pressure from the first measure, Kiara mentions that the mean difference is **positive**, indicating that the first measure of systolic blood pressure tends to be higher than the second measure. 
 
-and Leslie summarizes the interpretation: 
+Leslie summarizes the interpretation: 
 
 > The mean difference between systolic blood pressure measures is statistically significantly different from zero [t(7100) = 9.38; p < .05]. The positive difference of .54 indicates that systolic blood pressure is significantly higher for the first measure compared to the second measure. While the mean difference in the sample is .54, the mean difference between the first and second measures in the population is likely between .43 and .66 ($d$ = .54; 95% CI: .43-.66).
 
@@ -535,7 +535,136 @@ descriptions:
 * Compares a single mean to a population or hypothesized value 
 * Compares two related means 
 
-### Achievement 5: Introducing assumptions
+## Achievement 5: Computing and interpreting an effect size for significant t-tests
+
+Leslie thinks that the small differences between means being statistically significant suggests that reporting statistical significance might be misleading. She thinks that, especially where differences between means are small, it would be useful to have something to report that is about the size of the difference or the strength of the relationship. Kiara explains that what she is looking for is called **effect size** and it gives some idea of how strong a statistically significant relationship is [@sullivan2012using]. That is, a difference in mean systolic blood pressure of .54 is *statistically significant* but is it really a big enough difference to suggest that one group is different from the other in an important way? 
+
+The effect size statistic usually reported with a t-test is **Cohen's d**. Like standardized residuals with chi-squared analyses, **Cohen's d** is computed when the test results are **statistically significant**. Cohen's $d$ can be computed for each t-test using a slightly different formula that works for the research question being examined. Kiara shows Leslie the three formulas and Nancy contributes the R code for each test. Before they begin, Kiara wants to explain how the value of $D$ is classified: 
+
+* Cohen's $d = .2$ to $d< .5$ is a **small** effect size 
+* Cohen's $d = .5$ to $d< .8$ is a **medium** effect size 
+* Cohen's $d \ge .8$ is a **large** effect size 
+
+### Cohen's d for one-sample t-tests
+
+The formula for $Cohen's d$ for a one-sample t-test is [@sullivan2012using]:
+
+$$
+\begin{equation}
+d=\frac{m - \mu}{s}
+ (\#eq:donesamp)
+\end{equation}
+$$
+
+Where $m$ is the sample mean, $\mu$ is the hypothesized or population mean, and $s$ is the sample standard deviation. This seems familiar to Leslie and she asks how this is different from the calculation of $z$. Kiara agrees that this looks very familiar, including having the standard deviation in the denominator, but reminds Leslie that the numerator for $z$ is different and refers her back to Section \@ref(zscore.section) as a refresher. Leslie decides to go back and look later, for now she is interested in computing the effect size for the one-sample t-test in Section \@ref(osttest). 
+
+$$
+\begin{equation}
+d=\frac{120.5 - 120}{18.62}=.027
+ (\#eq:donesamp2)
+\end{equation}
+$$
+
+The effect size is less than .03, which does not even get close to the **small** effect size value of .2. Nancy shows Leslie how to use R to get the value by first installing the <span style="font-family:Lucida Console, monospace;font-weight:bold">lsr</span> package and then writing the code. The `cohensD()` function can be used to compute effect size for each of the three t-tests. For the one-sample test, there are three arguments to use: `x =` takes the vector that contains the variable to be tested and `mu =` takes the hypothesized or population mean.
+
+```{r}
+# cohen's d effect size for one sample t
+lsr::cohensD(x = nhanes.2016.cleaned$systolic, mu = 120)
+
+```
+
+Leslie notices that there is a slight difference in the values between the hand-calculation and the R calculation. Kiara suggests this is due to rounding error. Both the 120.5 and the 18.62 are rounded for the sake of easier hand calculations while R can keep many digits in memory while computing the value of $d$. 
+
+Leslie adds the effect size to the interpretation of results from the one-sample t-test:
+
+> The mean systolic blood pressure in a sample of 7,145 people was 120.5 (sd = 18.62). A one-sample t-test found this mean to be statistically significantly different from the hypothesized mean of 120 [t(7144) = 2.45; p = .014]. The sample likely came from a population with a mean systolic blood pressure higher than 120. While the sample mean was statistically significantly different from 120, the difference was relatively small with a small effect size of $d = .03$. 
+
+### Cohen's d for independent samples t-tests 
+
+The formula for $Cohen's d$ for an independent samples t-test is [@salkind2010encyclopedia]:
+
+$$
+\begin{equation}
+d=\frac{m_1 - m_2}{s_{pooled}}=\frac{m_1 - m_2}{\sqrt{\frac{s_1^2+s_2^2}{2}}}
+ (\#eq:dindsamp)
+\end{equation}
+$$
+
+Where $m_1$ and $m_2$ are the sample means and $s_1^2$ and $s_2^2$ are the sample variances. Leslie goes ahead and uses the formula to compute the effect size for the independent samples t-test in Section \@ref(indepsamp):
+
+```{r}
+# compare means of systolic by sex
+nhanes.2016.cleaned %>% 
+  drop_na(systolic) %>%
+  group_by(sex) %>%
+  summarize(m.sbp = mean(systolic),
+            var.sbp = var(systolic))
+```
+
+$$
+\begin{equation}
+d=\frac{122.1767 - 118.9690}{\sqrt{\frac{329.2968+358.2324}{2}}}=.173
+ (\#eq:dindsamp2)
+\end{equation}
+$$
+
+The effect size is .173, which is close to the **small** effect size value of .2 but the effect of sex on systolic blood pressure is not quite even a small effect. Nancy shows Leslie how to use R to get the value, this time entering a formula (see Box \ref(ch6nancy)) for `x = ` and the data frame name for the `data = ` argument. 
+
+```{r}
+# cohen's d effect size for indep sample t
+lsr::cohensD(x = systolic ~ sex, 
+             data = nhanes.2016.cleaned)
+
+```
+
+Again there is there is a slight difference in the values between the hand-calculation and the R calculation likely again due to rounding error. Leslie adds the effect size to the interpretation of results from the independent samples t-test:
+
+> There is a statistically significant difference [t(7143) = 7.31; p < .05] between the mean systolic blood pressure for males (m = 122.2) and females (m = 119.0). The sample is from the US population indicating that males in the US likely have a higher mean systolic blood pressure than females in the US. The difference between male and female mean systolic blood pressure is `r 122.1767 - 118.969` in the sample. In the population this sample came from, the difference between male and female blood pressure is likely to be between 2.35 and 4.07 (d = `r round(122.1767 - 118.969, 2)`; 95% CI: 2.35-4.07). The effect size for the relationship between sex and systolic blood pressure was small $d=.17$.
+
+### Cohen's d for paired samples t-tests
+
+The formula for $Cohen's d$ for a paired samples t-test is:
+
+$$
+\begin{equation}
+d=\frac{m_{diff}-0}{s_{diff}}
+ (\#eq:dpairsamp)
+\end{equation}
+$$
+
+Where $m_{diff}$ is mean difference between the two measures, in this case systolic and systolic2, and $s_{diff}$ is the standard deviation of the differences between the two measures. Leslie goes ahead and uses the formula to compute the effect size for the paired samples t-test in Section \@ref(depttest). 
+
+```{r}
+# var and sample size of the difference variable
+nhanes.2016.cleaned %>%
+  drop_na(diff.syst) %>%
+  summarize(m.sbp = mean(diff.syst),
+            sd.sbp = sd(diff.syst))
+```
+
+$$
+\begin{equation}
+d=\frac{.5449937-0}{4.898043}=.111
+ (\#eq:dpairsamp2)
+\end{equation}
+$$
+
+The effect size is .111, which is not quite up to the **small** effect size value of .2. Nancy shows Leslie how to use R to get the value, this time entering each blood pressure measure as a separate vector: 
+
+
+```{r}
+# cohen's d effect size for indep sample t
+lsr::cohensD(x = nhanes.2016.cleaned$systolic, 
+             y = nhanes.2016.cleaned$systolic2, 
+             method = "paired")
+
+```
+
+The value is the same as the hand calculation. Leslie adds the effect size to the interpretation of results from the one-sample t-test:
+
+> The mean difference between systolic blood pressure measures is statistically significantly different from zero [t(7100) = 9.38; p < .05]. The positive difference of .54 indicates that systolic blood pressure is significantly higher for the first measure compared to the second measure. While the mean difference in the sample is .54, the mean difference between the first and second measures in the population is likely between .43 and .66 ($d$ = .54; 95% CI: .43-.66). The effect size for the comparison of the two systolic blood pressure measures is very small $d = .11$ suggesting that the statistically significant difference is not a large difference.
+
+## Achievement 6: Examining and checking the underlying assumptions for using the t-test
 
 Just like chi-squared, the t-tests have to meet a few assumptions before they can be used. The first assumption for the t-test is that the data are normally distributed. For the one-sample t-test, the single variable being examined should be normally distributed. For the independent samples t-test and the paired samples t-test the data within each of the two groups should be normally distributed. There are several ways to assess normality. Visually, a histogram or a QQ-plot is useful for identifying normal and non-normal data distribution. Statistically, a Shapiro-Wilk test can be used. 
 
@@ -721,7 +850,7 @@ nhanes.2016.cleaned %>%
 * normal distribution in each group 
 * equal variances for each group 
 
-## Achievement 6: Alternative tests when assumptions are not met
+## Achievement 7: Identifying and using alternate tests for when t-test assumptions are not met
 
 Nancy introduces Leslie to the alternate tests she can use when the assumptions fail:
 
@@ -1134,7 +1263,7 @@ Importing the NHANES data directly from the internet into a code file increases 
 
 <img align = "left" src = "graphics\leslie.gif" style="PADDING-RIGHT: 30px">
 
-Leslie reads the materials Nancy has provided and learns that the t-test was developed by William Sealy Gosset who was hired by the Irish beer brewer Guiness in 1900 along with a group of promising young scientists in order to apply scientific expertise to improve the brewing process [@box1987guinness; @cals2018student; @connelly2011t]. Among the scientists, Gosset stood out for having experience with math and was recruited by the other scientists (who were mainly chemists) to analyze the data during and after seven years of experiments to better understand the influence of weather and soil on growing barley [@box1987guinness]. It was during these seven years that Gosset, with help from Karl Pearson (another great statistician), developed the t-test in order to handle the small samples and the limitations of using sample values of $s$ and $m$ rather than population values of $\sigma$ and $\mu$. Gosset's analyses identified the barley that produced the highest yield and quality, allowing Guiness to identify and purchase the best barley for their growing area. Guiness restricted publication of Gosset's work showing any ties to the Guiness brewery but the board agreed that he could publish with a pseudonym and he chose *Student* [@box1987guiness]. *So, the widely used t-test was developed in order to make beer better.* 
+Leslie reads the materials Nancy has provided and learns that the t-test was developed by William Sealy Gosset who was hired by the Irish beer brewer Guiness in 1900 along with a group of promising young scientists in order to apply scientific expertise to improve the brewing process [@box1987guinness;@cals2018student;@connelly2011t]. Among the scientists, Gosset stood out for having experience with math and was recruited by the other scientists (who were mainly chemists) to analyze the data during and after seven years of experiments to better understand the influence of weather and soil on growing barley [@box1987guinness]. It was during these seven years that Gosset, with help from Karl Pearson (another great statistician), developed the t-test in order to handle the small samples and the limitations of using sample values of $s$ and $m$ rather than population values of $\sigma$ and $\mu$. Gosset's analyses identified the barley that produced the highest yield and quality, allowing Guiness to identify and purchase the best barley for their growing area. Guiness restricted publication of Gosset's work showing any ties to the Guiness brewery but the board agreed that he could publish with a pseudonym and he chose *Student* [@box1987guinness]. *So, the widely used t-test was developed in order to make beer better.* 
 
 #### Nancy's fancy code: formulas in R {#ch6nancy}
 

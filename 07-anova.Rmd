@@ -1,15 +1,19 @@
-# ANOVA and non-parametric alternatives
+# The R-team attempts ANOVA and its non-parametric alternatives
 
 ## Achievements to unlock
+
+Now that Leslie is getting more familiar with R coding, Nancy thinks it is time to learn one of the biggest strengths of R, making graphs! As the team saw in the previous chapter, graphs are very important for adding context to the numbers. For example, the negative skewness value for the PHYSHLTH variable in the previous chapter could have led an analyst to believe the variable was left skewed rather than right since negative skewness *almost always* means left skewed. A quick histogram plot showed otherwise and allowed the team to interpret the skewness accurately and identify the appropriate descriptive statistics to use for the situation. In addition to clarifying statistical results, graphs are one of the best way to communicate about data with various audiences. 
+
+This chapter will primarily use the <span style="font-family:Lucida Console, monospace;font-weight:bold">ggplot2</span> package, which is part of the <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span> to create and format common graphs used to display data. The chapter will cover which graphs are appropriate for different data types, the important features of a well-formatted graph, ways to avoid creating a misleading graph, and how to interpret graphs. Nancy and Kiara made a list of tasks for Leslie: 
 
 T-test work great for comparing means in two groups, but what happens when there are three or more groups?  
 
 * Achievement 1: Using graphics and descriptive statistics to make a prediction
-* Achievement 2: One-way ANOVA 
-* Achievement 3: Post-hoc tests and contrasts
-* Achievement 4: ANOVA assumptions
-* Achievement 5: Alternative tests when assumptions are not met
-* Achievement 6: Two-way ANOVA
+* Achievement 2: Understanding and conducting one-way Analysis of Variance (ANOVA) 
+* Achievement 3: Choosing and using post-hoc tests and contrasts
+* Achievement 4: Testing ANOVA assumptions
+* Achievement 5: Choosing and using alternative tests when assumptions are not met
+* Achievement 6: Understanding and conducting two-way ANOVA
 
 Follow Chelsea, Bobbi, and Leslie through the examples and exercises to test some relationships.
 
