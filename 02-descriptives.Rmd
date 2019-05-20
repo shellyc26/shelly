@@ -451,7 +451,7 @@ hist(x2, main="Right skewed distribution", xlab="Values of variable",ylab = "Pro
 abline(v=mean(x2), col="#78A678", lwd=5)
 ```
 
-#### Using the median
+#### Using the median {#median}
 
 Leslie reminds everyone that the **median** is the middle number when numbers are in order from smallest to largest. When there are an even number of numbers, the median is the mean of the middle two numbers. Nancy types some quick code to show that, in the examples above, the median for the friend groups with and without Bill gates would be:
 
@@ -644,7 +644,7 @@ In addition to using central tendency to characterize a variable, Leslie remembe
 * median: use **range** or **interquartile range (IQR)** to measure spread
 * mode: use the **index of qualitative variation** to measure spread
 
-#### Spread to report with the mean 
+#### Spread to report with the mean {#mean.spread}
 
 The variance is the average of the squared differences between each value of a variable and the mean of the variable. Leslie shows Nancy the formula from an old statistics textbook and Nancy writes the R code so Leslie can review how it works:
 
