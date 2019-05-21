@@ -323,7 +323,7 @@ grid.arrange(ease.graph, req.graph, nrow = 2)
 
 This seems easier to examine than the tables and the differences are quickly clear. Based on the descriptive and visual exploratory data analyses (EDA) examining the relationship between these categorical variables, it looks like race ethnicity is related to opinions about voter registration and voting requirements. Specifically, it seems that there was a much higher percent of White Non-Hispanic participants supporting no requirement for voting, while the highest percent supporting making it easy to vote were Black Non-Hispanic participants.
 
-### Unlocking achievement 1: Check your understanding
+### unlock achievement 1: Check your understanding
 
 Make an appropriate table or a graph to examine the relationship between sex and voting requirements. Explain your results.
 
@@ -429,7 +429,7 @@ There are a couple of ways observations can be non-independent. One way to viola
 
 Leslie asks what happens when the assumptions are not met for a statistical test. Kiara explains that often there is another test that can be used, depending on which of the assumptions is not met. For chi-squared, the assumption that is often a problem is the assumption about expected values being at least 5 in most cells. Kiara says they will look at an option for addressing this assumption violation as they walk through some examples. 
 
-### Unlocking achievement 2: Check your understanding
+### unlock achievement 2: Check your understanding
 
 Which of the following is true about the observed and expected values for voting ease and race ethnicity? (choose all that apply)
 
@@ -441,7 +441,7 @@ Which of the following is true about the observed and expected values for voting
 
 ### Summing the differences between observed and expected values
 
-The differences between observed values and expected values can be combined into an overall statistic showing how much observed and expected differ across all the categories. However, since some expected values are higher than observed values, some are lower, and the expected and observed both have the same total when summed, just combining the differences will result in a zero, like this:
+The differences between observed values and expected values can be combined into an overall statistic showing how much observed and expected differ across all the categories [@kim2017statistical]. However, since some expected values are higher than observed values, some are lower, and the expected and observed both have the same total when summed, just combining the differences will result in a zero, like this:
 
 $(292 - 256.6) + (28 - 51.3) + ... + (46-43.3) = 0$
 
@@ -480,7 +480,7 @@ chisq.test(x = vote.cleaned$ease.vote,
 
 Leslie notes that the "X-squared" value is the same as the hand-calculated results. However, there appear to be two other values, df = 3 and p-value < 2.2e-16. Leslie recognizes the scientific notation but is still unclear what these two pieces of information mean. Kiara asks Leslie how much she remembers about probability distributions from last chapter? The same concepts can be applied to interpret a chi-squared statistic and the corresponding p-value. 
 
-### Unlocking achievement 3: Check your understanding
+### unlock achievement 3: Check your understanding
 
 The way to compute a chi-squared statistic is to add up all the observed values and subtract the sum of all the expected values. Then, square the total. 
 
@@ -619,7 +619,7 @@ Kiara summarizes the result of the chi-squared for Leslie:
 
 When possible, use the actual p-value rather than _p < .05_. In this case the p-value of .000002293 has too many decimal places for easy reporting, so using < .05 or using the less than symbol `<` with whatever the chosen threshold was (e.g., $<.10$ or $<.001$) will work.
 
-### Unlocking achievement 4: Check your understanding
+### unlock achievement 4: Check your understanding
 
 Which of the following is a good representation of p-value < 2.2e-4:
 
@@ -726,7 +726,7 @@ Leslie adds this information to her interpretation:
 
 >We used the $\chi^2$ test to test the null hypothesis that there was no relationship between opinions on the ease of voting by race ethnicity group. We rejected the null hypothesis and concluded that there was a statistically significant association between views on voting ease and race ethnicity [$\chi^2(3) = 28.95$; $p < .05$]. Based on standardized residuals, the statistically significant chi-squared test result was driven by White Non-Hispanic participants who felt that people should prove they want to vote and Black Non-Hispanic participants who felt that the voting process should be made easy and people should not have to prove they want to vote.
 
-### Unlocking achievement 6: Check your understanding  
+### unlock achievement 6: Check your understanding  
 
 A standardized residual of -3.56 would indicate:
 
@@ -739,7 +739,7 @@ A standardized residual of -3.56 would indicate:
 
 ### Computing the Cramer's V statistic
 
-Now that Leslie can determine if two categorical variables are related and what might be driving that relationship, Kiara thinks of one more detail about chi-squared that is useful. While the voting data show a relationship between preference on ease of voting and race ethnicity category, it is not clear how strong the relationship is. Kiara explains that the strength of a relationship in statistics is referred to as _effect size_. For $\chi^2$ there are a few options, including the commonly used effect size statistic of _Cramer's V_. The $V$ statistic is computed:
+Now that Leslie can determine if two categorical variables are related and what might be driving that relationship, Kiara thinks of one more detail about chi-squared that is useful. While the voting data show a relationship between preference on ease of voting and race ethnicity category, it is not clear how strong the relationship is. Kiara explains that the strength of a relationship in statistics is referred to as _effect size_. For $\chi^2$ there are a few options, including the commonly used effect size statistic of _Cramer's V_ [@kim2017statistical]. The $V$ statistic is computed:
 
 $$
 \begin{equation}
@@ -878,7 +878,7 @@ There is no reason to use a different R package to compute $\phi$ since it is ju
 
 ### The odds ratio for effect size with two binary variables
 
-Another effect size useful when both variables are binary is the **odds ratio**. The odds ratio measures the odds of some event or outcome occurring given a particular exposure compared to odds of it happening without that exposure. In this case, the **exposure** would be home ownership and the **outcome** would be opinion on ease of voting. So, the odds ratio would measure the odds of thinking people should prove they want to vote given owning a home, compared to the odds of thinking people should prove they want to vote given not owning a home.
+Another effect size useful when both variables are binary is the **odds ratio** [@kim2017statistical]. The odds ratio measures the odds of some event or outcome occurring given a particular exposure compared to odds of it happening without that exposure. In this case, the **exposure** would be home ownership and the **outcome** would be opinion on ease of voting. So, the odds ratio would measure the odds of thinking people should prove they want to vote given owning a home, compared to the odds of thinking people should prove they want to vote given not owning a home.
 
 The calculation uses the frequencies in the 2 x 2 table where the rows are the exposure and the columns are the outcome:
 
@@ -948,7 +948,7 @@ Kiara explains that the p-value for the odds ratio has the same broad meaning as
 
 Likewise, Kiara explains, the 95% confidence interval has a similar meaning to the 95% confidence intervals computed in Chapter 4. In this case, the odds ratio is 1.42 in the sample and likely falls between 1.078 and 1.875 in the population that the sample came from. So, in the sample, home owners have 42% higher odds of thinking people should prove they want to vote compared to people home renters. In the population, home owners have 7.8% to 87.4% higher odds of thinking people should prove they want to vote compared to people home renters (OR = 1.42; 95% CI: 1.078 - 1.873). 
 
-### Unlocking achievement 7: Check your understanding
+### unlock achievement 7: Check your understanding
 
 Describe what Cramer's V, $\phi$, and $OR$ are and how they differ. 
 
@@ -962,7 +962,7 @@ Kiara says this one is easy! Use a different statistical test. Chi-squared is on
 
 ### Violating the assumption of expected values of 5 or higher in at least 80% of groups 
 
-The sampling distribution for the chi-squared statistic approximates the actual chi-squared distribution but does not capture it completely accurately. When a sample is large, the approximation is better and using the chi-squared distribution to determine statistical significance works well. However, for very small samples, the approximation is not great, so a different method of computing the p-value is better. The methods most commonly used is the **Fisher's Exact Test**. Essentially, the Fisher's Exact Test computes a different p-value for the $\chi^2$ statistic [@field2013discovering]. In R, the Fisher's Exact Test can be conducted with the `fisher.test()` function. The process of NHST and the interpretation of the results are the same as for the $\chi^2$, just with a different method of computing the p-value to reject or keep the null hypothesis. 
+The sampling distribution for the chi-squared statistic approximates the actual chi-squared distribution but does not capture it completely accurately. When a sample is large, the approximation is better and using the chi-squared distribution to determine statistical significance works well. However, for very small samples, the approximation is not great, so a different method of computing the p-value is better. The methods most commonly used is the **Fisher's Exact Test**. Essentially, the Fisher's Exact Test computes a different p-value for the $\chi^2$ statistic [@kim2017statistical]. In R, the Fisher's Exact Test can be conducted with the `fisher.test()` function. The process of NHST and the interpretation of the results are the same as for the $\chi^2$, just with a different method of computing the p-value to reject or keep the null hypothesis. 
 
 ### Violating the independent observations assumption
 

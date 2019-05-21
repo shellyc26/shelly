@@ -157,7 +157,7 @@ Kiara explains that the **numeric** data type is also used for variables that do
 
 Leslie remembers that each different type of variable requires a different approach for analysis. Before getting into any complex statistical modeling, she remembers that descriptive statistics are key for understanding who or what is in the data set and often help in choosing an appropriate statistical test and refining analysis planning. 
 
-### Unlocking achievement 1: Check your understanding
+### unlock achievement 1: Check your understanding
 
 Identify the most appropriate R data type for the following variables: 
 
@@ -322,7 +322,7 @@ Hmisc::describe(x = brfss.2014.cleaned)
 
 They look through the information and see that percents are included, which is something that is not in the `summary()` output, however, there is a lot of output to read through in order to find specific information. Kiara says she prefers to use more targeted statistics and just uses `summary()` and `describe()` to get a sense of the data or to confirm her data management tasks have worked. Leslie thinks this is a good strategy, although she is curious what other packages might be out there and whether any of them and have the perfect descriptive statistics code. Kiara says she might like the <span style="font-family:Lucida Console, monospace;font-weight:bold">tableone</span> package they will use later.
 
-### Unlocking achievement 2: Check your understanding
+### unlock achievement 2: Check your understanding
 
 Use one of the methods shown to create a table of the HADMAM variable, which indicates whether or not the survey participant had a mammogram. Review the question and response options in the codebook and recode to ensure that the correct category labels show up in the table (see link in references [@brfss-2014-codebook]) before you begin. 
  
@@ -872,7 +872,7 @@ qualvar::B(x = as.numeric(x = brfss.2014.cleaned$TRNSGNDR))
 
 The resulting value of `r round(qualvar::B(as.numeric(brfss.2014.cleaned$TRNSGNDR)), 2)` indicates that observations in this data set are well spread out among the six categories. While it is true that there are people in all categories, the *Not transgender* category contains a much larger group than any of the other categories. Leslie tries a few of the other indices and starts to think that the indices of qualitative variation tend to have higher values than she would have expected. She and Kiara agree that it is important to include other information for context when using one of these indices.
 
-### Unlocking achievement 3: Check your understanding
+### Unlock achievement 3: Check your understanding
 
 Find central tendency and spread for the number of unhealthy mental health days (MENTHLTH). Review the possible values for the variable in the BRFSS codebook first and clean the data so 77, 88, and 99 are handled appropriately.
 

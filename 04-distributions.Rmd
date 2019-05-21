@@ -154,7 +154,7 @@ Kiara adds that there are many different probability distributions, with each on
 
 These two categories of probability distributions are are the foundation for most statistical tests in social science. Kiara suggests that there are two specific probability distributions in particular that are commonly used and good examples for learning how a probability distribution works: the _binomial distribution_ and the _normal distribution_. The binomial distribution is a _discrete probability distribution_ and applies to probability for binary categorical variables with specific characteristics.  The _normal distribution_ is a _continuous probability distribution_ and applies to probability for continuous variables. 
 
-### Unlocking achievement 1: Check your understanding
+### unlock achievement 1: Check your understanding
 
 The _binomial distribution_ is a probability distribution for ___________ variables, while the _normal distribution_ is a probability distribution for ____________ variables.
 
@@ -417,7 +417,7 @@ opioid.policy.kff %>%
 
 This one just has 14 states with PDMP. So, out of three samples of 25 states, two samples had more than 10 states with PDMP and one sample had fewer than 10 states with PDMP. This seems consistent with the binomial distribution prediction that 70% of the time a sample of size 25 will have at least 15 states with PDMP. Leslie agrees that it is a lot easier to use `pbinom()` than to take a bunch of samples to see what happens and she finally sees the value of this distribution for selecting a sample size. Kiara is glad this clarified things and they get ready to move on.
 
-### Unlocking achievement 2: Check your understanding
+### unlock achievement 2: Check your understanding
 
 Forty-eight states (94%) had implemented an opioid quantity limits policy in 2017. Nancy created the graph below to show the probability for having an opioid quantity policy in a sample of 30 states when the probability in the population of states is 94%. Based on the graph, how likely do you think it is that all 30 states in a sample would have this policy? 
 
@@ -492,7 +492,7 @@ pnorm(q = 25, mean = 18, sd = 7, lower.tail = FALSE)
 
 Much better! It looks like 15.9% of counties have more than 25 drug poisoning deaths per 100,000 residents. This value seems more consistent with the purple shaded area of the Figure \@ref(fig:c4main15).
 
-### Unlocking achievement 3: Check your understanding
+### unlock achievement 3: Check your understanding
 
 Figure \@ref(fig:c4main20) shows shading for counties with fewer than 10 drug poisoning deaths per 100,000 residents. Look at the graph and make your best estimate (without computing the answer) of the percentage of counties in the shaded area.
 
@@ -557,7 +557,7 @@ $$
 
 Leslie notices that the z-score was a positive value for the county with a rate that was higher than the mean and a negative value for the county with a rate that was lower than the mean. So, the z-score not only indicates how many standard deviations away from the mean an observation is, but whether the observed value is above or below the mean. 
 
-### Unlocking achievement 4: Check your understanding
+### unlock achievement 4: Check your understanding
 
 Use Equation \@ref(eq:zscore) to calculate the z-score for a county with 24 drug poisoning deaths when the mean is 18 and the standard deviation is 7. Interpret your result.
 
@@ -806,7 +806,7 @@ Leslie stops Kiara to make sure she understands the difference is between a samp
 
 So, if there were no way to measure the population mean for the number of opioid deaths per 100k people in a county, Leslie could use the first sample of 500 counties to estimate that there is a good chance it is between $18.34-.44$ and $18.34+.44$ or `r 18.34-.44` and `r 18.34+.44`. There is an even higher probability that the population mean is between $18.34-.44\cdot 2$ and $18.34+.44\cdot 2$ or `r 18.34-.44*2` and `r 18.34+.44*2`. While it is unusual to have the population mean to compare results to, this time the team has it and can see that the population mean of 18.08 opioid deaths per 100k people in a county is represented well by the sample mean of 18.34 and the standard error of .44.
 
-### Unlocking achievement 5: Check your understanding
+### unlock achievement 5: Check your understanding
 
 Take a sample of 200 counties and compute the mean, standard deviation, and standard error for the drug poisoning death rate in 2017. BAsed on the sample mean and standard error, fine the range of values where the population mean drug poisoning death rate could be. Explain your results.
 
@@ -1134,7 +1134,7 @@ The main practical difference between the two is that the $t$-statistic works be
 
 Leslie feels like she learned a lot today about statistics and about the seriousness of the opioid problem with more than 18.08 people out of every 100,000 dying of opioid overdose in 2017. She also learned that, while there are some effective policies for reducing opioid use, not all states have adopted these policies. However, she is keeping in mind that the assumptions that they made about states being independent and the continuous nature of the deaths variable need more attention before adopting the conclusions from today as facts. As she starts to learn more about how to use statistics from samples to learn about populations, Leslie thinks she will be better able to contribute to the research on all of these tricky problems. She starts to review the concepts from the day while Nancy and Kiara put together a brief summary and some tasks to work on. 
 
-### Unlocking achievement 6: Check your understanding
+### unlock achievement 6: Check your understanding
 
 Describe what a confidence interval is in your own words. 
 

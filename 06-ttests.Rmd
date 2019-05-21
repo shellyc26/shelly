@@ -314,7 +314,7 @@ H0: There is no difference in mean systolic blood pressure for males and females
 
 HA: There is a difference in mean systolic blood pressure for males and females in the US population 
 
-#### NHST Step 2: Compute the test statistic 
+#### NHST Step 2: Compute the test statistic {#indepttest.tval}
 
 The test statistic for the independent samples t-test is a little more complicated to calculate since it now includes the means from both the groups in the numerator and the standard errors from the groups in the denominator. In the formula, $\bar{x_1}$ is the mean of one group and $\bar{x_2}$ is the mean of the other group; the difference between the means makes up the numerator. So, the larger the difference between the group means, the larger the numerator will be and the larger the $t$-statistic will be!
 
@@ -350,7 +350,7 @@ $$
 
 After watching Leslie substitute in the values and do the math, Nancy types a line of code:
 
-```{r}
+```{r indepttest.ch6}
 # compare systolic blood pressure for males and females
 t.test(formula = nhanes.2016.cleaned$systolic ~ nhanes.2016.cleaned$sex)
 ```
@@ -537,7 +537,7 @@ descriptions:
 
 ## Achievement 5: Computing and interpreting an effect size for significant t-tests
 
-Leslie thinks that the small differences between means being statistically significant suggests that reporting statistical significance might be misleading. She thinks that, especially where differences between means are small, it would be useful to have something to report that is about the size of the difference or the strength of the relationship. Kiara explains that what she is looking for is called **effect size** and it gives some idea of how strong a statistically significant relationship is [@sullivan2012using]. That is, a difference in mean systolic blood pressure of .54 is *statistically significant* but is it really a big enough difference to suggest that one group is different from the other in an important way? 
+Leslie thinks that the small differences between means being statistically significant suggests that reporting statistical significance might be misleading. She thinks that, especially where differences between means are small, it would be useful to have something to report that is about the size of the difference or the strength of the relationship. Kiara explains that what she is looking for is called **effect size** and it gives some idea of how strong a statistically significant relationship is [@sullivan2012using]. That is, a difference in mean systolic blood pressure of .54 is *statistically significant* but is it really a big enough difference to suggest that one group is different from the other in an important way? Kiara mentions that some people have argued that effect sizes are even more important than p-values since p-values only report whether a difference or relationship from a sample is likely to be true in the population, while effect sizes provide information about the strength or size of a difference or relationship [@sullivan2012using; @fritz2012effect]. In addition, in analyses of large samples, p-values usually reach statistical significance, even for very small differences and very weak relationships [@sullivan2012using].
 
 The effect size statistic usually reported with a t-test is **Cohen's d**. Like standardized residuals with chi-squared analyses, **Cohen's d** is computed when the test results are **statistically significant**. Cohen's $d$ can be computed for each t-test using a slightly different formula that works for the research question being examined. Kiara shows Leslie the three formulas and Nancy contributes the R code for each test. Before they begin, Kiara wants to explain how the value of $D$ is classified: 
 
@@ -579,7 +579,7 @@ Leslie adds the effect size to the interpretation of results from the one-sample
 
 > The mean systolic blood pressure in a sample of 7,145 people was 120.5 (sd = 18.62). A one-sample t-test found this mean to be statistically significantly different from the hypothesized mean of 120 [t(7144) = 2.45; p = .014]. The sample likely came from a population with a mean systolic blood pressure higher than 120. While the sample mean was statistically significantly different from 120, the difference was relatively small with a small effect size of $d = .03$. 
 
-### Cohen's d for independent samples t-tests 
+### Cohen's d for independent samples t-tests {#d.indep.ttest}
 
 The formula for $Cohen's d$ for an independent samples t-test is [@salkind2010encyclopedia]:
 
@@ -997,7 +997,7 @@ Group 2:
 
 $$
 \begin{equation}
-U_1=n_1{n_2}+\frac{n_2(n_2+1)}{2}-\sum{R_2}
+U_2=n_1{n_2}+\frac{n_2(n_2+1)}{2}-\sum{R_2}
  (\#eq:mannwhit2)
 \end{equation}
 $$
@@ -1030,8 +1030,9 @@ As if the similar process was not confusing enough, this test is also called the
 
 ```{r}
 # test the distribution of systolic by sex
-wilcox.test(nhanes.2016.cleaned$systolic ~ nhanes.2016.cleaned$sex,
+u.syst.by.sex <- wilcox.test(nhanes.2016.cleaned$systolic ~ nhanes.2016.cleaned$sex,
             paired = FALSE)
+u.syst.by.sex
 
 ```
 
@@ -1041,7 +1042,7 @@ The p-value is shown in scientific notation in the output as $<2.2e-16$ which is
 
 #### Steps 4 & 5:  Interpret the probability and write a conclusion 
 
-A Mann-Whitney U test comparing systolic blood pressure for males and females in the US found a _statistically significant difference_ between the two groups (W = 7,186,882; p < .05). Histograms demonstrate the differences with notably more females at the lower end with systolic blood pressure below 100 compared to males along with some other differences between the distributions.
+Leslie reviews the distribution one more time writes the final conclusion:
 
 ```{r fig.cap="Distribution of systolic blood pressure in mmHg for 2015-2016 NHANES participants."}
 # graph systolic bp by sex
@@ -1054,6 +1055,64 @@ nhanes.2016.cleaned %>%
        y="NHANES participants") 
   
 ```
+
+> A Mann-Whitney U test comparing systolic blood pressure for males and females in the US found a _statistically significant difference_ between the two groups (W = 7,186,882; p < .05). Histograms demonstrate the differences with notably more females at the lower end with systolic blood pressure below 100 compared to males along with some other differences between the distributions.
+
+### Effect size for Mann-Whitney U
+
+She is curious as to whether these alternative tests have effect sizes like the t-test did. Kiara says one effect size that can be used with Mann-Whitney U is $r$ [@fritz2012effect], which is computed using the $z$ statistic from the Mann-Whitney $U$ test and dividing by the square root of the sample size:
+
+$$
+\begin{equation}
+r=\frac{z}{\sqrt{n}}
+ (\#eq:mannwhiteffect)
+\end{equation}
+$$
+
+For the current analysis, the effect size for the comparison of male and female systolic blood pressure can be determined using the $z$ from the $U$ test. Unfortunately, the `u.syst.by.sex` object does not include the $z$ statistic used to determine the p-value. Fortunately, Nancy knows a super secret way to get z-statistics from p-values! She introduces the team to `qnorm()`, which finds the z-score that corresponds to a given p-value. 
+
+```{r}
+# use qnorm to find z from p-value
+qnorm(u.syst.by.sex$p.value)
+```
+
+The z-score is negative and a large value. Because effect size is about the size or strength and not the direction (positive or negative) of a relationship, the absolute value can be used to get the effect size $r$ with the sample size from earlier (see Section \@ref(indepttest.tval)):
+
+
+$$
+\begin{equation}
+r=\frac{9.280266}{\sqrt{7145}}=.110
+ (\#eq:mannwhiteffect2)
+\end{equation}
+$$
+
+Consistent with the effect size from the t-test comparing males and females (see Section \@ref(d.indep.ttest)), this is a pretty small effect size, with $r$ effects being classified as:
+
+* $r$ = .1 to $r \lt$ .3 is small 
+* $r$ = .3 to $r \lt$ .5 is medium 
+* $r \ge$ .5 is large 
+
+As usual, Nancy has some R code to use instead of the hand calculations, although she notes that the code is a little tricky this time because the value of $n$ used in the calculations is the entire $n$ without considering the missing values. Leslie asks how she knows this and Nancy shows her the help documentation, which has a section with extra details about the test (Figure \@ref(fig:mannr.details)).
+
+```{r mannr.details, echo = FALSE, fig.cap="wilcoxonR help documentation Details section."}
+knitr::include_graphics("graphics/chap6-ind-ttest-effsize-help.JPG")
+```
+
+Leslie asks Nancy how they should deal with this? Nancy suggests that they install the <span style="font-family:Lucida Console, monospace;font-weight:bold">rcompanion</span> package first, then create a new data frame without the NA values for systolic, and use the new data frame with the `wilcoxonR()` command to get the $r$. Leslie sighs and installs the new package. Then she writes the code:
+
+```{r}
+# new data frame with no NA
+nhanes.2016.cleaned.noNA <- nhanes.2016.cleaned %>%
+  drop_na(systolic)
+
+# use new data frame to get r
+rcompanion::wilcoxonR(x = nhanes.2016.cleaned.noNA$systolic, 
+                      g = nhanes.2016.cleaned.noNA$sex)
+```
+
+The value is consistent with the hand calculations and they all breathe a sigh of relief. That was a tricky one! Leslie adds the effect size to the full interpretation:
+
+> A Mann-Whitney U test comparing systolic blood pressure for males and females in the US found a _statistically significant difference_ between the two groups (W = 7,186,882; p < .05). Histograms demonstrate the differences with notably more females at the lower end with systolic blood pressure below 100 compared to males along with some other differences between the distributions. The effect size was small, ($r$ = .11), indicating a weak relationship between sex and systolic blood pressure.
 
 ### Alternative when the independent-samples t-test variance assumption fails: The Kolmogorov-Smirnov (or KS) test
 
@@ -1116,9 +1175,9 @@ nhanes.2016.cleaned %>%
   
 ```
 
-At the widest gap between these two curves, the cumulative probability of systolic blood pressure for male and female are .11 apart, giving a test statistic of D = .11. The probability of getting a test statistic this large or larger is determined by examining the KS distribution. In this case, the probability of .11 difference between the two was very tiny (p < .05) if the null hypothesis were true, so the difference would be reported as statistically significant.
+At the widest gap between these two curves, the cumulative probability of systolic blood pressure for male and female are .11 apart, giving a test statistic of D = .11. The probability of getting a test statistic this large or larger is determined by examining the KS distribution. In this case, the probability of .11 difference between the two was very tiny (p < .05) if the null hypothesis were true, so the difference between the distributions for males and females would be reported as statistically significant. Leslie rolls her eyes. Kiara explains that it is good to have some awareness of what statistical tests are actually doing, but that details like what the ECDF is showing are not important for the final reporting of the statistical test.
 
-Leslie writes the final interpretation:
+Leslie thinks that sound about right and asks if there is an effect size to consider for the KS test. Kiara says that she read on a message board that the KS $D$ statistic could be used as an effect size in addition to using it for significance testing, but that she could not find any published papers or book chapters to confirm this, so she thinks just using descriptive information and graphs are probably the best approach. Leslie agrees and writes the final interpretation:
 
 > A KS test comparing systolic blood pressure for males and females found a statistically significant difference between the two groups (D = .11; p < .05). This sample likely came from a population where males and females had different systolic blood pressure.
 
@@ -1281,6 +1340,6 @@ wilcox.test(formula = nhanes.2016.cleaned$systolic ~ nhanes.2016.cleaned$sex)
 There may be other ways of reading the `~`, but for this chapter and the next few chapters, try these two choices. Use the help documentation by typing `?tilde` at the R prompt to learn more. 
 
 
-> Gamification idea for Chapter 6: Performance on student work in the achievements unlocked, are you a coder or hacker, and chapter exercises in this chapter could be included as part of earning a continuous data analysis badge. Combine scores from this chapter and chapters 10 and 11. Set thresholds for earning a bronze, silver, or gold badge. Integrate badge earnings into Blackboard or other platforms students use to share their portfolios and achievements with prospective employers or degree programs. Create a class contest for students to create a decision tree for choosing descriptive and bivariate statistics depending on variable type and assumptions. Students can work as individuals or groups. Decision trees are posted online and the class votes for the "best" decision tree. The individual or group responsible gets additional points for the chapter 6 exercises. 
+
 
 

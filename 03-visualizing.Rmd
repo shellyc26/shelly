@@ -1401,7 +1401,7 @@ gridExtra::grid.arrange(line.gun.manu,
 
 There are clearly better options depending on the data for graphing the relationship between two continuous or numeric variables. Line graphs are useful to show change over time or to graph data with little variation. Scatterplots are better for when there is some variation in the relationship between the two variables. Nancy thinks they are done with graphs, but Kiara has one more thing she wants to discuss. Because graphs are such an important part of communicating data, it is extremely important that they are well-formatted. Formatting graphs well is also key for making sure your work is reproducible.
 
-### Unlocking achievement 3: Check your understanding
+### unlock achievement 3: Check your understanding
 
 Plot an appropriate graph to show the relationship between transgender status and the number of unhealthy days. Explain why you chose this graph and not the others available.
 
