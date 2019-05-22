@@ -737,7 +737,7 @@ A standardized residual of -3.56 would indicate:
 
 ## Achievement 7: Computing and interpreting effect sizes to understand the strength of a significant chi-squared relationship
 
-### Computing the Cramer's V statistic
+### Computing the Cramer's V statistic {#cramersv}
 
 Now that Leslie can determine if two categorical variables are related and what might be driving that relationship, Kiara thinks of one more detail about chi-squared that is useful. While the voting data show a relationship between preference on ease of voting and race ethnicity category, it is not clear how strong the relationship is. Kiara explains that the strength of a relationship in statistics is referred to as _effect size_. For $\chi^2$ there are a few options, including the commonly used effect size statistic of _Cramer's V_ [@kim2017statistical]. The $V$ statistic is computed:
 
