@@ -1,79 +1,94 @@
-# Correlations
+# The R team covers correlations
+
+So far the team has discussed $\chi^2$ and its alternatives, t-tests and their alternatives, and ANOVA and its alternatives. These methods are useful for when they encounter a question that can be answered by examining the relationship between two categorical variables ($\chi^2$) or between a continuous variable and one or two categorical variables (t-tests, ANOVA). Variations on these tests can also be useful for comparing one continuous variable or one categorical variable to a hypothesized or population value. Leslie is impressed! This is a lot of tests to have learned already. 
+
+Leslie has noticed some patterns emerging for an analysis plan that works across all the statistical tests: 
+
+* import and clean the data (e.g., check missing values, add labels to categories, rename variables for easier use)
+* conduct descriptive and visual exploratory data analysis to get familiar with the data 
+* choose the test that fits the data types to answer your research question 
+* check the assumptions to make sure the test is appropriate 
+* use the NHST process conduct the test or an alternative test if assumptions are not met 
+* if the test results find a statistically significant relationship, follow up with post-hoc tests, effect size calculations, or other strategies for better understanding the relationship  
+
+Kiara likes this list and thinks it will be a useful way to organize their remaining statistics days. Nancy is ready to get started on correlation and has created a list of achievements to get them started.
 
 ## Achievements to unlock
 
-Leslie notes that the remaining two-variable situation is when there are two continuous variables. Chelsea creates an outline for learning about *correlation* analyses: 
+By the end of their correlation day, the team will have discussed:
 
-* Achievement 1: Using graphics to make a prediction 
-* Achievement 2: Computing and interpreting Pearson's r correlation coefficient 
-* Achievement 3: Inference and correlation coefficients 
-* Achievement 4: The coefficient of determination 
-* Achievement 5: Assumption checking for correlation analyses 
-* Achievement 6: Spearman's rho correlation coefficient 
-* Achievement 7: Partial correlations 
+* Achievement 1: Using graphics and descriptive statistics to make a prediction 
+* Achievement 2: Computing and interpreting Pearson’s r correlation coefficient 
+* Achievement 3: Conducting an inferential statistical test for Pearson’s r correlation coefficient 
+* Achievement 4: Examining effect size for Pearson’s r with the coefficient of determination 
+* Achievement 5: Checking assumptions for Pearson’s r correlation analyses 
+* Achievement 6: Transforming the variables as an alternative when Pearson's $r$ correlation assumptions are not met  
+* Achievement 7: Using Spearman's rho as an alternative when Pearson's $r$ correlation assumptions are not met 
+* Achievement 8: Briefly introducing partial correlations 
 
-Follow Chelsea, Bobbi, and Leslie through the examples and exercises to test some relationships.
+Follow Nancy, Kiara, and Leslie through the examples and exercises to test some relationships.
 
 ## The clean water problem
 
-Chelsea has been reading about the lack of access to clean water and sanitation worldwide and how this impacts people living in poverty and poor women and girls in particular. Specifically, women and girls tend to be responsible for collecting water for their families, often walking long distances in unsafe areas and carrying heavy loads. Lack of access to sanitation facilities also, in some cultures, means that women can only defecate after dark, which is physically uncomfortable or dangerous and puts them at greater risk for harassment and assault. The lack of sanitation facilities also keeps girls out of school when they are menstruating in many parts of the world. Bobbi has worked with World Health Organization data and knows they track water access and sanitation globally. She looks online and finds that the United Nations Educational, Scientific, and Cultural Organization (UNESCO) tracks education rates by sex globally. 
+Nancy has been reading about the lack of access to clean water and sanitation worldwide and how this impacts people living in poverty and poor women and girls in particular [@thompson2011fetching; @warrington2012makes]. Specifically, women and girls tend to be responsible for collecting water for their families, often walking long distances in unsafe areas and carrying heavy loads [@devnarain2011poor; @thompson2011fetching]. Lack of access to sanitation facilities also, in some cultures, means that women can only defecate after dark, which is physically uncomfortable or dangerous and puts them at greater risk for harassment and assault. The lack of sanitation facilities also keeps girls out of school when they are menstruating in many parts of the world [@sommer2010education]. Kiara has worked with World Health Organization data and knows they track water access and sanitation globally. She looks online and finds that the United Nations Educational, Scientific, and Cultural Organization (UNESCO) tracks education rates by sex globally. Together these two data sources might allow an exploration of the relationship the education of girls and water access and sanitation.  
 
 ### Examining the relationship with a scatterplot 
 
-After merging these two data sources, Bobbi puts together a graph showing the percent of females in school during primary and secondary school and the percent of the population with basic access to water:
+While the data are interesting, the data sources are in formats online that are not easy to manage. Kiara spends some time downloading and merging the two data sources (see \@ref(ch7kiara)) so the team can work with them more easily. After merging these two data sources, Kiara sends the data to Nancy, who puts together a graph showing the percent of females in school during primary and secondary school and the percent of the population with basic access to water. She uses a **scatterplot**, which is a common way to visualize the relationship between two continuous variables.
 
-```{r echo = FALSE, message=FALSE, warning=FALSE, fig.cap = "Relationship between percent of females educated and percent of citizens with water access in countries worldwide."}
+Leslie asks Nancy if these variables really count as continuous? Nancy explains that they can take any value between 0 and 100, so they fit the definition of any value along a continuum, however, the range of values is limited and variables that are percents often have many observations at the **ceiling** and **floor** values of 100 and 0. Having many ceiling and floor values often results in failing the assumptions underlying most analytic strategies for continuous variables. Leslie remembers the data for the ANOVA analysis having a lot of 0 and 100 values and failing the assumptions of normality and homogeneity of variances (see Section \@ref(assumptanova)), so this makes sense. Leslie does a little research and finds that there are a number of alternative ways these data could be analyzed (see Box \@ref(ch8leslie)), but there is no **one right way**, so she suggests that they proceed with using the percent data for the correlation analyses. 
+
+```{r echo=FALSE, fig.cap = "Relationship between percent of females educated and percent of citizens with water access in countries worldwide."}
+# import data
+water.educ <- read.csv(file = "data/water_educ_2015_who_unesco_ch8.csv")
+
+# open tidyverse 
 library(tidyverse)
-waterData <- read_csv(file = "data/waterData.csv")
 
-# explore plot of female education and water
-ggplot(data = waterData, aes(y = female.in.school/100, x = perc.basic2015water/100)) + 
-  geom_point(size = 2, colour = "#88398a") + 
+# plot of female education and water access
+water.educ %>%
+  ggplot(aes(y = female.in.school, x = perc.basic2015water)) + 
+  geom_point(size = 2, colour = "#7463AC") + 
   theme_minimal() + 
   labs(y = "Percent of females in school (primary & secondary)",
-       x = "Percent with access to basic water") +
-  scale_x_continuous(labels = scales::percent) +
-  scale_y_continuous(labels = scales::percent)
+       x = "Percent with access to basic water") 
 
 ```
 
-Chelsea and Bobbi ask Leslie to describe what she is seeing in the graph. Leslie sees that the percentage with basic access to water ranges from just below 40% to 100% and the percent of females in school ranges from around 30% to 100%. She notes that it looks like the percent of females in school increases as the percentage of people with access to water in a country increases. 
+Nancy and Kiara ask Leslie to describe what she is seeing in the graph. Leslie sees that the percent of people with basic access to water ranges from just below 40% to 100% and the percent of females in school ranges from around 30% to 100%. She notices that it looks like the percent of females in school increases as the percentage of people with access to water in a country increases. She also sees what looks like a bunch of values at the ceiling of the water access variable, but no problem with floor values and few ceiling values for the percent of females in school variable.
 
 ### Interpreting the scatterplot 
 
-Chelsea explains that the pattern in the graph could indicate that there is a relationship, or _correlation_ between the two variables. Specifically, she says, if one variable goes up as the other one goes up, the relationship between the two could be a _positive correlation_. Leslie asks if there is such a thing as a negative correlation. Chelsea shows her the relationship between the percent of people with basic access to water and the percent of people living on less than one dollar per day:
+Nancy explains that the pattern in the graph could indicate that there may be a relationship, or **correlation** between the two variables. Specifically, she says, if one variable goes up as the other one goes up, the relationship between the two could be a **positive correlation**. Leslie asks if there is such a thing as a negative correlation. Nancy shows her the relationship between the percent of people with basic access to water and the percent of people living on less than one dollar per day:
 
-```{r fig.cap = "Relationship between percent living on less than one dollar per day and percent with water access in countries worldwide"}
-# explore plot of poverty and water
-ggplot(data = waterData, aes(y = perc.1dollar/100, x = perc.basic2015water/100)) + 
-  geom_point(size = 2, colour = "#88398a") + 
+```{r echo=FALSE, fig.cap = "Relationship between percent living on less than one dollar per day and percent with water access in countries worldwide."}
+# plot of poverty and water access
+water.educ %>% 
+  ggplot(aes(y = perc.1dollar, x = perc.basic2015water)) + 
+  geom_point(size = 2, colour = "#7463AC") + 
   theme_minimal() + 
   labs(x = "Percent with basic access to water",
-       y = "Percent living on less than $1 per day") +
-  scale_x_continuous(labels = scales::percent, limits = c(.35,1)) +
-  scale_y_continuous(labels = scales::percent)
+       y = "Percent living on less than $1 per day")
 
 ```
 
-Leslie notices that the pattern of points flows in a different direction, from the top left to the bottom right. As the  percent of people with access to water increases, it looks like the percent of people living on less than $1 day decreases. As the values of one variable go up, the values of the other one go down. Chelsea explains that this shows a negative relationship, or _negative correlation_ between the two variables.
+Leslie notices that the pattern of points goes in a different direction, from the top left to the bottom right. As the  percent of people with access to water increases, it looks like the percent of people living on less than $1 day decreases. As the values of one variable go up, the values of the other one go down. This time there appears to be fewer points that that are at the ceiling or floor values. Nancy explains that this shows a negative relationship, or **negative correlation** between the two variables.
 
-Leslie asks if there is such thing as a correlation that is neither _positive_ nor _negative_. Chelsea explains that correlations are either positive or negative. A correlation of 0 would suggest that there is no relationship between two variables. 
+Leslie asks if there is such thing as a correlation that is neither _positive_ nor _negative_. Nancy explains that correlations are either positive or negative. A correlation of 0 would suggest that there is *no relationship* or *no correlation* between two variables [@mukaka2012guide]. 
 
-## Achievement 1: Using graphics to make a prediction
+## Achievement 1: Using graphics and descriptive statistics to make a prediction
 
-Leslie wants to examine not only water but also basic sanitation, poverty, and the education levels of female and males citizens in countries around the world. Bobbi explains that the data for the graphs above came from the World Health Organization (WHO) and United Nations Educational, Scientific and Cultural Organization (UNESCO). The WHO data on access to basic or safe sanitation and basic or safe water is in the Global Health Observatory data repository. The data in this repository are saved in several formats including Excel files, comma separated values (CSV) files, and other options. Of the options, the CSV files are the easiest to import into R, so Bobbi suggests Lesle start with the CSV file for basic and safely managed drinking water services by country. The tidyverse package has a `read_csv()` command that is useful for bringing in CSV data:
+Leslie wants to examine not only water but also basic sanitation, poverty, and the education levels of female and males citizens in countries around the world. Kiara explains that the data for the graphs above came from the World Health Organization (WHO) and United Nations Educational, Scientific and Cultural Organization (UNESCO). The WHO data on access to basic or safe sanitation and basic or safe water is in the Global Health Observatory data repository. The data in this repository are saved in several formats including Excel files, comma separated values (CSV) files, and other options. Of the options, the CSV files are the easiest to import into R, so Kiara suggests Lesle start with the CSV file for basic and safely managed drinking water services by country. The `read.csv()` function is useful for bringing in CSV data. Follow along with the example by downloading the **water_educ_2015_who_unesco_ch8.csv** data from edge.sagepub.com/harris1e or using the more reproducible method in Box \@ref(ch8nancy).
 
 ```{r}
-# open the tidyverse package
-library(tidyverse)
-
 # import the water data
-waterData <- read_csv("data/waterData.csv")
-summary(waterData)
+water.educ <- read.csv(file = "data/water_educ_2015_who_unesco_ch8.csv")
 
+# examine the data
+summary(object = water.educ)
 ```
 
-Reviewing the final data frame in the Environment pane shows `r nrow(waterData)` countries and `r length(waterData)` variables. The variables included in the data frame are:
+Reviewing the data frame in the Environment pane shows `r nrow(water.educ)` countries and `r length(water.educ)` variables. The variables included in the data frame are:
 
 * country: the name of the country 
 * med.age: the median age of the population in the country 
@@ -84,16 +99,19 @@ Reviewing the final data frame in the Environment pane shows `r nrow(waterData)`
 * perc.safe2015water: percentage of the population with safe water access 
 * perc.in.school: percentage of school-age people in primary and secondary school  
 * female.in.school: percentage of female school-age people in primary and secondary school 
-* male.in.school: percentage of female school-age people in primary and secondary school  
+* male.in.school: percentage of female school-age people in primary and secondary school 
+
+The data are all from 2015.
 
 ### Make a scatterplot to examine the relationship
 
-Leslie uses `ggplot2()` to re-create one of the graphs from above. She uses the `scale_x_continuous()` and `scale_y_continuous()` to change the scale on the x-axis and y-axis so that it shows percentages. To use these scales, Bobbi shows Leslie that she needs to divide the percentages by 100 to get a decimal percentage for use with the `labels = scales::percent` option for the two axes.
+Leslie uses `ggplot2()` to re-create one of the graphs from above. She asks Nancy about adding percent signs to the axes. Nancy introduces her to some new layers for `ggplot()`, the `scale_x_continuous()` and `scale_y_continuous()` layers with the `label =` argument can be used to change the scale on the x-axis and y-axis so that it shows percents. To use these scales, Kiara shows Leslie that she needs to divide the percents by 100 to get a decimal version of the percent for use with the `labels = scales::percent` option.
 
-```{r fig.cap = "Relationship of percent of females educated and percent of citizens with water access in countries worldwide."}
+```{r fig.cap = "Relationship of percent of females in school and percent of citizens with water access in countries worldwide."}
 # explore plot of female education and water access
-ggplot(data = waterData, aes(y = female.in.school/100, x = perc.basic2015water/100)) + 
-  geom_point(size = 2, colour = "#88398a") + 
+water.educ %>%
+  ggplot(aes(y = female.in.school/100, x = perc.basic2015water/100)) + 
+  geom_point(size = 2, colour = "#7463AC") + 
   theme_minimal() + 
   labs(y = "Percent of females in school (primary & secondary)",
        x = "Percent with access to basic water") +
@@ -112,51 +130,148 @@ A positive correlation between two variables is when:
 * one variable increases when the other decreases 
 * a good results is obtained after some treatment
 
-## Achievement 2: Computing and interpreting the r correlation coefficient {#corr}
+## Achievement 2: Computing and interpreting Pearson's r correlation coefficient {#corr}
 
 ### Computing and interpreting the covariance between two variables 
 
-Chelsea says they are ready to start computing the correlation statistic now. She explains that the relationship between two variables can be checked in a few different ways. The first method is covariance, which measures whether two variables vary together (co-vary) using this formula:
+Nancy says they are ready to start computing the correlation statistic now. She explains that the relationship between two variables can be checked in a few different ways. The first method is covariance, which measures whether two variables vary together (co-vary) using this formula:
 
+$$
 \begin{equation} 
-\[
 cov_{xy}=\frac{{\sum_{i=1}^n}(x_i-\bar{x})(y_i-\bar{y})}{n-1}
-\]
+ (\#eq:cov)
 \end{equation}
+$$
 
-Leslie examines the formula. The numerator adds up how far each point is away from the mean values of the two variables. The denominator divides this by _n - 1_, which is close to the sample size, basically finding the average deviation from the means for one observation.
+Leslie examines the formula. She sees the summation from the first observation in the data, $i=1$ to the last observation in the data set, $n$. The sum is of the product of (1) the difference between each individual observation value for the first variable $x_i$ and the mean of that variable $\overline{x}$ and the same thing for the second variable, $y$. The numerator essentially adds up how far each observation is away from the mean values of the two variables being examined, so this ends up being a very large number quantifying how far away all the observations are from the mean values. The denominator divides this by $n - 1$, which is close to the sample size, essentially finding the average deviation from the means for one observation.
 
-If the covariance is a positive number, there is a positive relationship between the two variables. Female education and basic water access appeared to have a positive relationship; the covariance can help quantify it. Note that the _covariance_ command is like the `mean()` command in that it needs to know what to do with missing values. In this case, instead of `na.rm =`, the `cov()` command uses `use =` to determine which values to use. See the help documentation for information on all the possible options for `use =`.
+If the numerator is positive, the covariance will be positive, representing a positive relationship between two variables. This happens when many of the observations have $x$ and $y$ values that are either:
 
-```{r}
-# covariance of percent females in school and 
-# percent with basic access to drinking water
-cov(x = waterData$perc.basic2015water, 
-    y = waterData$female.in.school, 
-    use = 'complete')
+* both higher values than the mean, or 
+* both lower than the mean 
+
+When $x_i$ and $y_i$ are **both** greater than $\overbar{x}$ and $\overbar{y}$, respectively, the contribution of that observation to the numerator of Equation \@ref(eq:cov) is a positive amount. Likewise, when $x_i$ and $y_i$ are **both** less than $\overbar{x}$ and $\overbar{y}$, respectively, the contribution of that observation to the numerator of Equation \@ref(eq:cov) is also a positive amount because multiplying two negatives results in a positive. Nancy thinks a visual might help here and she revises the graph with lines showing the means of $x$ and $y$ and highlighting the points where $x$ and $y$ are both either above or below $\overline{x}$ and $\overline{y}$. Leslie notices that there are a lot more points that are green than purple in Figure \@ref(fig:poscor), which is consistent with the positive value of the covariance. The green observations contribute positive amounts to the sum in the numerator, while the purple observations contribution negative amounts to the sum in the numerator. Since there are so many more green than purple in the figure, the sum is likely positive and the covariance is positive. 
+
+```{r poscor, echo = FALSE, fig.cap = "Relationship of percent of females in school and percent of citizens with water access in countries worldwide."}
+# explore plot of female education and water access
+water.educ %>%
+  drop_na(female.in.school) %>%
+  drop_na(perc.basic2015water) %>% 
+  mutate(abovebel = (female.in.school > mean(female.in.school) &
+                          perc.basic2015water > mean(perc.basic2015water)) |
+          (female.in.school < mean(female.in.school) &
+                          perc.basic2015water < mean(perc.basic2015water))) %>%
+  ggplot(aes(y = female.in.school/100, 
+             x = perc.basic2015water/100, color = abovebel)) + 
+  geom_point(size = 2) + 
+  geom_hline(aes(yintercept = mean(female.in.school/100), 
+                 linetype = "Females in school"), color = "deeppink") +
+    geom_vline(aes(xintercept = mean(perc.basic2015water/100), 
+                   linetype = "Basic water access"), color = "dodgerblue2", show.legend = FALSE) +
+  theme_minimal() + 
+  labs(y = "Percent of females in school (primary & secondary)",
+       x = "Percent with access to basic water") +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_manual(values = c("#7463AC","#78A678"),
+                     labels = c("No", "Yes"),
+                     name = "x & y both above\nor below mean") +
+  scale_linetype_manual(values = c(2,2),
+                     labels = c("% females in school", "% basic water access"),
+                     name = "Mean",
+                     guide = guide_legend(override.aes = list(color = c("deeppink", "dodgerblue2"))))
+
+
 ```
 
-Leslie is puzzled by the result and asks Chelsea what `r cov(waterData$female.in.school, waterData$perc.basic2015water, use = 'complete')` means with respect to the relationship between percent females in school and basic water access. Chelsea explains that the covariance does not have a useful inherent meaning; it is not a percentage or a sum or a difference. In addition, the size of the covariance depends largely on the size of what is measured. So, for example, something measured in the millions might have a covariance in the millions or hundreds of thousands. The value of the covariance indicates whether there is a relationship at all and whether the relationship is positive or negative. In this case, a non-zero value indicates that there is some relationship and the positive value indicates the relationship is positive.  
+Likewise, if there are more purple dots, there were more negative values contributed to the numerator and the covariance is likely to be negative, like in Figure \@ref(fig:negcor).
+
+```{r negcor, echo = FALSE, fig.cap = "Relationship of percent living on less than $1 per day and percent of citizens with water access in countries worldwide."}
+# explore plot of poverty and water access
+water.educ %>%
+  drop_na(perc.1dollar) %>%
+  drop_na(perc.basic2015water) %>% 
+  mutate(abovebel = (perc.1dollar > mean(perc.1dollar) &
+                          perc.basic2015water > mean(perc.basic2015water)) |
+          (perc.1dollar < mean(perc.1dollar) &
+                          perc.basic2015water < mean(perc.basic2015water))) %>%
+  ggplot(aes(y = perc.1dollar/100, 
+             x = perc.basic2015water/100, color = abovebel)) + 
+  geom_point(size = 2) + 
+  geom_hline(aes(yintercept = mean(perc.1dollar/100), 
+                 linetype = "Percent lt 1 dollar"), color = "deeppink") +
+    geom_vline(aes(xintercept = mean(perc.basic2015water/100), 
+                   linetype = "Basic water access"), color = "dodgerblue2", show.legend = FALSE) +
+  theme_minimal() + 
+  labs(y = "Percent living on less than $1 per day",
+       x = "Percent with access to basic water") +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_manual(values = c("#7463AC","#78A678"),
+                     labels = c("No", "Yes"),
+                     name = "x & y both above\nor below mean") +
+  scale_linetype_manual(values = c(2,2),
+                     labels = c("% females in school", "% living on < $1/day"),
+                     name = "Mean",
+                     guide = guide_legend(override.aes = list(color = c("deeppink", "dodgerblue2"))))
+
+
+```
+
+
+Female education and basic water access appeared to have a positive relationship while poverty and basic water access have a negative relationship; the covariance can help quantify it. Note that the _covariance_ command is like the `mean()` command in that it needs to know how to handle missing values. In the <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span> style, using `drop_na()` for the variables used to compute covariance is one way to ensure that no missing values are included in the calculations. There are other ways to ensure that missing values are treated appropriately, including adding `use = "complete"` to the `cov()` function as an argument, which results in `cov()` using only observations with complete (i.e., non-missing) data on the variables used in the command.  
+
+```{r}
+# covariance of females in school, poverty, and 
+# percent with basic access to drinking water
+water.educ %>%
+  drop_na(perc.basic2015water) %>%
+  drop_na(female.in.school) %>% 
+  drop_na(perc.1dollar) %>%
+  summarize(cov.females.water = cov(x = perc.basic2015water,
+                                    y = female.in.school),
+            cov.poverty.water = cov(x = perc.basic2015water,
+                                    y = perc.1dollar))
+
+```
+
+Leslie is puzzled by the result and asks Kiara what `r cov(water.educ$female.in.school, water.educ$perc.basic2015water, use = 'complete')` means with respect to the relationship between percent females in school and basic water access. Nancy explains that the covariance does not have a useful inherent meaning; it is not a percentage or a sum or a difference. In addition, the size of the covariance depends largely on the size of what is measured. So, for example, something measured in the millions might have a covariance in the millions or hundreds of thousands. The value of the covariance indicates whether there is a relationship at all and the direction of the relationship, that is, whether the relationship is positive or negative. In this case, a non-zero value indicates that there is some relationship and the positive value indicates the relationship is positive.  
 
 ### Computing the Pearson's r correlation between two variables 
 
-Leslie is not impressed, but Chelsea lets her know that the covariance is not usally the metric that is used to quantify spread. Instead the covariance is standardized by dividing by the standard deviations of the two variables involved, denoted x and y. The result is called a correlation coefficient:
+Leslie is not impressed, but Kiara lets her know that the covariance is not usally the metric that is used to quantifies a relationship between two continuous variables. Instead the covariance is **standardized** by dividing it by the standard deviations of the two variables involved [@falk1997many]. The result is called the correlation coefficient and is referred to as $r$:
 
+$$
 \begin{equation} 
-\[
-r_{xy}=\frac{{\sum_{i=1}^n}(x_i-\bar{x})(y_i-\bar{y})}{(n-1){s_x}{s_y}}
-\]
-\end{equation} 
+r_{xy}=\frac{cov_{xy}}{{s_x}{s_y}}
+ (\#eq:cor)
+\end{equation}
+$$
 
-This version of the correlation coefficient is called Pearson's r and can range from -1 (a perfect negative relationship) to 0 (no relationship) to 1 (a perfect positive relationship). 
+Kiara explains that this correlation coefficient is called Pearson's $r$ after Karl Pearson who incorporated an idea from Francis Galton and a mathematical formula from Auguste Bravais into one of the more commonly used statistics [@stanton2001; @zou2003correlation]. Pearson's $r$ can range from -1 (a perfect negative relationship) to 0 (no relationship) to 1 (a perfect positive relationship) [@garner2010joy; @falk1997many]. 
 
-### Interpreting the direction of the correlation 
+Leslie notices that her book calls Pearson's $r$ something else, the Pearson's **product-moment** correlation coefficient. Kiara says she has seen this before too and looked it up a while ago to see if she could figure out what the heck a **product-moment** is. In her reading, she found that **moment** was another term for the mean and a **product-moment** is a term for the mean of some products [@garner2010joy]. Leslie notices that Equation \@ref(eq:cor) does not seem to show the mean of some products. Kiara thinks she might know why. The formula for $r$ can be organized in many different ways, one of which is as the mean of the summed products of z-scores (see Section \@ref(zscore)) from $x$ and $y$. Kiara writes out this alternate version of the $r$ calculation that fits better with the product-moment language:  
+
+$$
+\begin{equation} 
+r_{xy}=\frac{{\sum_{i=1}^n}z_x\cdot{z_y}}{n-1}
+ (\#eq:corz)
+\end{equation}
+$$
+
+This makes more sense to Leslie in terms of using the product-moment terminology because it is the product of the $z$ scores. Kiara says they could show with some algebra how Equation \@ref(eq:cor) and Equation \@ref(eq:corz) are equivalent but Leslie is satisfied with just believing Kiara on this one and is ready to move ahead. She does think that using *Pearson's product-moment correlation coefficient* instead of $r$ or correlation is so long that it is borderline silly. Kiara and Nancy agree.
+
+### Interpreting the direction of the Pearson's product-moment correlation coefficient 
+
+Leslie writes out her current understanding of how Pearson's product-moment correlation coefficient values work:
 
 * _Negative correlations_ are when one variable goes up, the other goes down  
 * _No correlation_ is when there is no discernable pattern in how two variables vary  
 * _Positive correlations_ are when one variable goes up, the other also goes up (or when one goes down the other does too); both variables move together in the same direction  
 
-```{r echo=FALSE}
+Nancy creates a simple visual to solidify the concept for the team:
+
+```{r echo=FALSE, fig.cap = "Graphs showing positive, negative, and no correlation."}
 x <- c(1,2,3,4,5,6,7,8,9)
 y <- 1.4*x
 z <- -1.4*x
@@ -168,13 +283,14 @@ plot(x,y, main="positive")
 
 ```
 
-Leslie graphs the relationship between female education and basic water access again and uses the geom_smooth option to add a line to show the relationship. With the line added, the relationship seems to be positive:
+Nancy suggests that adding a line to their graphs to capture the relationship might be useful in better understanding Leslie graphs the relationship between female education and basic water access again and adds a `geom_smooth()` layer to add a line for showing the relationship between female education and water access. The `geom_smooth()` layer requires a few arguments to get a useful line. The first argument is `method =` which is the method used for drawing the line. In this case, Nancy uses the `lm` method, with `lm` standing for **linear model**. Leslie looks confused and Kiara explains that they have not yet covered linear models, so just go with it for now and it will become more clear next time they meet. While that seems unsatisfying to Leslie, adding the line does seem to clarify that the relationship between female education and water access is positive:
 
-```{r fig.cap = "Relationship of percent of females educated and percent of citizens with water access in countries worldwide."}
+```{r corfeduc, fig.cap = "Relationship of percent of females educated and percent of citizens with water access in countries worldwide."}
 # explore plot of female education and water
-ggplot(data = waterData, aes(y = female.in.school/100, x = perc.basic2015water/100)) + 
-  geom_smooth(method = "lm", se = FALSE, colour = "#88398a") +
-  geom_point(size = 2, colour = "gray") + 
+water.educ %>%
+  ggplot(aes(y = female.in.school/100, x = perc.basic2015water/100)) + 
+  geom_smooth(method = "lm", se = FALSE, colour = "#78A678") +
+  geom_point(size = 2, colour = "#7463AC") + 
   theme_minimal() + 
   labs(y = "Percent of females in primary and secondary school",
        x = "Percent with basic access to water") +
@@ -183,250 +299,395 @@ ggplot(data = waterData, aes(y = female.in.school/100, x = perc.basic2015water/1
 
 ```
 
-A correlation coefficient computed with the `cor()` command can help to quantify the relationship:
+Nancy is excited to show a new function and computes $r$ using `cor()`. Like `cov()`, the `cor()` function uses complete data, so the missing values need to be removed or addressed somehow. Nancy chooses to remove them to be consistent with their use of <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span>:
 
 ```{r}
-# compute the correlation coefficient
-cor(x = waterData$perc.basic2015water, 
-    y = waterData$female.in.school,  
-    use='complete')
+# correlation between water access and female education
+water.educ %>%
+  drop_na(perc.basic2015water) %>%
+  drop_na(female.in.school) %>% 
+  summarize(cor.females.water = cor(x = perc.basic2015water,
+                                    y = female.in.school))
+
 ```
 
-A correlation of `r round(cor(waterData$female.in.school, waterData$perc.basic2015water, use='complete'), 2)` is positive and strong since 1.0 is the largest positive correlation possible. Chelsea suggests the interpretation would be something like: 
+She finds a positive correlation of `r round(cor(water.educ$female.in.school, water.educ$perc.basic2015water, use='complete'), 2)`, which is consistent with Figure \@ref(fig:corfeduc). Leslie guesses that the interpretation would be something like: 
 
-> The percent of females in school is strongly and positively correlated with the percentage of citizens with basic access to drinking water (r = `r round(cor(waterData$female.in.school, waterData$perc.basic2015water, use='complete'), 2)`). As access to water goes up, education for females also increases.
+> The Pearson's product-moment correlation coefficient demonstrates that the percent of females in school is positively correlated with the percentage of citizens with basic access to drinking water (r = `r round(cor(water.educ$female.in.school, water.educ$perc.basic2015water, use='complete'), 2)`). Essentially, as access to water goes up, the percent of females in school also increases.
 
-### Interpreting the strength of the correlation 
+Kiara agrees and smiles at Leslie's use of the full name of $r$. Leslie winks at Kiara and they move on.
 
-Bobbi clarifies that correlation strength is about the magnitude, not the direction, of the correlation. While there is no firm cutoff, most explanations will characterize correlation coefficients as: 
+### Interpreting the strength of the Pearson's product-moment correlation coefficient 
 
-* very weak: below .2 
-* weak: .2 to .39
-* moderate: .4 to .59
-* strong: .6 to .79 
-* very strong: .8 to 1 
+Kiara says that $r$ is not only positive, but it also shows a very strong relationship. While there are minor disagreements in the thresholds (see [@mukaka2012guide] and [@zou2003correlation] for an example of the differences), she explains that resources characterize $r$ strength by using threshold values somewhat close to these adapted from [@zou2003correlation]:
+
+* $r = -1.0$ is perfectly negative 
+* $r = -.8$ is strongly negative 
+* $r = -.5$ is moderately negative 
+* $r = -.2$ is weakly negative 
+* $r = 0$ is no relationship 
+* $r = .2$ is weakly positive 
+* $r = .5$ is moderately positive 
+* $r = .8$ is strongly positive 
+* $r = 1.0$ is perfectly positive 
 
 To make sure she understands the general idea, Leslie tries graphing and computing the correlation between poverty and female education:
 
-```{r fig.cap="Relationship of percent of females educated and percent of citizens living on less than one dollar per day in countries worldwide."}
-# explore plot of female education and poverty
-ggplot(data = waterData, aes(y = female.in.school/100, x = perc.1dollar/100)) + 
-  geom_smooth(method = "lm", se = FALSE, colour = "#88398a") +
-  geom_point(size = 2, colour = "gray") + 
+```{r fig.cap="Relationship of percent of people with water access and percent of citizens living on less than one dollar per day in countries worldwide."}
+# explore plot of poverty and water
+water.educ %>%
+  ggplot(aes(y = perc.1dollar/100, x = perc.basic2015water/100)) + 
+  geom_smooth(method = "lm", se = FALSE, colour = "#78A678") +
+  geom_point(size = 2, colour = "#7463AC") + 
   theme_minimal() + 
-  labs(y = "Percentage of females in primary and secondary school",
-       x = "Percent living on less than $1/day") +
+  labs(y = "Percent of people living on < $1 per day",
+       x = "Percent with basic access to water") +
   scale_x_continuous(labels = scales::percent) +
   scale_y_continuous(labels = scales::percent)
 
 ```
 
+Nancy adds the poverty variable to the correlation code she created earlier. She includes both the `drop_na()` for the variable and the `cor()`.
+
 ```{r}
-# compute the correlation coefficient
-cor(x = waterData$perc.1dollar, 
-    y = waterData$female.in.school, 
-    use='complete')
+# correlations between water access, poverty, and female education
+water.educ %>%
+  drop_na(perc.basic2015water) %>%
+  drop_na(female.in.school) %>% 
+  drop_na(perc.1dollar) %>%
+  summarize(cor.females.water = cor(x = perc.basic2015water,
+                                    y = female.in.school),
+            cor.poverty.water = cor(x = perc.basic2015water,
+                                    y = perc.1dollar))
+
 ```
 
-Leslie interprets the graph and correlation coefficient as showing a strong negative relationship between poverty and female education (r = `r round(cor(waterData$female.in.school, waterData$perc.1dollar, use='complete'), 2)`). That is, as poverty goes up, percent of females in school goes down. 
+Leslie notices that the correlation for water access and female education is not as strong. Kiara says that the `drop_na()` for the new variable probably resulted in dropping some observations that were contributing to the correlation between female education and water access. She asks Nancy if they can check the value of $n$ for the original correlation of `r round(cor(water.educ$female.in.school, water.educ$perc.basic2015water, use='complete'), 2)` and for this correlation to see what the difference is. Nancy copies the earlier code and adds the $n$ to `summarize()`:
 
-Chelsea approves of this interpretation and thinks Leslie is ready to move on to conducting inferential correlation analyses. 
+```{r}
+# correlation between water access and female education
+water.educ %>%
+  drop_na(perc.basic2015water) %>%
+  drop_na(female.in.school) %>% 
+  summarize(cor.females.water = cor(x = perc.basic2015water,
+                                    y = female.in.school),
+            n = n())
+
+```
+
+They find that there are 96 countries contributing to this correlation coefficient. Nancy adds the `n()` to the code for both correlations:
+
+```{r}
+# correlations between water access, poverty, and female education
+water.educ %>%
+  drop_na(perc.basic2015water) %>%
+  drop_na(female.in.school) %>% 
+  drop_na(perc.1dollar) %>%
+  summarize(cor.females.water = cor(x = perc.basic2015water,
+                                    y = female.in.school),
+            cor.poverty.water = cor(x = perc.basic2015water,
+                                    y = perc.1dollar),
+            n = n())
+
+```
+
+Now the $n = 64$ so only 64 countries are contributing data to use in these correlations. Kiara asks Nancy if there is another way to compute the correlations so that they are not eliminating precious data. Nancy says they can take out the `drop_na()` lines and use the `use = complete` option in `cor()` instead, which will keep all the complete observations for each correlation:
+
+```{r}
+# correlations between water access, poverty, and female education
+water.educ %>%
+  summarize(cor.females.water = cor(x = perc.basic2015water,
+                                    y = female.in.school,
+                                    use = "complete"),
+            cor.poverty.water = cor(x = perc.basic2015water,
+                                    y = perc.1dollar,
+                                    use = "complete"))
+
+```
+
+Both correlations are now different than they were when `drop_na()` was used for all three variable! It seems that some countries must have been missing the female education value and other countries must have been missing the poverty value. When all of these observations were dropped with `drop_na()`, fewer countries were used in both analyses. Leslie finds this to be complicated and a little annoying. How is she supposed to figure this out?
+
+Kiara suggests that it takes time, practice, and a lot of careful organization and thinking during data exploration in each project. Being very clear about how missing values are being included or excluded from an analysis is extremely important and it is worth the time to think it through before conducting any inferential tests. Nancy agrees and Leslie looks a little sad. She thinks the inferential testing with p-values and confidence intervals is so much more fun than cleaning the data and descriptive statistics. Kiara and Nancy agree but remind Leslie that the results she gets from the inferential tests are not going to be good quality or reproducible if she ignores the data management. 
+
+Leslie sighs and goes back to interpreting the graph and correlation coefficient. They consistently show a *very strong negative* relationship between poverty and water access (r = `r round(cor(water.educ$perc.basic2015water, water.educ$perc.1dollar, use='complete'), 2)`). That is, as water access up, poverty goes down. 
+
+Kiara approves of this interpretation and thinks Leslie is ready to move on to conducting inferential correlation analyses.  
 
 ### Unlock achievement 2: Check your understanding
 
-Compute and interpret the correlation between percent of females in school and basic sanitation.
+Graph and calculate the correlation between percent of females in school and basic sanitation (perc.basic2015sani variable).
 
-## Achievement 3: Inference and correlation coefficients 
+## Achievement 3: Conducting an inferential statistical test for Pearson’s r correlation coefficient 
 
-### Writing the null and alternate hypotheses
+The correlation coefficients and plots indicated that, for this sample of countries, percent of females in school was positively correlated with basic water access and negatively correlated with poverty. Leslie wonders if this relationship holds for all countries. Kiara explains that there is a statistical test that can be used to determine if the correlation coefficient is statistically significant. Leslie gets out her NHST notes and starts with:
 
-The correlation coefficients and plots indicated that, for this sample of countries, percent of females in school was positively correlated with basic water access and negatively correlated with poverty. Leslie wonders if this relationship holds for all countries. Chelsea explains that there is a statistical test that can be used to determine if the correlation coefficient is statistically significant. In the case of the correlation coefficient, the null hypothesis is:
+### NHST Step 1: writing the null and alternate hypotheses
 
 H0: There is no relationship between the two variables (r = 0) 
 
 HA: There is a relationship between the two variables 
 
-### Using a one-sample t-test to test the hypotheses
+### NHST Step 2: Computing the test statistic
 
-The null hypothesis can be tested by using a t-test comparing the correlation coefficient to a value of zero. Remember, the formula for a one-sample t-test is: 
+Kiara explains that the null hypothesis can be tested by using a one-sample t-test (see Section \@ref(osttest)) comparing the correlation coefficient to a hypothesized value of zero [@puth2014effective]. Remember, the formula for a one-sample t-test is: 
 
-\begin{equation} 
-\[
-t=\frac{\bar{x}-\mu}{\frac{s}{\sqrt{N}}}
-\]
-\end{equation} 
+$$
+\begin{equation}
+t=\frac{\bar{x}-\mu}{\frac{s}{\sqrt{n}}}
+ (\#eq:onesampt)
+\end{equation}
+$$
 
-Chelsea reminds Leslie that the denominator for the t-statistic is the standard error of the mean, so essentially a one sample t-statistic comparing the mean to zero could be simplified to:
+Kiara reminds Leslie that the denominator for the t-statistic is the standard error, so one sample t-statistic comparing a mean to zero could be simplified to:
 
-\begin{equation} 
-\[
+$$
+\begin{equation}
 t=\frac{\bar{x}-0}{se_\bar{x}}
-\]
-\end{equation} 
+ (\#eq:onesamptse)
+\end{equation}
+$$
 
 Or even:
 
-\begin{equation} 
-\[
+$$
+\begin{equation}
 t=\frac{\bar{x}}{se_\bar{x}}
-\]
-\end{equation} 
+ (\#eq:onesamptsesimp)
+\end{equation}
+$$
 
-While there are multiple ways to compute the standard error for the correlation coefficient, one commonly used version is:
+Kiara then reminds Leslie that they are not actually working with means, but instead comparing the correlation of $r_{xy}$ to zero. She rewrites the equation for the t-test so it is appropriate for the one-sample t-test of the correlation coefficient:
 
-\begin{equation} 
-\[
-se_r=\sqrt\frac{1-r^2}{n-2}
-\]
+$$
+\begin{equation}
+t=\frac{r_{xy}}{se_{r_{xy}}}
+ (\#eq:onesamptr)
+\end{equation}
+$$
 
-Substituting r and the se of r into the one-sample t-statistic formula from above:
+Kiara explains that there are multiple ways to compute the standard error for a correlation coefficient, one commonly used version is:
 
-\begin{equation} 
-\[
-t=\frac{r}{\sqrt\frac{1-r^2}{n-2}}
-\]
-\end{equation} 
+$$
+\begin{equation}
+se_{r_{xy}}=\sqrt\frac{1-r^2_{xy}}{n-2}
+ (\#eq:onesamprse)
+\end{equation}
+$$
 
-Or simplified to:
 
-\begin{equation} 
-\[
-t=\frac{r\sqrt{n-2}}{\sqrt{1-r^2}}
-\]
-\end{equation} 
+Kiara substitutes the formula for $se_r_{xy}$ into the one-sample t-statistic formula from above:
 
-Use of this formula requires r and n. The correlation between poverty and female education is `r round(cor(waterData$female.in.school, waterData$perc.1dollar, use='complete'), 2)`, but it is unclear what the value of `n` is for this correlation. While the overall data frame has `r nrow(waterData)` observations, some of these have missing values. To find the n for the correlation between perc.1dollar and female.in.school, take a subset of the data containing these two variables and count the number of complete cases. Leslie gives this a try with the `drop_na()` command and the subsetting commands from previous chapters:
+$$
+\begin{equation}
+t=\frac{r_{xy}}{\sqrt\frac{1-r_{xy}^2}{n-2}}
+ (\#eq:onesamptrse)
+\end{equation}
+$$
+
+And simplifies it to:
+
+$$
+\begin{equation}
+t=\frac{r_{xy}\sqrt{n-2}}{\sqrt{1-r_{xy}^2}}
+ (\#eq:onesamptfinr)
+\end{equation}
+$$
+
+Use of this formula requires $r_{xy}$ and $n$. The correlation between water access and female education is `r round(cor(water.educ$female.in.school, water.educ$perc.basic2015water, use='complete'), 2)`, but it is unclear what the value of `n` is for this correlation. While the overall data frame has `r nrow(water.educ)` observations, some of these have missing values. To find the n for the correlation between perc.1dollar and female.in.school, use `drop_na()` and add `n()` to `summarize()` to count the number of cases after dropping the missing NA values. Leslie gives this a try with the `drop_na()` command and the subsetting commands from previous chapters:
 
 ```{r}
-# subset the waterData to the poverty and fem educ vars
-# drop rows with NA
-completePovertyFemEduc <- drop_na(subset(waterData, 
-                                         select = c(perc.1dollar, 
-                                                    female.in.school)))
-
-# find length of new data frame
-nrow(completePovertyFemEduc)
-
+# correlation between water access and female education
+water.educ %>%
+  drop_na(perc.basic2015water) %>%
+  drop_na(female.in.school) %>% 
+  summarize(cor.females.water = cor(x = perc.basic2015water,
+                                    y = female.in.school),
+            n = n())
 ```
 
-Leslie examines the new data frame in the environment and sees that there are `r nrow(completePovertyFemEduc)` cases. Using the t-statistic to test whether the correlation coefficient is statistically significantly different from zero results in:
+Leslie sees that there are $n = 96$ cases. Using the t-statistic to test whether the correlation coefficient is statistically significantly different from zero results in:
 
+$$
 \begin{equation} 
-\[
-t=\frac{-0.7144238\sqrt{64-2}}{\sqrt{1-(-0.7144238)^2}} = -8.0395
-\]
+t=\frac{r_{xy}\sqrt{n-2}}{\sqrt{1-r_{xy}^2}}=\frac{.8086651\sqrt{96-2}}{\sqrt{1-(.8086651)^2}} = 13.33
 \end{equation} 
+$$
 
-The t-statistic is -8.04 with _n - 2_ or 62 degrees of freedom. Using the t-distribution with 62 degrees of freedom, it appears that there is very little area under the curve at -8.04 or less. This indicates a very small probability that the correlation in the population is actually 0 given the sample size and the value of the correlation (-.71).
+The t-statistic is 13.33. That seemed like a lot of work to Leslie. Nancy looks scoots her laptop over to Leslie to show her how she might compute the t-statistic with a little code instead using `cor.test()` with the two variables as the two arguments.
 
-```{r echo=FALSE, fig.cap = "t-distribution with 62 degrees of freedom."}
-dat<-with(density(rt(100000, 62)),data.frame(x,y))
+```{r}
+# test for correlation coefficient
+cor.test(x = water.educ$perc.basic2015water, 
+         y = water.educ$female.in.school)
+```
+
+Leslie is relieved to see that the t-statistic she computed is the same as the t-statistic that R computed! She also sees the value of $r$ listed along with degrees of freedom and a p-value. She is ready to move to NHST step 3.
+
+### NHST Step 3: Calculate the probability that your test statistic is at least as big as it is if there is no relationship (i.e., the null is true)
+
+Although `cor.test()` prints out a p-value, Leslie likes to look at probability distributions used to convert the test statistic into a p-value and to remind herself what the p-value means. Nancy is happy to oblige and graphs a t-distribution with 94 degrees of freedom. Leslie cannot figure out why it is 94 degrees of freedom when there are 96 observations used to compute the correlation. She thought she remembered that the one-sample t-test has $n-1$ degrees of freedom (see Section \@ref(osttest)) and that would be 95 degrees of freedom. Kiara reminds her that the one-sample t-test they used in Section \@ref(osttest) tested the mean of *one* variable against a hypothesized or population mean. In this case, there are *two* variables involved even though the $r$ is a single statistic and therefore two is subtracted from the sample size.
+
+```{r echo=FALSE, fig.cap = "t-distribution with 94 degrees of freedom."}
+dat<-with(density(rt(100000, 94)),data.frame(x,y))
 ggplot(data = dat, mapping = aes(x = x, y = y)) +
     geom_line()+
-    geom_area(mapping = aes(x = ifelse(x < -8.04 , x, 0)), fill = "#88398a") + 
-  ylim(0,.5) + xlim(-5, 6) +
+    geom_area(mapping = aes(x = ifelse(x > 13.328 , x, 0)), fill = "#88398a") + 
+  ylim(0,.5) + 
   theme_minimal() +
   xlab("t statistic") + ylab("Probability")
 
 ```
 
-### Conducting the significance test in R
+In this case the distribution is arguably not all that useful except to note that, by the time the distribution extends to the t-statistic of 13.33, there is almost no area left under the curve. Leslie still likes the distribution, though, since this is consistent with the very tiny p-value in the `cor.test()` output. 
 
-Leslie interprets this as demonstrating that the correlation between poverty and female education is likely to be statistically significant. Chelsea introduces the `cor.test()` function which computes the t-statistic, correlation coefficient, and the probability of a correlation coefficient being at least that magnitude when there is no relationship between the variables in the population. Leslie uses the `cor.test()` to confirm her suspicion that there is a statistically significant correlation between poverty and female education. 
+#### NHST Steps 4 & 5: Reject or retain the null hypothesis based on the p-value 
 
-```{r}
-# test for correlation coefficient
-cor.test(x = waterData$perc.1dollar, 
-         y = waterData$female.in.school)
-```
+The p-value in this case is very tiny, well under .05. This p-value is the probability that the very strong positive relationship ($r=.81$) observed between percent of females in school and percent with basic water access would have happened if the null were true. That is, it is extremely unlikely that this correlation would happen in the sample if there were not a very strong positive correlation between females in school and access to water in the population that this sample came from.
 
-She notices that the output from the `cor.test()` includes the correlation of -.71, the t-statstic of -8.04, its degrees of freedom of 62, and a very tiny p-value that is less than .05. The output also contains the 95% confidence interval for the correlation coefficient. Chelsea explains that this 95% confidence interval is calculated and interpreted like the other confidence intervals computed for means and other statistics. 
+Leslie notices that the output has a 95% confidence interval in it. Kiara explains that this is the confidence interval around $r$, so the value of $r$ in the sample is $r=.81$ and the likely value of $r$ in the population that this sample came from is somewhere between $r=.7258599$ and $r=.8683663$.
 
-### Interpreting the results of the significance test
+This makes sense to Leslie and she writes her final interpretation: 
 
-Leslie writes her final interpretation: 
+> The percentage of people basic access to water is statistically significantly, positively, and very strongly correlated with the percentage of primary and secondary age females in school in a country (r = .81; t(94) = 13.33; p < .05). As the percentage of people living with basic access to water goes up, the percentage of females with education also goes up.
 
-> The percentage of people living on \$1 per day or less is statistically significantly negatively correlated with the percentage of primary and secondary age females in school in a country (r = -.71; t(62) = -8.04; p < .05). As the percentage of people living on \$1 per day or less goes up, the percentage of females with education goes down.
+Before they move on, Nancy wants to mention that one of her favorite statisticians was involved in making correlation analyses more accessible to researchers. Florence Nightengale David, daughter of the other famous Florence Nightengale, developed tables of correlation coefficients in 1938 to aid researchers using this statistical tool before R was available (before computers were available!) [@david1938tables]. Although they were vastly outnumbered by the males in the field, there were a number of women like Nightengale who played key roles in the development of current statistical practice. Leslie had no idea that Florence Nightengale had a statistician daughter! Nancy explains that Florence Nightengale (the mother of Florence Nightengale David) also contributed to statistical theory with her pioneering graph called a **coxcomb** or **rose diagram**, which similar to a pie graph but with multiple layers [@brasseur2005florence]. Leslie is fascinated and puts a note on her calendar to look up **rose diagrams** after they finish with correlation. 
 
-### Unlocking achievement 3: Check your understanding
+### Unlock achievement 3: Check your understanding
 
-Use the `cor.test()` command to examine the relationship between female education and basic water access. Which of the following is true about the correlation:
+Use the `cor.test()` command to examine the relationship between female education and poverty (percent living on less than one dollar per day). Which of the following is true about the correlation:
 
 a) negative, statistically significant 
 b) negative, statistically non-significant 
 c) positive, statistically significant 
 d) positive, statistically non-significant 
 
-## Achievement 4: The coefficient of determination
+## Achievement 4: Examining effect size for Pearson's r with the coefficient of determination
 
-While the correlation coefficient is great for describing the size and direction of the relationship between two variables, with a small modification it can be transformed into the _coefficient of determination_. The coefficient of determination is more directly interpretable than the correlation coefficient. It is the percentage of the variance in one variable that is shared, or explained, by the other variable.
+Leslie wonders if the correlation coefficient is considered its own effect size since it measures the strength of the relationship. Kiara says this is true, but there is another value that is easy to calculate and that has a more direct interpretation to use as an effect size with $r$. She introduces the **coefficient of determination**, which is more directly interpretable than the correlation coefficient as the percentage of the variance in one variable that is shared, or explained, by the other variable. 
+
+Leslie is going to need some more information before this makes sense. Kiara thinks they should start by looking at the equation for the coefficient of determination, which just happens to be $r^2$.
 
 ### Calculating the coefficient of determination
 
 There are a number of ways to compute the coefficient of determination. For a simple correlation analysis, the coefficient of determination is computed by squaring the correlation coefficient, like this:
 
-\[
-r_{xy}^2=(\frac{{\sum_{i=1}^n}(x_i-\bar{x})(y_i-\bar{y})}{(n-1){s_x}{s_y}})^2
-\]
+$$
+\begin{equation} 
+r_{xy}^2=\biggl(\frac{cov_{xy}}{{s_x}{s_y}}\biggr)^2
+ (\#eq:cor)
+\end{equation}
+$$
+
+
+Leslie understands the concept of squaring, but not how this captures how much variance these two variables share. Nancy thinks maybe a little R code could help. 
 
 ### Using R to calculate the coefficient of determination 
 
-Chelsea explains that the result is often referred to as R-squared and reported as $R^2$. Bobbi says there is no specific R command for computing just the coefficient of determination, but there are a number of options for computing it. The most straightforward way might be to use the `cor()` command and square the result, but it is also possible to use the `cor.test()` command and square the correlation from the output of this procedure. Leslie is curious about the second method, so Bobbi uses this method (see pullout box for more) to demonstrate. She decides to use the correlation between female education and basic water access. 
+Kiara explains that the coefficient of determination is often referred to just as r-squared and reported as $r^2$ or more commonly, $R^2$. Nancy says there is no specific R command for computing the coefficient of determination directly from the data, but there are a number of options for computing it from the output of a correlation analysis. The most straightforward way might be to use `cor()` and square the result, but it is also possible to use `cor.test()` and square the correlation from the output of this procedure. Leslie is curious about the second method, so Kiara to demonstrate (see Box \@ref(ch8kiara) for more). She decides to first calculate the coefficient of determination from the $r$ for the relationship between female education and basic water access and assign the output to an object name. To see the structure of the new object, she uses `str()`.  
 
 ```{r}
 # conduct the correlation analysis
 # assign the results to an object 
-corFemEducWater <- cor.test(x = waterData$perc.basic2015water, 
-                            y = waterData$female.in.school)
+cor.Fem.Educ.Water <- cor.test(x = water.educ$perc.basic2015water, 
+                            y = water.educ$female.in.school)
 
 # explore the object
-str(corFemEducWater)
+str(cor.Fem.Educ.Water)
 
 ```
 
-The corFemEducWater object is a list with nine entries. The entry called estimate is the correlation coefficient. Use the $^2$ math notation to square estimate from the corFemEducWater list.
+The cor.Fem.Educ.Water object is a list with nine entries. Leslie looks at the object and finds an entry called `estimate`, which appears to be the correlation coefficient. Kiara then uses the $^2$ math notation to square estimate from the cor.Fem.Educ.Water list.
 
 ```{r}
 # square the correlation coefficient
-rsquared <- corFemEducWater$estimate^2
-rsquared
+r.squared <- cor.Fem.Educ.Water$estimate^2
+r.squared
 ```
 
-The result `r rsquared` indicates that female education and basic water access have `r rsquared`% shared variance. Leslie understands how this is computed, but the concept of shared variance is still a little fuzzy. Bobbi thinks a visual representation might be useful to explain what it means. The Venn Diagram is a good tool for showing overlap. Bobbi creates four Venn Diagrams with different amounts of shared variance.  
+The result `r r.squared` can be multiplied by 100 to find that percent females in school and basic water access have `r round(100*r.squared, 2)`% shared variance. Leslie understands how this is computed, but the concept of shared variance is still a little fuzzy. Kiara thinks a visual representation might be useful to explain what it means. The Venn Diagram is a good tool for showing overlap. Nancy does some fancy coding and creates scatterplots and their corresponding Venn Diagrams showing correlations with different amounts of shared variance.  
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE, fig.cap="Visualizing percent of shared variance."}
-# draw venn diagrams
 library(venneuler)
-par(mfrow=c(2,2), mar = c(0, 0, 1, 0))
-venn5 <- venneuler(c(Educ = 100, Water = 100, "Educ&Water" = 5))
-venn20 <- venneuler(c(Educ = 100, Water = 100, "Educ&Water" = 20))
-venn40 <- venneuler(c(Educ = 100, Water = 100, "Educ&Water" = 40))
-venn63 <- venneuler(c(Educ = 100, Water = 100, "Educ&Water" = 60))
-plot(venn5)
-title(main="10% shared variance")
-plot(venn20)
-title(main="20% shared variance")
-plot(venn40)
-title(main="40% shared variance")
-plot(venn63)
-title(main="60% shared variance")
+
+# corr 1 with .10
+samples1 = 200
+r1 = 0.1
+data1 = MASS::mvrnorm(n=samples1, mu=c(0, 0), Sigma=matrix(c(1, r1, r1, 1), nrow=2), empirical=TRUE)
+X1 = data1[, 1]  # standard normal (mu=0, sd=1)
+Y1 = data1[, 2]  # standard normal (mu=0, sd=1)
+Y1b = -Y1
+#cor(X1, Y1)  # yay!
+#cor(X1, Y1b)
+
+# corr 2 with .50
+samples2 = 200
+r2 = 0.5
+data1 = MASS::mvrnorm(n=samples2, mu=c(0, 0), Sigma=matrix(c(1, r2, r2, 1), nrow=2), empirical=TRUE)
+X2 = data1[, 1]  # standard normal (mu=0, sd=1)
+Y2 = data1[, 2]  # standard normal (mu=0, sd=1)
+Y2b = -Y2
+#cor(X2, Y2)  # yay!
+
+
+# corr 3 with .90
+samples3 = 200
+r3 = 0.9
+data1 = MASS::mvrnorm(n=samples3, mu=c(0, 0), Sigma=matrix(c(1, r3, r3, 1), nrow=2), empirical=TRUE)
+X3 = data1[, 1]  # standard normal (mu=0, sd=1)
+Y3 = data1[, 2]  # standard normal (mu=0, sd=1)
+Y3b = -Y3
+#cor(X3, Y3)  # yay!
+
+venn1 <- venneuler(c(X = 100, Y = 100, "X&Y" = 1))
+venn25 <- venneuler(c(X = 100, Y = 100, "X&Y" = 25))
+venn81 <- venneuler(c(X = 100, Y = 100, "X&Y" = 81))
+
+# draw venn diagrams
+par(mfrow=c(3,3), mar = c(bottom = 3, left = 2, right = 2, top = 2))
+plot(x = X1, y = Y1, col = "#78A678", xlab = "X", ylab = "Y")
+abline(lm(Y1 ~ X1), col = "#7463AC")
+title(main = "r = .1, r-squared = .01")
+plot(x = X2, y = Y2, col = "#78A678", xlab = "X", ylab = "Y") 
+abline(lm(Y2 ~ X2), col = "#7463AC")
+title(main = "r = .5, r-squared = .25")
+plot(x = X3, y = Y3, col = "#78A678", xlab = "X", ylab = "Y")
+abline(lm(Y3 ~ X3), col = "#7463AC")
+title(main = "r = .9, r-squared = .81")
+
+plot(x = X1, y = Y1b, col = "#78A678", xlab = "X", ylab = "Y")
+abline(lm(Y1b ~ X1), col = "#7463AC")
+title(main = "r = - .1, r-squared = .01")
+plot(x = X2, y = Y2b, col = "#78A678", xlab = "X", ylab = "Y") 
+abline(lm(Y2b ~ X2), col = "#7463AC")
+title(main = "r = - .5, r-squared = .25")
+plot(x = X3, y = Y3b, col = "#78A678", xlab = "X", ylab = "Y")
+abline(lm(Y3b ~ X3), col = "#7463AC")
+title(main = "r = - .9, r-squared = .81")
+
+plot(venn1, col = c("#78A678", "#7463AC"))
+title(main="1% shared variance")
+plot(venn25, col = c("#78A678", "#7463AC"))
+title(main="25% shared variance")
+plot(venn81, col = c("#78A678", "#7463AC"))
+title(main="81% shared variance")
 
 ```
 
-Leslie examines the Venn Diagrams and concludes that shared variance is the amount of variability shared by the two variables. Chelsea reminds her that this topic will continue to come up in future chapters, so there will be additional examples and ways of thinking about variance.
+Leslie examines the scatterplots and Venn Diagrams. The first column has *weak* positive and negative correlations. The points are spread out without much pattern. The line that goes through the points is slightly slanted up for the first graph and slightly down for the second one. The Venn Diagram in the first column shows just a small amount of overlap. 
 
-### Unlocking achievement 4: Check your understanding
+The second column shows moderate *correlations* of .5 and -.5 along with 25% shared variance. The difference is pretty clear between the first column and this column. The points clearly show a pattern with a positive relationship between X and Y in the top graph and a negative relationship in the graph below that. The Venn Diagram shows more overlap between the two. The third column shows strong positive and negative relationships with a more pronounced slope of the line, points close to the line, and a large amount of shared variance. 
+
+Altogether, the graphs suggest that shared variance is related to the strength of the relationship between X and Y are. If Y tends to change with X, they both go up together, they both go down together, or one up when the other down, they are varying together. The more this occurs, the more the graph looks like one of the ones in the third column on the right. Leslie thinks she gets it. Kiara informs her that this topic will continue to come up in future chapters, so there will be additional examples and ways of thinking about variance, but it is good to have this start.
+
+### Unlock achievement 4: Check your understanding
 
 What is the coefficent of determination for the relationship between female education and basic sanitation access:
 
 ```{r echo = FALSE, results = FALSE}
 # conduct the correlation analysis
 # assign the results to an object 
-corFemEducSani <- cor.test(x = waterData$perc.basic2015sani, 
-                           y = waterData$female.in.school)
-
-# explore the object
-str(corFemEducSani)
+corFemEducSani <- cor.test(x = water.educ$perc.basic2015sani, 
+                           y = water.educ$female.in.school)
 
 # square the correlation coefficient
 rsquared2 <- corFemEducSani$estimate^2
@@ -440,25 +701,28 @@ b) `r round(corFemEducSani$estimate, digits = 2)`
 c) `r round(corFemEducSani$statistic, digits = 2)`
 d) `r round(corFemEducSani$conf.int[1], digits = 2)` 
 
-## Achievement 5: Assumption checking for correlation analyses 
+## Achievement 5: Checking assumptions for Pearson's r correlation analyses 
 
-Leslie asks if there are assumptions for correlation like for the other statistical tests. Chelsea explains that correlation coefficients rely on four assumptions:
+Leslie asks if there are assumptions for the Pearson's product-moment correlation coefficient like there for the other statistical tests. Kiara rolls her eyes as Leslie's smarty-pants use of the full name for $r$ and explains that correlation coefficients rely on four assumptions:
 
 * Both variables are continuous 
 * Both variables are normally distributed 
 * The relationship between the two variables is _linear_ (linearity) 
 * The variance is constant with the points distributed equally around the line (homoscedasticity) 
 
-Leslie thinks she can check these on her own already and starts with the relationship between female education and basic water access. Both variables are continuous, so the first assumption is met. 
+Leslie thinks she can probably check these all on her own already with some graphs. She starts by checking the assumptions for the correlation between percent of females in school and percent of citizens with basic water access. Although percents are limited by a floor and ceiling, within the range of 0 to 100, they can take any value along the continuum. With the floor and ceiling caveat (see Box \@ref(ch8kiara) for more on methods for examining percent variables), both variables are continuous, so the first assumption is met. 
 
 ### Checking the normality assumption graphically  
 
-Leslie starts by using histograms to check the normality assumption:
+Leslie starts by using histograms to check the normality assumption. She drops the missing values from the two variables in the analysis so that the histograph is of the observations that contribute to the correlation coefficient. Kiara and Nancy are impressed! Leslie smirks. She has been paying attention.
 
 ```{r fig.cap="Histogram showing distribution of percent of females in school."}
 # check normality of female.in.school variable
-ggplot(data = waterData, aes(x = female.in.school)) + 
-  geom_histogram(fill = "#88398a", col = "grey") + 
+water.educ %>%
+  drop_na(female.in.school) %>%
+  drop_na(perc.basic2015water) %>%
+  ggplot(aes(x = female.in.school)) + 
+  geom_histogram(fill = "#7463AC", col = "white") + 
   theme_minimal() + 
   labs(x = "Percentage of school-age females in school",
        y = "Countries") 
@@ -469,63 +733,78 @@ The values of the females in school variable do not appear to be normally distri
 
 ```{r fig.cap="QQ-plot showing distribution of percent of females in school."}
 # QQ-plot of female.in.school variable to check normality
-ggplot(data = waterData, aes(sample = female.in.school)) + 
-  stat_qq(color = "#88398a") + 
-  geom_abline(intercept = mean(waterData$female.in.school, na.rm = TRUE), 
-              slope = sd(waterData$female.in.school, na.rm = TRUE)) +
+water.educ %>%
+  drop_na(female.in.school) %>%
+  drop_na(perc.basic2015water) %>%
+  ggplot(aes(sample = female.in.school)) + 
+  stat_qq(color = "#7463AC") + 
+  geom_abline(aes(intercept = mean(female.in.school),
+                  slope = sd(female.in.school))) +
   theme_minimal() + 
   labs(x="Theoretical normal distribution",
-       y="Observed values of percent of females in school") 
+       y="Observed values of percent of females in school") +
+  ylim(0,100)
 ```
 
-Leslie notices that the points deviate from the line the most at the extremes. In the lower left corner of the graph, there are three countries with close to zero for the observed years of female education, which has a standardized score of more than two standard deviations below the mean shown on the x-axis. Likewise, there are two countries in the top right portion of the graph that have more than 10 years of school on average for femails and are more than two standard deviations above the mean. These deviations from normal are consistent with the histogram, which shows several countries at each end of the histogram.
+Leslie notices that the points deviate from the line the most at the extremes. In the lower left corner of the graph, there are two countries well below 50% for percent of females in school with standardized scores on the x-axis that are more than two standard deviations below the mean. Likewise, there are two countries in the top right portion of the graph that have more than 10 years of school on average for females and are more than two standard deviations above the mean. These deviations from normal are consistent with the histogram, which shows countries at both extremes.
 
 The assumption is violated for percent of females in school, but maybe it is ok for basic water access. Leslie graphs this variable:
 
 ```{r fig.cap="Histogram of percent of citizens with basic water access"}
 # check normality of water access variable
-ggplot(data = waterData, aes(x = perc.basic2015water)) + 
-  geom_histogram(fill = "#88398a", col = "grey") + 
+water.educ %>%
+  drop_na(female.in.school) %>%
+  drop_na(perc.basic2015water) %>%
+  ggplot(aes(x = perc.basic2015water)) + 
+  geom_histogram(fill = "#7463AC", col = "white") + 
   theme_minimal() + 
-  labs(x = "Percent with basic water access",
-       y = "Countries")  
+  labs(x = "Percentage with basic access to water",
+       y = "Countries") 
 ```
 
 ```{r fig.cap="QQ plot of percent of citizens with basic water access"}
 # QQ-plot of water access variable to check normality
-ggplot(data = waterData, aes(sample = perc.basic2015water)) + 
-  stat_qq(color = "#88398a") + 
-  geom_abline(intercept = mean(waterData$perc.basic2015water, na.rm = TRUE), 
-              slope = sd(waterData$perc.basic2015water, na.rm = TRUE)) +
+water.educ %>%
+  drop_na(female.in.school) %>%
+  drop_na(perc.basic2015water) %>%
+  ggplot(aes(sample = perc.basic2015water)) + 
+  stat_qq(color = "#7463AC") + 
+  geom_abline(aes(intercept = mean(perc.basic2015water),
+                  slope = sd(perc.basic2015water))) +
   theme_minimal() + 
   labs(x="Theoretical normal distribution",
-       y="Observed values") 
-
+       y="Observed values of percent of people with water access") +
+  ylim(0,100)
 ```
 
-Leslie is suprised by how non-normal the water access variable appears. The histogram shows a distribution that is extremely _left skewed_ and the QQ-plot confims the lack of normality with most of the points being quite far from the line representing a normal distribution. The data have failed the normality assumption.
+Leslie is suprised by how non-normal the water access variable appears. The histogram shows a distribution that is extremely _left skewed_ and the QQ-plot confims the lack of normality with most of the points being quite far from the line representing a normal distribution. The data have failed the normality assumption. Leslie might even go so far as to say that the data have spectacularly failed the normality assumption.
 
 ### Checking the linearity assumption
 
 The linearity assumption requires that the relationship between the two variables falls along a line. The assumption is met if a scatterplot of the two variables shows that the relationship that falls along a line. The earlier plot showing gray points and a purple straight line drawn so it has the best fit to the data suggests that this assumption is met. When graphed, the gray points fall generally along the straight purple line without any major issues. If it is difficult to tell, a _Loess curve_ can be added to double-check. 
 
-A Loess curve shows the actual relationship between the two variables without constraining the line to be straight like the `method = "lm"` options does. In this case, an orange Loess curve shows some minor deviation from linear at the lower percentages, but overall the relationship seems close to linear. This assumption appears to be met.
+A Loess curve shows the actual relationship between the two variables without constraining the line to be straight like the linear model `method = lm` option does. In this case, a pink Loess curve shows some minor deviation from linear at the lower percentages, but overall the relationship seems close to linear. This assumption appears to be met.
 
-```{r fig.cap="Relationship of percent of females educated and percent of citizens with water access in countries worldwide."}
-# check linearity of plot of female education and water
-ggplot(data = waterData, aes(y = female.in.school/100, x = perc.basic2015water/100)) + 
-  geom_smooth(se = FALSE, colour = "orange") +
-  geom_smooth(method = "lm", se = FALSE, colour = "#88398a") + 
-  geom_point(size = 2, colour = "gray") + 
+```{r loess, fig.cap="Relationship of percent of females educated and percent of citizens with water access in countries worldwide."}
+# explore plot of female education and water
+water.educ %>%
+  ggplot(aes(y = female.in.school/100, x = perc.basic2015water/100)) + 
+  geom_smooth(method = "lm", se = FALSE, aes(color = "linear model")) +
+  geom_smooth(se = FALSE, aes(color = "Loess curve")) +
+  geom_point(size = 2, color = "#7463AC") + 
   theme_minimal() + 
-  labs(y = "Percentage of females in school",
+  labs(y = "Percent of females in primary and secondary school",
        x = "Percent with basic access to water") +
-  scale_x_continuous(labels = scales::percent) + 
-    scale_y_continuous(labels = scales::percent)
-
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_manual(name="Type of fit line", values=c("#78A678", "deeppink"))
 ```
 
-Leslie asks what a non-linear relationship might look like, Bobbi simulates some data and shows a plot of two possible shapes for relationships that do not fall along a straight line:
+Leslie looks at the code that Nancy wrote and notices a couple of new things. In the two `geom_smooth()` layers, Nancy has added aesthetics with `aes()` and, inside the aesthetics, she has added a `color =` argument but the value she gave the argument was the type of line and not an actual color. The actual color for the lines looks like it is in the `scale_color_manual()` layer at the very bottom of the code. Nancy explains that she wanted to make sure she was able to add a legend to clarify which line was the Loess curve and which was not. Only things that are in `aes()` can be added to a legend in `ggplot()`, so putting the color inside `aes()` was for this purpose. The reason for using the name of the line instead of the actual color with the `color =` argument was so that the name of the line would appear in the legend. 
+
+This makes sense but Leslie thinks it is yet another thing she will not remember. Nancy sees the look on her face and lets her know that it is extremely common to look up multiple things online any time you are coding in R. There is no way to remember all the code tricks. Nancy assures her that she will get to know some code really well once she has used it a lot, but other things she might have to look up every time. This is one of the drawbacks of R being open source and extremely flexible. There is a lot to remember and it does not all follow the same patterns. 
+
+Leslie is satisfied with this and goes back to thinking about the lines in Figure \@ref(fig:loess). She asks what a non-linear relationship might look like, and Nancy simulates some data to show two possible shapes for relationships that do not fall along a straight line:
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE, fig.cap="Non-linear relationship examples."}
 # create vectors
@@ -540,10 +819,12 @@ examp <- rbind(exampNonlin, exampNonlin2)
 # plot non-linear relationship
 # check linearity of plot of female education and water
 ggplot(data = examp, aes(y = y, x = x)) + 
-  geom_smooth(method = "lm", se = FALSE, colour = "#88398a") + 
-  geom_point(size = 2, colour = "gray") + 
+  geom_smooth(method = "lm", se = FALSE, aes(color = "linear model")) + 
+  geom_smooth(se = FALSE, aes(color = "Loess curve")) +
+  geom_point(size = 2, color = "#7463AC") + 
   theme_minimal() + 
-  facet_grid(. ~ z)
+  facet_grid(. ~ z) +
+  scale_color_manual(name="Type of fit line", values=c("#78A678", "deeppink"))
   
 
 ```
@@ -552,37 +833,41 @@ Both of these plots show relationships between x and y, but the relationships ar
 
 ### Checking the homoscedasticity assumption 
 
-The final assumption is the equal distribution of points around the line, which is often called the assumption of homoscedasticity. In the plot below, the points seem closer to the line on the far right and then are a little more spread out around the line on the left. 
+The final assumption is the equal distribution of points around the line, which is often called the assumption of homoscedasticity. In Figure \@ref(fig:linearity), the points seem closer to the line on the far right and are more spread out away from the line on the left. 
 
-```{r fig.cap="Relationship of female education and water access worldwide."}
+```{r linearity, fig.cap="Relationship of female education and water access worldwide."}
 # check linearity of plot of female education and water
-ggplot(data = waterData, aes(y = female.in.school, x = perc.basic2015water/100)) + 
-  geom_smooth(method = "lm", se = FALSE, colour = "#88398a") + 
-  geom_point(size = 2, colour = "gray") + 
+water.educ %>%
+  ggplot(aes(y = female.in.school/100, 
+             x = perc.basic2015water/100)) + 
+  geom_smooth(method = "lm", 
+              se = FALSE, 
+              color = "#78A678") +
+  geom_point(size = 2, 
+             color = "#7463AC") + 
   theme_minimal() + 
-  labs(y = "Percentage of females in school",
+  labs(y = "Percent of females in primary and secondary school",
        x = "Percent with basic access to water") +
   scale_x_continuous(labels = scales::percent) +
   scale_y_continuous(labels = scales::percent)
 
 ```
 
-Although the difference in spread from the left to the right is not dramatic until the values are over 90% access to water, it might be worth using a statistical test to check whether the difference in spread from one end to the other is statistically significantly. Bobbi suggests using the Breusch-Pagan test to test the null hypothesis that the variance is constant. The Breusch-Pagan test relies on the chi-squared distribution. In R, the `bptest` command can be used:
+Although it seems pretty clear that the points are not evenly spread along the line, it might be worth using a statistical test to check whether the difference in spread from one end to the other is statistically significantly. Kiara suggests using the Breusch-Pagan test to test the null hypothesis that *the variance is constant* aound the line. The Breusch-Pagan test relies on the $\chi^2$ distribution. In R, the `bptest()` function from the <span style="font-family:Lucida Console, monospace;font-weight:bold">lmtest</span> package can be used:
 
 ```{r}
 # testing for equal variance
-library(lmtest)
-testVar <- bptest(formula = waterData$female.in.school ~ waterData$perc.basic2015water)
+testVar <- lmtest::bptest(formula = water.educ$female.in.school ~ water.educ$perc.basic2015water)
 testVar
 ```
 
-The Breusch-Pagan test statistic has a low p-value associated with it (BP = `r round(testVar$statistic, 2)`; p = `r round(testVar$p.value, 2)`), indicating that the null hypothesis that the variance is constant would be rejected. When the null hypothesis that the variance is constant is rejected, the assumption of constant variance is _not met_.
+The Breusch-Pagan test statistic has a low p-value associated with it (BP = `r round(testVar$statistic, 2)`; p = `r round(testVar$p.value, 2)`), indicating that the null hypothesis that the variance is constant would be rejected. When the null hypothesis that the variance is constant is rejected, the assumption of constant variance is _not met_. Leslie thinks this sounds logical given the difference in spread around the line at the lower and higher ends of the graph.
 
 ### Interpreting the assumption checking results
 
-In all, the correlation analysis for female education and water access met two of the four assumptions. It failed the assumption of normally distributed variables and the assumption of homoscedasticity. While the results of the correlation analysis can be reported, since it failed two assumptions, the results should not be generalized beyond the sample.
+In all, the correlation analysis for female education and water access met two of the four assumptions. It failed the assumption of normally distributed variables and the assumption of homoscedasticity. Kiara explains that there are a few options for what they could do with these results: (1) report the results and explain that the inferential analysis does not meet assumptions, so it is unclear that what is happening in the sample is a good reflection of what is happening in the population; (2) transform the two variables to meet the assumptions for $r$ and conduct the analysis again, and (3) choose a different type of analysis with assumptions that can be met by these data.  
 
-### Unlocking achievement 5: Check your understanding
+### Unlock achievement 5: Check your understanding
 
 Use the `cor.test()` command to examine the relationship between living on less than $1 per day and basic water access. Test the assumptions. Check all the assumptions that were _met_:
 
@@ -591,80 +876,293 @@ b) Both variables are normally distributed
 c) The relationship between the two variables is _linear_ (linearity)
 d) The variance is constant with the points distributed equally around the line (homoscedasticity) 
 
-## Achievement 6: Spearman's rho correlation coefficient
+## Achievement 6: Transforming the variables as an alternative when Pearson's $r$ correlation assumptions are not met 
 
-Leslie asks if there are options for when the assumptions are unmet for a correlation analysis but you are interested in generalizing beyond the sample. Chelsea suggests that there are other correlation statistics that do not have the same strict assumptions. The most commonly used alternative to the Pearson's r correlation coefficient is the Spearman's rho ($\rho$) rank correlation coefficient. 
+Kiara explains that one of the ways to deal with data that do not meet assumptions for $r$ is to use a transformation and examine the relationship between the transformed variables. There are two types of transformations: 
+
+(1) **Linear transformations** keeps existing linear relationships between variables, often by multiplying or dividing one or both of the variables by some amount
+
+(2) **Nonlinear transformations** increases (or decreases) the linear relationship between two variables, usually by applying an exponent (i.e., **power transformation**) or other function to one or both of the variables
+
+Different transformations are appropriate in different settings. Kiara explains that, for variables that are percents or proportions, a **logit transformation** or **arcsine transformation** is often used to account for the floor and ceiling effects [@osborne2005notes]. The **logit transformation** uses the following formula to normalize percent data:
+
+$$
+\begin{equation} 
+y_{logit}=log(\frac{y}{1-y})
+ (\#eq:logit.trans)
+\end{equation}
+$$
+Where $y$ is a percent ranging from 0 to 1. The arcsine transformation is also used to normalize percent or proportion data by transforming the variable $y$ like this:
+
+$$
+\begin{equation} 
+y_{arcsine}=arcsin(\sqrt{y})
+ (\#eq:logit.trans)
+\end{equation}
+$$
+
+Where **asine** is the **arcsine** function, which Kiara has to look up to remember from a trigonometry class she took as a teenager. She finds that it is the inverse of the sine function, which is not all that helpful, but she decides she will go back and read more about it later. 
+
+Leslie is looking up information on both of these transformations and comes across an article that is quite critical of the arcsine transformation [@warton2011arcsine], so she suggests they try the logit transformation first. Nancy goes ahead and writes some code to transform the two variables with the logit and arcsine transformations just so they can take a look at both before they choose. After looking up the function for arcsine, which is `asin()` in R, Nancy uses the standard `mutate()` to add these new variables to the data frame:
+
+```{r}
+# create new variables
+water.educ.new <- water.educ %>%
+  mutate(logit.female.school = log((female.in.school/100)/(1-female.in.school/100))) %>%
+  mutate(logit.perc.basic.water = log((perc.basic2015water/100)/(1-perc.basic2015water/100))) %>%
+  mutate(arcsin.female.school = asin(sqrt(female.in.school/100))) %>%
+  mutate(arcsin.perc.basic.water = asin(sqrt(perc.basic2015water/100)))
+
+# check the data
+summary(water.educ.new)
+```
+
+It looks like the new variables have been successfully added to the data frame, although there is something strange about the *logit.perc.basic.water* variable, which has a mean value of `Inf`. Kiara remembers that the logit function has a denominator that is $1-y$, so when $y$ is 1 for 100%, the denominator is zero and it is impossible to divide by zero. Leslie suggests that they subtract a very small amount from the variable before transforming, but Kiara thinks this is a bad idea. Once transformed, even a very tiny subtracted value can make a big difference with the logit transformation. Instead Kiara suggests they try a **folded power transformation** from the set of transformations suggested by Tukey [@tukey1977exploratory]. She writes the formula:
+
+$$
+\begin{equation} 
+y_{folded.power}=y^{\frac{1}{p}}-(1-y)^{\frac{1}{p}}
+ (\#eq:fold.root)
+\end{equation}
+$$
+Kiara explains that the $p$ in the formula is for the power to raise it to. Leslie asks how they know that? Nancy thinks she has seen this somewhere before in all her years of search R help documentation. She searches the help documentation for Tukey and finds the <span style="font-family:Lucida Console, monospace;font-weight:bold">rcompanion</span> package, which can be used to help to choose the value of $p$. Nancy installs the package and writes some code to find $p$ for each variable: 
+
+```{r}
+# use Tukey transformation to get power for transforming
+# female in school variable to more normal distribution
+rcompanion::transformTukey(water.educ$female.in.school, 
+                           plotit = FALSE,
+                           quiet = TRUE,
+                           returnLambda = TRUE)
+
+# use Tukey transformation to get power for transforming
+# basic2015 water variable to more normal distribution
+rcompanion::transformTukey(water.educ$perc.basic2015water, 
+                           plotit = FALSE,
+                           quiet = TRUE,
+                           returnLambda = TRUE)
+```
+
+It looks like the best value for $p$, which is called lambda by the package, is 8.85 for the female in school variable and 7.3 for the water variable. Nancy writes some code removing the logit transformation and adding the folded power transformations:
+
+```{r}
+# create new variables
+water.educ.new <- water.educ %>%
+  mutate(arcsin.female.school = asin(sqrt(female.in.school/100))) %>%
+  mutate(arcsin.perc.basic.water = asin(sqrt(perc.basic2015water/100))) %>%
+  mutate(folded.p.female.school = (female.in.school/100)^(1/8.85) - (1-female.in.school/100)^(1/8.85)) %>%
+  mutate(folded.p.basic.water = (perc.basic2015water/100)^(1/7.3) - (1-perc.basic2015water/100)^(1/7.3))
+
+# check the data
+summary(water.educ.new)
+```
+
+Now the variables seem ok and Leslie thinks they should move on to check the assumption of normality to see how the transformations worked. She creates a couple of graphs, starting with the arcsine transformation:
+
+```{r fig.cap = "Histogram of arcsine transformed percent of females in school."}
+# histogram of arcsin females in school
+water.educ.new %>%
+  ggplot(aes(x = arcsin.female.school)) +
+  geom_histogram(fill = "#7463AC", color = "white") +
+  theme_minimal() +
+  labs(x = "Arcsine transformation of females in school", y = "Number of countries")
+```
+
+That looks more normally distributed, but definitely not perfect. It is still left skewed. She tries the folded power transformation variable next:
+
+```{r fig.cap = "Histogram of folded power transformed percent of females in school."}
+# histogram of power transf females in school
+water.educ.new %>%
+  ggplot(aes(x = folded.p.female.school)) +
+  geom_histogram(fill = "#7463AC", color = "white") +
+  theme_minimal() +
+  labs(x = "Folded power transformation of females in school", y = "Number of countries")
+```
+
+This looks much better to everyone. It is not perfectly normal, but it is pretty close. Leslie continues her graphing:
+
+```{r fig.cap = "Histogram of arcsine transformed basic water access."}
+# histogram of arcsine of water variable
+water.educ.new %>%
+  ggplot(aes(x = arcsin.perc.basic.water)) +
+  geom_histogram(fill = "#7463AC", color = "white") +
+  theme_minimal() +
+  labs(x = "Arcsine transformed basic water access", y = "Number of countries")
+```
+
+Eek! That looks terrible. It is not much better than the original variable. Leslie hopes the folded power works better:
+
+
+```{r fig.cap = "Histogram of power transformed percent of basic water access."}
+# histogram of logit water variable
+water.educ.new %>%
+  ggplot(aes(x = folded.p.basic.water)) +
+  geom_histogram(fill = "#7463AC", color = "white") +
+  theme_minimal() +
+  labs(x = "Folded power transformed basic water access", y = "Number of countries")
+```
+
+This transformation is also not that great. Kiara suggests that this variable might actually be one that works better by recoding it into categories since so many countries have 100% access, it could be a binary variable with 100% access in one category and less than 100% access in another category. That sounds reasonable to the team but Leslie wants to practice the NHST with transformed variables. She thinks the folded power transformations are probably best given that it did so well for the females in school variable. Kiara explains that Leslie can use the same NHST process for the transformed variables as for the original variables. Leslie goes ahead: 
+
+### NHST Step 1: Write the null and alternate hypotheses 
+
+H0: There is no correlation between the percent of females in school and the percent of citizens with basic water access ($r$ = 0) 
+
+HA: There is no correlation between the percent of females in school and the percent of citizens with basic water access ($r \ne 0$)
+
+### NHST Step 2: Compute the test statistic 
+
+The `cor.test()` function is then used with the transformed variables: 
+
+```{r}
+# correlation test for transformed variables 
+cor.test(water.educ.new$folded.p.female.school, 
+         water.educ.new$folded.p.basic.water, 
+         use = "complete")
+```
+
+The test statistic is $t = 9.72$ for the correlation of $r = .71$ between the two transformed variables.
+
+### NHST Step 3: Calculate the probability that your test statistic is at least as big as it is if there is no relationship (i.e., the null is true) 
+
+The p-value show in the output of `cor.test()` is very tiny. The probability that the $t$ would be 9.72 or larger if there were no relationship is very tiny, nearly (but not quite) zero. 
+
+### NHST Step 4 & 5: Reject or retain the null hypothesis based on the probability
+
+With a very tiny p-value, the null hypothesis is rejected. There is a statistically significant relationship between the transformed variables for percent of females in school and percent of citizens with basic water access in a country. The relationship is positive and strong ($r = .71$), as the percent of citizens with basic water access goes up, the percent of females in school also goes up. The relationship is $r=.71$ in the sample and the 95% confidence interval shows that it is between $r=.59$ and $r=.80$ in the population that the sample came from. 
+
+### Testing assumptions for Pearson's $r$ between the transformed variables
+
+Correlation coefficients rely on four assumptions:
+
+* Both variables are continuous 
+* Both variables are normally distributed 
+* The relationship between the two variables is _linear_ (linearity) 
+* The variance is constant with the points distributed equally around the line (homoscedasticity) 
+
+The first assumption is *met*; the transformations resulted in continuous variables. The second assumption of normal distributions was *not met* based on the left-skewed histogram of the transformed water variable examined during data transformation. To test the third and fourth assumptions, Leslie makes a scatterplot with the Loess curve and the linear model line to check linearity and homoscedasticity. 
+
+```{r fig.cap = "Plot of transformed females in school and water access variables."}
+# explore plot of transformed female education and water
+water.educ.new %>%
+  ggplot(aes(y = folded.p.female.school, x = folded.p.basic.water)) + 
+  geom_smooth(method = "lm", se = FALSE, aes(color = "linear model")) +
+  geom_smooth(se = FALSE, aes(color = "Loess curve")) +
+  geom_point(size = 2, color = "#7463AC") + 
+  theme_minimal() + 
+  labs(y = "Transformed percent of females in school",
+       x = "Transformed percent with basic access to water") +
+  scale_color_manual(name="Type of fit line", values=c("#78A678", "deeppink"))
+
+```
+
+The final two assumptions are linearity and homoscedasticity. The plot shows a pretty terrible deviation from linearity, which looks like it is mostly due to all the countries with 100% basic water access. The homoscedasticity looks better, although maybe less spread out at the lower end. Leslie decides to use Breusch-Pagan just for practice and to determine if this spread is considered equal around the line. She reminds herself that the BP test is testing the null hypothesis that *the variance is constant* aound the line. 
+
+```{r}
+# testing for homoscedasticity
+bp.test.trans <- lmtest::bptest(formula = water.educ.new$folded.p.female.school ~ 
+                                  water.educ.new$folded.p.basic.water)
+bp.test.trans 
+```
+
+With a p-value of .03, the null hypothesis is rejected and the assumption fails. The data transformation worked to address the problem of normality for the females in school variable, but the transformed data were not useful for maintaining linearity or improving homoscedasticity. Leslie writes her final conclusion:
+
+> There was a statistically significant, positive, and strong ($r = .71$; $t = 9.72$; $p<.05$; 95% CI: .59 - .80) relationship between the transformed variables for percent of females in school and percent of citizens with basic water access in a sample of countries. As the percent of citizens with basic water access increases, so does the percent of school-age females in school. The data failed several of the assumption for $r$ and so these results should not be generalized outside the sample.  
+
+Kiara wants to add one more caveat to the analyses. She explains that, although transformation may work to meet assumptions in some cases, they always make interpretation more complicated. Because the relationship is now between the transformed values, the interpretation is now with respect to the transformed values and not the original data [@osborne2005notes]. 
+
+### Unlock achievement 6: Check your understanding
+
+Use the Tukey method to transform the poverty variable and check normality for the transformed variable. 
+
+## Achievement 7: Using Spearman's rho as an alternative when Pearson's $r$ correlation assumptions are not met
+
+Kiara suggests that there other correlation statistics that do not have the same strict assumptions and given the difficulty of getting such problematic data to meet the assumptions suggests this might be a better option. The most commonly used alternative to the Pearson's r correlation coefficient is the Spearman's rho ($\rho$) rank correlation coefficient. Technically, Kiara says, this is just another transformation, but instead of computing the arcsine or raising the variables to a power, they are transformed into ranks. So, the values of the variable are ranked from lowest to highest and the calculations for correlation are conducted using the ranks instead of the raw values for the variables.
 
 ### Computing Spearman's rho correlation coefficient 
 
-Spearman's rho is computed by ranking each value for each variable from lowest to highest and then computing the extent to which the two variable ranks are the same. So, for a Spearman's correlation of female education and water access, the values of female education would be ranked from lowest to highest and the values of water access would be ranked from lowest to highest. Then, once the ranks are assigned, the correlation coefficient is computed: 
+Spearman's rho is computed by ranking each value for each variable from lowest to highest and then computing the extent to which the two variable ranks are the same. So, for a Spearman's correlation of female education and water access, the values of female education would be ranked from lowest to highest and the values of water access would be ranked from lowest to highest. Then, once the ranks are assigned, the $\rho$ correlation coefficient is computed: 
 
-\[
+$$
+\begin{equation} 
 \rho=\frac{6{\sum{d^2}}}{n(n^2-1)}
-\]
+ (\#eq:rho)
+\end{equation}
+$$
 
 Where:
 
-* d is the difference between the ranks of the two variables
+* d is the difference between the ranks of the two variables 
 * n is the number of observations 
 
-Using the `cor.test()` command, Bobbi tests the correlation between female education and basic water access by adding `method = spearman` as one of the options:
+Leslie gets her NHST ready to go. 
+
+### NHST Step 1: Write the null and alternate hypotheses 
+
+H0: There is no correlation between the percent of females in school and the percent of citizens with basic water access ($\rho$ = 0) 
+
+HA: There is no correlation between the percent of females in school and the percent of citizens with basic water access ($\rho \ne 0$)
+
+### NHST Step 2: Compute the test statistic 
+
+Using the `cor.test()` command, Kiara tests the correlation between female education and basic water access by adding `method = spearman` as one of the options: 
 
 ```{r}
 # spearman correlation female education and water access
-spearCorrFemWater <- cor.test(x = waterData$perc.basic2015water, 
-                              y = waterData$female.in.school, 
+spear.fem.water <- cor.test(x = water.educ$perc.basic2015water, 
+                              y = water.educ$female.in.school, 
                               method = "spearman")
-spearCorrFemWater
+spear.fem.water
 ```
 
-While Pearson's r between female education and basic water access was `r round(corFemEducWater$estimate, 2)`, the Spearman's rho was slightly lower at `r round(spearCorrFemWater$estimate, 2)`. 
+While Pearson's r between female education and basic water access was `r round(cor.Fem.Educ.Water$estimate, 2)`, the Spearman's rho was slightly lower at `r round(spear.fem.water$estimate, 2)`. 
 
-### Testing statistical significance for Spearman's rho
+Instead of a t-statistic and p-value, the output for Spearman's $\rho$ reports the `S` test statistic, which is computed: 
 
-Instead of a t-statistic and p-value, the Spearman's rho statistical significance test reports the `S` statistic, which is computed:
-
-\[
+$$
+\begin{equation} 
 S=(n^3-n)\frac{1-r_p}{6}
-\]
+ (\#eq:rho.s)
+\end{equation}
+$$
 
-Where $r_p$ is the Pearson correlation coefficient. The p-value is determined by computing a t-statistic and degrees of freedom to find the probability of a t as large or larger if there were truly no difference between ranks. The t-statistic is computed: 
+Where $r_p$ is the Pearson correlation coefficient. The p-value in the output of the `cor.test()` function as it was used is determined by computing an approximation of $t$ and degrees of freedom. This special approximation of the  $t$-statistic is computed: 
 
-\[
+$$
+\begin{equation}
 t=r\sqrt{\frac{n-2}{1-r^2}}
-\]
+ (\#eq:rho.t)
+\end{equation}
+$$
 
-While it is not included in the output from R, the t-statistic can be computed easily by using R as a calculator:
+While it is not included in the output from R, the special $t$-statistic can be computed easily by using R as a calculator:
 
 ```{r}
 # compute the sample size
 # drop rows with NA
-completeWaterFemEduc <- drop_na(subset(waterData, 
-                                         select = c(perc.basic2015water, 
-                                                    female.in.school)))
+water.educ.new %>%
+  drop_na(perc.basic2015water) %>%
+  drop_na(female.in.school) %>%
+  summarize(n = n(),
+            t.spear = cor.Fem.Educ.Water$estimate*sqrt((n()-2)/(1-cor.Fem.Educ.Water$estimate^2)))
 
-# find length of new data frame
-# assign to nSpear
-nSpear <- nrow(completeWaterFemEduc)
-
-# compute the t-statistic
-tSpear <- corFemEducWater$estimate * (sqrt(((nSpear-2))/(1-corFemEducWater$estimate^2)))
-tSpear
 ```
 
-Leslie is confused by the `corFemEducWater$estimate` part of the code. Until now she considered the use of the `$` to separate data frame names from variable names. In this case, Bobbi explains, the Spearman's rho analysis produced a _list_ of eight things that can be explored and used in reporting and in other calculations. The dollar sign operator can be used to refer to items in a list in the same way as it is used to refer to variables in a data frame. Leslie prints the summary of the list to take a look:
+Leslie is confused by the `cor.Fem.Educ.Water$estimate` part of the code. Kiara explains to her that `$` can be used to access parts of objects and the Spearman's rho analysis produced a _list_ of eight things that can be explored and used in reporting and in other calculations. The dollar sign operator can be used to refer to items in a list in the same way as it is used to refer to variables in a data frame. Leslie prints the summary of the list to take a look:
 
 ```{r}
-# print the list from the Spearman analysis
-summary(spearCorrFemWater)
+# print the list from the Pearson's analysis
+summary(cor.Fem.Educ.Water)
 ```
 
-Bobbi suggests Leslie spend a little time examining the objects created from analyses like the Spearman correlation test (see Box). 
+Kiara suggests Leslie spend a little time examining the objects created from analyses like the Spearman correlation test (see Box \@ref(ch8kiara)). 
 
-In this case, t = `r round(tSpear, 2)` with degrees of freedom computed using _nSpear - 2_. A quick plot of the t-distribution with `r nSpear-2` degrees of freedom reveals that the probability of a t-statistic this big would be very tiny. 
+### NHST Step 3: Calculate the probability that your test statistic is at least as big as it is if there is no relationship (i.e., the null is true) 
 
-```{r echo = FALSE, message=FALSE, warning=FALSE, fig.cap="t-distribution with 98 degrees of freedom."}
-dat<-with(density(rt(100000, nSpear-2)),data.frame(x, y))
+In this case, $t$ is 13.33 with 94 degrees of freedom ($n$ = 96). A quick plot of the t-distribution with 94 degrees of freedom reveals that the probability of a t-statistic this big or bigger would be very tiny if the null hypothesis were true. The p-value of `r spear.fem.water$p.value` in the output for the Spearman analysis makes sense given this distribution.
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.cap="t-distribution with 94 degrees of freedom."}
+dat<-with(density(rt(100000, 94)),data.frame(x, y))
 
 ggplot(data = dat, mapping = aes(x = x, y = y)) +
     geom_line()+
@@ -672,22 +1170,22 @@ ggplot(data = dat, mapping = aes(x = x, y = y)) +
   xlab("t-statistic") + ylab("Probability") 
 ```
 
-Given the chi-squared distribution for `r nSpear-2` degrees of freedom, the p-value of `r spearCorrFemWater$p.value` makes sense. 
+Given the very small area under the curve of the t-distribution that would be at 13.33 or a higher value for 94 degrees of freedom, the tiny p-value makes sense. 
 
 Leslie interprets the results: 
 
-> There is a statistically significant positive correlation between basic access to drinking water and female education ($r_s$ = `r round(spearCorrFemWater$estimate, 2)`; p < .001). As the percent of the population with basic access to water increases, so does the mean years of education for female citizens. 
+> There is a statistically significant positive correlation between basic access to drinking water and female education ($r_s$ = `r round(spear.fem.water$estimate, 2)`; p < .001). As the percent of the population with basic access to water increases, so does the percent of females in school. 
 
 ### Assumption checking for Spearman's rho
 
-Chelsea looks up the assumptions for Spearman's rho significance test and finds just two: 
+Kiara looks up the assumptions for Spearman's rho significance test and finds just two: 
 
-* The variables must be at least ordinal 
+* The variables must be at least ordinal or even closer to continuous
 * the relationship between the two variables must be **monotonic** 
 
 ### Checking the monotonic assumption 
 
-A **monotonic** relationship is a relationship where one variable goes up as the other variable goes up, or one variable goes down while the other goes up. Leslie asks how this differs from the linear relationship. Chelsea clarifies that the relationship does not have to follow a straight line, it can curve as long as it is always heading in the same direction. She creates a couple of examples to demonstrate: 
+A **monotonic** relationship is a relationship where one variable goes up as the other variable goes up, or one variable goes down while the other goes up. Leslie asks how this differs from the linear relationship. Nancy clarifies that the relationship does not have to follow a straight line, it can curve as long as it is always heading in the same direction. She creates a couple of examples to demonstrate: 
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE, fig.cap="Monotonic relationship examples."}
 # create vectors
@@ -697,188 +1195,213 @@ y1 <- (-expon^2)*3
 y2 <- (expon^3)/1.5
 a <- (seq(-25, 24.5, .5))^2
 
-exampNonlin <- data.frame(x = expon, y = y1, z = "monotonic (negative correlation)")
-exampNonlin2 <- data.frame(x = expon, y = y2, z = "monotonic (positive correlation)")
+exampNonlin <- data.frame(x = expon, y = y1, z = "monotonic (negative corr)")
+exampNonlin2 <- data.frame(x = expon, y = y2, z = "monotonic (positive corr)")
 exampNonlin3 <- data.frame(x = expon, y = a, z = "not monotonic")
 examp2 <- rbind(exampNonlin, exampNonlin2, exampNonlin3)
 
 # plot non-linear relationship
 # check linearity of plot of female education and water
-library(ggplot2)
 ggplot(data = examp2, aes(y = y, x = x)) + 
-    geom_point(colour = "gray") + 
-  geom_jitter(width = 4, colour = "gray") +
-    geom_smooth(se = FALSE, colour = "#88398a") +
+    geom_point(color = "#78A678") + 
+  geom_jitter(width = 4, color = "#78A678") +
+    geom_smooth(se = FALSE, aes(color = "Loess curve")) +
     theme_minimal() + 
-  facet_grid(. ~ z)
+  facet_grid(. ~ z) +
+  scale_color_manual(name="Type of fit line", values="deeppink") 
+  
+  
   
 ```
 
 Leslie understands the assumption after this visual. For the female education and water access analysis, she reviews the earlier graph to see if the relationship meets the monotone assumption: 
 
 ```{r fig.cap = "Relationship of percent of females educated and percent of citizens with water access in countries worldwide."}
-# check monotonic of plot of female education and water
-ggplot(data = waterData, aes(y = female.in.school, x = perc.basic2015water/100)) + 
-  geom_smooth(se = FALSE, colour = "orange") +
-  geom_point(size = 2, colour = "gray") + 
+# check monotonic for plot of female education and water
+water.educ %>%
+  ggplot(aes(y = female.in.school/100, x = perc.basic2015water/100)) + 
+  geom_smooth(method = "lm", se = FALSE, aes(color = "linear model")) +
+  geom_smooth(se = FALSE, aes(color = "Loess curve")) +
+  geom_point(size = 2, color = "#7463AC") + 
   theme_minimal() + 
-  labs(y = "Percentage of females in school",
+  labs(y = "Percent of females in primary and secondary school",
        x = "Percent with basic access to water") +
-  scale_x_continuous(labels = scales::percent)
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_manual(name="Type of fit line", values=c("#78A678", "deeppink"))
 
 ```
 
-The line suggests that the relationship between female education and water access meets the monotonic assumption since the values of female education consistently go up as the values of access to water go up. The relationship does not change direction. Chelsea suggests that the best option for this analysis is to report and interpret the Spearman correlation coefficient since the assumptions are met. Leslie reiterates her interpretation from above: 
+The line suggests that the relationship between female education and water access meets the monotonic assumption since the values of female education consistently go up as the values of access to water go up. The relationship does not change direction. Kiara suggests that the best option for this analysis is to report and interpret the Spearman correlation coefficient since the assumptions are met, while the assumptions failed for Pearson's $r$ with the original data and with the transformed variables. Leslie reiterates her interpretation from above: 
 
-> There is a statistically significant positive correlation between basic access to drinking water and female education ($r_s$ = `r round(spearCorrFemWater$estimate, 2)`; p < .001). As the percent of the population with basic access to water increases, so does the mean years of education for female citizens. The data meet the monotonic relationship and variable type assumptions.
+> There is a statistically significant positive correlation between basic access to drinking water and female education ($\rho$ = `r round(spear.fem.water$estimate, 2)`; p < .001). As the percent of the population with basic access to water increases, so does the mean years of education for female citizens. The data meet the monotonic relationship and variable type assumptions for $\rho$.
 
-### Unlocking achievement 6: Check your understanding
+### Unlock achievement 7: Check your understanding
 
-Use the `cor.test()` command with the `method = spearman` option to examine the relationship between living on less than $1 per day and basic water access. Interpret your results.
+Use the `cor.test()` command with the `method = spearman` option to examine the relationship between living on less than $1 per day and basic water access. Check the assumptions. Interpret your results.
 
-## Achievement 7: Partial correlations
+## Achievement 8: Briefly introducing partial correlations
 
-Bobbi is concerned that female education levels and water access might both be related to poverty and that poverty might be responsible for some of the shared variance. Chelsea explains that there is a method called _partial correlation_ for examining how multiple variable overlap. Chelsea creates a few Venn Diagrams with different patterns of shared variance to clarify the idea:
+Kiara thinks that is almost enough for the day. She wants to just introduce briefly one additional topic. Specifically, she is concerned that female education levels and water access might both be related to poverty and that poverty might be the reason both of these variables increase at the same time. Basically, Kiara thinks that poverty is the reason for the shared variance between these two variables. She thinks that countries with higher poverty have fewer females in school and lower percents of people with basic water access. She explains that there is a method called _partial correlation_ for examining how multiple variable share variance with each other. Kiara is interested in how much overlap there is between female education and water access after accounting for poverty. 
+Nancy thinks it might be useful to think about partial correlation in terms of the shared variance they looked at with Venn Diagrams above. She creates a Venn Diagram with three variables that overlap. There are two ways the variables overlap in a diagram like this. There are the places where just two of the variables overlap (green and blue overlap, green and purple overlap, purple and blue overlap) and there is the place where all three overlap. The overlap between just two colors is the **partial correlation** between the two variables. It is the extent to which they vary in the same way after accounting for how they are both related to the third variable involved. 
 
-```{r echo = FALSE, message=FALSE, warning=FALSE, fig.cap = "Examples of shared variance."}
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.cap="Visualizing partial correlation."}
+# venna <- venneuler(c(X = 100, Y = 100, Z = 100, "X&Y" = 30, "X&Z" = 30, "Y&Z" = 30,
+#                      "X&Y&Z" = 10))
+# vennb <- venneuler(c(X = 100, Y = 100, Z = 100, "X&Y" = 20, "X&Z" = 20, "Y&Z" = 80,
+#                      "X&Y&Z" = 10))
+vennc <- venneuler(c(X = 100, Y = 100, Z = 100, "X&Y" = 81, "X&Z" = 30, "Y&Z" = 30,
+                     "X&Y&Z" = 5))
+
 # draw venn diagrams
-library(venneuler)
-par(mfrow=c(2,2), mar = c(0, 0, 1, 0))
-venn3way <- venneuler(c(Educ = 100, Water = 100, Poverty = 100, 
-                     "Educ&Water" = 30, "Educ&Poverty" = 30, "Poverty&Water" = 30,
-                     "Educ&Water&Poverty" = 10))
-venn3way2 <- venneuler(c(Educ = 100, Water = 100, Poverty = 100, 
-                     "Educ&Water" = 20, "Educ&Poverty" = 20, "Poverty&Water" = 80,
-                     "Educ&Water&Poverty" = 20))
-venn3way3 <- venneuler(c(Educ = 100, Water = 100, Poverty = 100, 
-                     "Educ&Water" = 80, "Educ&Poverty" = 80, "Poverty&Water" = 20,
-                     "Educ&Water&Poverty" = 10))
-venn3way4 <- venneuler(c(Educ = 100, Water = 100, Poverty = 100, 
-                     "Educ&Water" = 80, "Educ&Poverty" = 10, "Poverty&Water" = 20,
-                     "Educ&Water&Poverty" = 10))
-plot(venn3way)
-plot(venn3way2)
-plot(venn3way3)
-plot(venn3way4)
-
-
+# par(mfrow=c(3,1), oma = c(1,0,2,0), mar = c(top = .5, bottom = .5, left = .5, right = .5))
+# plot(venna, col = c("#78A678", "#7463AC", "dodgerblue2"))
+# title(main="Equal shared variance")
+# plot(vennb, col = c("#78A678", "#7463AC", "dodgerblue2"))
+# title(main="More shared variance between Y and Z")
+plot(vennc, col = c("#78A678", "#7463AC", "dodgerblue2"))
 
 ```
-
-Leslie notes the different amounts of overlap representing the amounts of shared variance among the variables. Bobbi is interested in how much overlap there is between female education and water access after accounting for poverty. In the Venn Diagrams, this would be the overlap between yellow and green only. 
 
 ### Computing Pearson's r partial correlations
 
-Bobbi suggests she load the ppcor package to examine the partial correlations among the three variables. The ppcor commands for partial correlation (`pcor()`) and for the partial correlation statistical test (`pcor.test()`) take a data frame consisting only of the variables for analyses with complete cases. 
+Nancy is aware of an R package for examining partial correlations and installs the <span style="font-family:Lucida Console, monospace;font-weight:bold">ppcor</span> package. Using the function for partial correlation (`pcor()`) and for the partial correlation statistical test (`pcor.test()`) requires having a small data frame that consists only of the variables involved in the correlation with no missing data. Nancy installs <span style="font-family:Lucida Console, monospace;font-weight:bold">ppcor</span> and starts to work on making such a data frame that includes females in school, basic water access, and poverty variables.
 
 ```{r}
-# open the partial correlation package
-library(ppcor)
-
 # create a data frame with only female education
 # poverty and water access
-waterDataSmall <- na.omit(waterData[ , c(3, 6, 9)])
+water.educ.small <- water.educ.new %>%
+  select(female.in.school, perc.basic2015water, perc.1dollar) %>%
+  drop_na()
 
-# conduct partial correlation
-educWaterPoverty <- pcor(waterDataSmall, method = "pearson")
-educWaterPoverty
+# examine the bivariate correlations 
+water.educ.small %>%
+  summarize(corr.fem.water = cor(female.in.school, perc.basic2015water),
+            corr.fem.pov = cor(female.in.school, perc.1dollar),
+            corr.water.pov = cor(perc.basic2015water, perc.1dollar))
 ```
 
-The original Pearson correlation between female education and water access was `r round(corFemEducWater$estimate, 2)` but the partial correlation between female education and water access after accounting for poverty was `r round(educWaterPoverty$estimate[2, 3], 2)`. Although poverty accounted for some of the shared variance, the correlation was still of moderate strength.
+The three correlations are all strong. Nancy uses `pcor()` to determine how they are interrelated.
+
+```{r}
+# conduct partial Pearson correlation
+educ.water.poverty <- ppcor::pcor(x = water.educ.small, method = "pearson")
+educ.water.poverty
+```
+
+So the original Pearson correlation between females in school and water access in this data without missing values was $r=.77$. Looking at the first section of the output from `pcor()`, it shows the partial correlations between all three of the variables. The partial correlation between females in school and water access is $r_{partial}=.44$. So, after accounting for poverty, the relationship betwen females in school and water access is moderate. Nancy thinks a visual might help, so she enters the correlations into the Venn Diagram code to make a diagram that shows the relationships from this analysis:
+
+```{r venn, echo = FALSE, message=FALSE, warning=FALSE, fig.cap="Visualizing partial correlation."}
+vennpart <- venneuler(c(poverty = 100, female.educ = 100, basic.water = 100, "female.educ&basic.water" = 76.5, "female.educ&poverty" = 71.4, "poverty&basic.water" = 83.2, "female.educ&basic.water&poverty" = 21.65083))
+plot(vennpart, col = c("#78A678", "#7463AC", "dodgerblue2"))
+
+```
+
+There is quite a bit of overlap among all the variables. The $r_{partial} = .44$ is the section of Figure \@ref(fig:venn) where the purple and blue overlap but there is no green overlap. The unique variance in water access that is shared with females in school is the purple and blue overlap. This is the partial correlation. 
+
+To get the percentage of shared variance, this could be squared and reported as a percentage. The squared value of the partial correlation is .193, so 19.3% of the variance in percent of females in school is shared with the percent who have basic access to water.
 
 ### Computing Spearman's rho partial correlations
 
-Leslie reminds Bobbi that the data do not meet the assumptions for the Pearson correlation. Bobbi lets Leslie know that the assumptions that applied to the two variables for a Pearson correlation would apply to all three variables for a partial Pearson correlation. So, each variable would be continuous and normally distributed, each pair of variable would demonstrate linearity and constant variances. Since she already knows that several assumptions are not met, Leslie goes ahead with the Spearman correlation, which is more appropriate in this case. The Spearman assumption of monotonic relationship would apply to each pair of variables. Bobbi changes the `method= "spearman"` argument in the `pcor()` command to specify Spearman's rho.
+Leslie reminds Kiara that the data do not meet the assumptions for the Pearson correlation. Kiara lets Leslie know that the assumptions that applied to the two variables for a Pearson correlation would apply to all three variables for a partial Pearson correlation. So, each variable would be continuous and normally distributed, each pair of variable would demonstrate linearity and constant variances. Since she already knows that several assumptions are not met, Leslie goes ahead with the Spearman correlation, which is more appropriate in this case. The Spearman assumption of monotonic relationship would apply to each pair of variables. Kiara changes the `method= "spearman"` argument in the `pcor()` command to specify Spearman's $\rho$.
 
 ```{r}
 # conduct partial correlation with Spearman
-educWaterPovertySpear <- pcor(waterDataSmall, method = "spearman")
-educWaterPovertySpear
+educ.water.poverty.spear <- ppcor::pcor(x = water.educ.small, method = "spearman")
+educ.water.poverty.spear
 ```
 
-The original Spearman correlation between female education and water access was `r round(spearCorrFemWater$estimate, 2)` but the partial Spearman's rho correlation between female education and water access after accounting for poverty was `r round(educWaterPovertySpear$estimate[2, 3], 2)`. In this case, including poverty reduced the magnitude of the correlation by nearly half. 
+The original Spearman correlation between female education and water access was `r round(spear.fem.water$estimate, 2)` but the partial Spearman's $\rho$ correlation between females in school and water access after accounting for poverty was .43. In this case, the $\rho_{partial}$ value is consistent with the $r_{partial}$, for both of these partial correlation options, including poverty reduced the magnitude of the correlation by nearly half. 
 
 ### Significance testing for partial correlations
 
-Like the Pearson's r and Spearman's rho correlations, the partial correlations can be tested for statistical significance using a t-test. The t-statistic for each partial correlation is shown in the output from the `pcor` command. Leslie uses the output to write her interpretation of the partial correlation between female education and water access, accounting for poverty: 
+Like the Pearson's $r$ and Spearman's $\rho$ correlations, the partial correlations can be tested for statistical significance using a t-test. The t-statistic for each partial correlation is shown in the output from `pcor()`. The second chunk of numbers are the p-values and the third chunk of numbers are the test statistics. Leslie skips over NHST this time because she is tired. She uses the output to write her interpretation of the partial correlation between female education and water access, accounting for poverty: 
 
-> The partial correlation between percent of females in school and the percent of citizens who have basic water access was moderate, positive, and statistically significant ($r_s$ = `r round(educWaterPovertySpear$estimate[2, 3], 2)`; t = `r round(educWaterPovertySpear$statistic[2, 3], 2)`; p = `r round(educWaterPovertySpear$p.value[2, 3], 2)`). Even after poverty is accounted for, increased basic water access is associated with an increased percent of females in school.
+> The partial correlation between percent of females in school and the percent of citizens who have basic water access was moderate, positive, and statistically significant ($rho_{partial} = .43$; $t = 3.73$; $p < .05$). Even after poverty is accounted for, increased basic water access is associated with an increased percent of females in school.
 
 ### Checking assumptions for partial correlations 
 
-Before reporting these results, Leslie checks to see if the monotonic assumption for the Spearman's rho correlation is met.  
+Kiara reminds Leslie that she needs to check the rest of the assumptions before reporting these results. The variables all meet the assumption of being at least ordinal and Leslie has already checked for a monotonic relationship between females in school and percent with basic water. She goes ahead and checks the monotonic assumption for the females in school with poverty and for percent with basic water and poverty. 
 
-```{r fig.cap="Relationship of percent of females educated and percent of citizens living on less than one dollar per day in countries worldwide."}
+```{r loess.pov.fem, fig.cap="Relationship of percent of females educated and percent of citizens living on less than one dollar per day in countries worldwide."}
 # check monotonic of plot of female education and poverty
-ggplot(data = waterData, aes(y = female.in.school/100, x = perc.1dollar/100)) + 
-  geom_smooth(se = FALSE, colour = "gray40") +
-  geom_point(size = 2, colour = "gray") + 
+water.educ.small %>%
+  ggplot(aes(y = female.in.school/100, x = perc.1dollar/100)) + 
+  geom_smooth(method = "lm", se = FALSE, aes(color = "linear model")) +
+  geom_smooth(se = FALSE, aes(color = "Loess curve")) +
+  geom_point(size = 2, color = "#7463AC") + 
   theme_minimal() + 
-  labs(y = "Percent of females in school",
-       x = "Percent living on $1 or less per day") +
+  labs(y = "Percent of females in primary and secondary school",
+       x = "Percent living on < $1 per day") +
   scale_x_continuous(labels = scales::percent) +
-  scale_y_continuous(labels = scales::percent)
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_manual(name="Type of fit line", values=c("#78A678", "deeppink"))
 ```
+
+The Loess curve in Figure \@ref(fig:loess.pov.fem) goes just one direction, down. The monotonic assumption is met.
 
 ```{r fig.cap="Relationship of percent with water access and percent of citizens living on less than one dollar per day in countries worldwide."}
 # check monotonic assumption for water access and poverty
-ggplot(data = waterData, aes(y = perc.basic2015water/100, x = perc.1dollar/100)) + 
-  geom_smooth(se = FALSE, colour = "gray40") +
-  geom_point(size = 2, colour = "gray") + 
+water.educ.small %>%
+  ggplot(aes(y = perc.basic2015water/100, x = perc.1dollar/100)) + 
+  geom_smooth(method = "lm", se = FALSE, aes(color = "linear model")) +
+  geom_smooth(se = FALSE, aes(color = "Loess curve")) +
+  geom_point(size = 2, color = "#7463AC") + 
   theme_minimal() + 
   labs(y = "Percent with basic water access",
-       x = "Percent living on $1 or less per day") +
+       x = "Percent living on < $1 per day") +
   scale_x_continuous(labels = scales::percent) +
-  scale_y_continuous(labels = scales::percent)
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_manual(name="Type of fit line", values=c("#78A678", "deeppink"))
 ```
 
-In this case the analyses appear to meet the monotonic assumption for the poverty variable and the female education variable but not for the poverty variable and the basic water access variable. The results can still be reported, but without meeting the assumptions for the statistical test, interpreting the statistical significance is a problem. 
+Oh no! Leslie has a sad face now. In this case the analyses appear to meet the monotonic assumption for the poverty variable and the female education variable but not for the poverty variable and the basic water access variable. The results can still be reported, but without meeting the assumptions for the statistical test, interpreting the statistical significance is a problem. 
 
 ### Interpreting results when assumptions are not met 
 
-when assumptions are not met, there are a few possible strategies. Chelsea recommends two of the strategies: (1) interpreting the results for the sample only, and (2) recoding one of the variables to be categorical and using a different type of analysis. 
+when assumptions are not met, there are a few possible strategies. Kiara recommends two strategies: (1) interpreting the results for the sample only, and (2) recoding one of the variables to be categorical and using a different type of analysis. She reminds Leslie that the interpretation should change since the assumption was not met. Leslie re-writes the interpretation:  
 
-Chelsea reminds Leslie that the interpretation should change since the assumption was not met. Leslie re-writes the interpretation:  
+> The partial correlation between percent of females in school and the percent of citizens who have basic water access was moderate, positive, and statistically significant ($rho_{partial} = .43$; $t = 3.73$; $p < .05$). Even after poverty is accounted for, increased basic water access is associated with an increased percent of females in school. The assumptions for Spearman's $\rho$ are not met, so, in the sample, the partial correlation is .43 but it is unclear if this is also the case in the population. 
 
-> The partial correlation between mean years of education for females and the percentage of citizens who have basic water access was weak and positive ($\rho$ = `r round(educWaterPovertySpear$estimate[2, 3], 2)`. Even after poverty is accounted for, an increased basic water access was related to increased percent of females in school in this sample of countries.
+Kiara suggests that the poverty variable might also be recoded into ordinal categories. The ordinal variable could then be used in place of the original version of the variable and the Spearman's $\rho$ analysis could be conducted again. 
 
-Chelsea suggests that the poverty variable might also be recoded into an ordinal categorical variable. The ordinal variable could then be used in place of the continuous version of the variable. 
-
-Bobbi mentions that in addition to the two stragies explained by Chelsea, many people transform variables by taking the square root, log, or inverse of the variable values. These transformations often work to help analysts meet a normality assumption or other assumptions for a particular type of analysis. Although transformation of variables allows meeting of assumptions, the interpretation of results suffers. For example, instead of reporting that the percentage of females in school is positively correlated with poverty rate, an inverse transformation of poverty rate would result in the interpretation that the percentage of females in school is positively correlated with the inverse of the poverty rate. Leslie is interested in transformations and Bobbi reassures her that choosing and applying transformations will be covered in much more detail in the linear regression chapter.
- 
 ## Chapter summary
 
 ### Achievements unlocked in this chapter: Recap
 
-After reading this chapter and following along, Leslie (and you) has learned and practiced: 
+After reading this chapter and following along, Leslie has learned and practiced: 
 
-#### Achievement 1 recap: Using graphics to make a prediction 
+#### Achievement 1 recap: Using graphics and descriptive statistics to make a prediction 
 
 Prior to conducting a correlation analysis, it is useful to examine how the two variables are related to one another visually. In the case of correlation analyses, the best visual to use is a scatterplot. The scatterplot shows whether the relationship appears to linear, how strong it might be, and whether it looks like a positive or negative relationship.
 
-#### Achievement 2 recap: Computing and interpreting Pearson's r correlation coefficient
+#### Achievement 2 recap: Computing and interpreting Pearson’s r correlation coefficient
 
 The Pearson's r correlation coefficient is used to examine the relationship between two continuous variables. To use Pearson's r, the two variables must be normally distributed, have a linear relationship to each other, and have constant variance throughout the linear relationship. 
 
-Pearson correlation coefficients range from -1 to 1, where values below 0 represent negative relationships where one variable goes down when the other goes up. Values above 0 represent positive relationships where one variable goes up as the other goes up. The strength of a correlation is very weak (0 to .19), weak (.2 to .39), moderate (.4 to .59), strong (.6 to .79), or very strong (.8 to 1).
+Pearson correlation coefficients range from -1 to 1, where values below 0 represent negative relationships where one variable goes down when the other goes up. Values above 0 represent positive relationships where one variable goes up as the other goes up. 
 
-#### Achievement 3 recap: Inference and correlation coefficients 
+#### Achievement 3 recap: Conducting an inferential statistical test for Pearson’s r correlation coefficient 
 
 A one-sample t-test comparing the Pearson's r to zero determines whether the correlation coefficient is statistically significantly different from zero. 
 
-#### Achievement 4 recap: The coefficient of determination 
+#### Achievement 4 recap: Examining effect size for Pearson’s r with the coefficient of determination 
 
 The coefficient of determination is an alternate _effect size_ computed by squaring the correlation coefficient. The coefficient of determination, or $R^2$, is interpreted as the amount of shared variance the two variables have.
 
-#### Achievement 5 recap: Assumption checking for correlation analyses 
+#### Achievement 5 recap: Transforming the variables as an alternative when Pearson's $r$ correlation assumptions are not met 
 
 Statistical tests rely on underlying assumptions about the characteristics of the data. When these assumptions are not met, the results may not reflect the true relationships among the variables. The variable type can be checked by examining the two variables to be sure they are continuous. Histograms and QQ-Plots can be used to determine if the variables are normally distributed. A scatterplot with a Loess curve is useful for examining linearity. Finally, a scatterplot and Breusch-Pagan test can aid in identifying problems with constant variance.
 
-#### Achievement 6 recap: Spearman's rho correlation coefficient 
+#### Achievement 6 recap: Transforming the variables as an alternative when Pearson's $r$ correlation assumptions are not met 
+
+One of the methods that can be useful when the data do not meet the assumptions for Pearson's $r$ is to transform the variables. The type of transformation depends on the characteristics of the data. For percents and proportions, using a logit transformation or folded power transformation can be useful. One caution of transforming variables for analysis is that the interpretation of results is no longer as straightforward.
+
+#### Achievement 7 recap: Using Spearman's rho as an alternative when Pearson's $r$ correlation assumptions are not met 
 
 When assumptions are not met for Pearson's r, the Spearman's rho correlation coefficient can be used instead. This correlation coefficient requires that the data are measured at ordinal, interval, or ratio level. The second assumption is that the relationship is monotonic, which means that it is either consistently positive or consistently negative. Spearman's rho does not assume normally distributed variables, constant variance, or linearity. The interpretation of the direction (positive or negative) and strength of Spearman's rho is consistent with the interpretation of the direction and strength of the Pearson's r correlation coefficient.
 
-#### Achievement 7 recap: Partial correlations 
+#### Achievement 8 recap: Partial correlations 
 
 Some correlations may be influenced by additional variables. Partial correlation analyses account for the influence of other variables and quantify the shared variance unique to the two variables of interest. Partial correlations can use Pearson or Spearman methods depending on whether the data meet the assumptions for these tests.
 
@@ -888,17 +1411,19 @@ The coder and hacker exercises are an opportunity to apply the skills from this 
 
 Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 multiple choice questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 multiple choice questions correctly on your first try the rest correctly on your first or second try.
 
+Visit edge.sagepub.com/harris1e to complete the multiple choice questions and download the materials for the chapter exercises.
+
 Q1: Which of the follow is not an assumption for the Pearson's correlation analysis? 
 
 a. Normally distributed variables 
-b. Monotonic relationship* 
+b. Monotonic relationship 
 c. Linear relationship 
 d. Constant variance 
 e. Continuous variables  
 
 Q2: What is the primary purpose of Pearson's and Spearman's correlation coefficients?
 
-a. Examining the relationship between two non-categorical variables* 
+a. Examining the relationship between two non-categorical variables 
 b. Identifying deviations from normality for continuous variables 
 c. Examining the relationship between two categorical variables 
 d. Comparing means across group
@@ -907,7 +1432,7 @@ Q3: Which of the following would be considered a very strong negative correlatio
 
 a. .89 
 b. -.09  
-c. -.89* 
+c. -.89 
 d. .09  
 
 Q4: What percentage of the variance is shared if two variables are correlated at .4? 
@@ -915,20 +1440,20 @@ Q4: What percentage of the variance is shared if two variables are correlated at
 a. 40 
 b. 4 
 c. 8 
-d. 16* 
+d. 16 
 
 Q5: Which test is used to determine whether a correlation coefficient is statistically significant? 
 
 a. paired samples t-test 
 b. chi-squared test 
-c. one sample t-test* 
+c. one sample t-test 
 d. p-value 
 
 #### Chapter exercises: Coder edition 
 
 Depending on your score in the knowledge check, choose either the coder or hacker edition of the chapter exercises. Use the data from this chapter and the appropriate tests to examine male and female education and water access.
 
-1) Import the waterData data frame as shown in this chapter 
+1) Import the water.educ data frame as shown in this chapter 
 2) Make a table of descriptive statistics for all the variables in the data from except for country. Be sure to use appropriate statistics for each variable.
 2) (**A1**) Use a graph to examine the relationship between male.in.school and female.in.school
 4) (**A1**) Use a graph to examine the relationship between male.in.school and perc.basic2015water
@@ -949,52 +1474,36 @@ Complete #1 through #9 of the coder edition, then complete the following:
 12) (**A5**, **A7**) Check assumptions and interpret your results. 
 13) Write a paragraph explaining what you found and how the results differed (or did not differ) once you were using the new ordinal version of the poverty variable.
 
-<br><br>
+#### Instructor note
 
-### BOX(ES)
+Solutions to exercises can be found on the book website, along with *Ideas for Gamification* for those who want to *take it further*.
 
-#### (BOX) Chelsea's clever code: Using Objects in R
+### BOXES
 
-<img align = "left" src = "avatars/chelsea.gif" style="PADDING-RIGHT: 30px">
+#### Leslie's stats stuff: ways to analyze percent data {#ch8leslie}
 
-R does not require users to assign most analyses a name, but if a name is assigned, the results of the analysis are stored in an object. Information stored in the object can then be accessed and used in other analyses or even in reporting. In the same way a vector is assigned a variable name, the results of statistical tests can be assigned object names using assignment arrow, `<-`.
+<img align = "left" src = "graphics/leslie.gif" style="PADDING-RIGHT: 10px">
 
-For example, a Pearson correlation analysis examining the relationship between basic access to drinking water and basic access to sanitation could be computed like this:
+After talking with the team about using ANOVA and correlation with percent variables, Leslie wonders what the other options are. She does a little searching online and finds a few strategies that have been recommended, but nothing stands out **the one best way** to model a variable that is a percent. A couple of the papers suggest that percent  variables are problematic for statistical models that have the purpose of *predicting* values of the outcome because predictions can often fall outside the range of 0 to 100 [@aferrari2004beta]. Some of the things she finds she has heard of, like logistic regression [@zhao2001comparison], transforming the variable, and recoding the variable into a categorical variable. Leslie also comes across something called **beta regression** [@aferrari2004beta; @zeileis2010beta; @schmid2013boosted], which is new to her. She asks Nancy and Kiara and texts a couple of her statistics-using friends, Chelsea and Angelique, and the consensus among all four is that everyone has either never heard of it or has heard of it but never used it. Leslie does some more reading and makes a short list of strategies and resources that are options for dealing with percent data: 
 
-```{r}
-# correlation of sanitation and water access
-cor.test(waterData$perc.basic2015sani, waterData$perc.basic2015water)
-```
+* logistic regression [@zhao2001comparison]
+* beta regression [@aferrari2004beta; @zeileis2010beta; @schmid2013boosted]  
+* transforming the percent 
+* recoding the variable to categorical and using a non-parametric method like chi-squared
 
-This is useful for reviewing, but the information is not stored anywhere and cannot be accessed for additional analyses or reporting. Instead, use a logical object name and assignment arrow:
+Each of these methods seems to have strengths and weaknesses and each is useful for different situations. 
 
-```{r}
-# correlation of sanitation and water access
-corSaniWater <- cor.test(waterData$perc.basic2015sani, waterData$perc.basic2015water)
-```
+#### Kiara's reproducibility resource: using objects in R {#ch8kiara}
 
-The object now appears in the global environment pane as a list of nine things. The information in the list can be accessed and used directly in other calculations. For example, to compute the coefficient of determination, use the `estimate` from the list directly instead of typing in `.892`:
+<img align = "left" src = "graphics/kiara.gif" style="PADDING-RIGHT: 10px">
 
-```{r}
-# coefficient of determination for 
-# sanitation and water access
-cod <- corSaniWater$estimate^2
-cod
-```
-
-Not only is this more precise, but using the object name instead of typing a number also increases reproduciblity (see BOX).
-
-#### (BOX) Bobbi's reproducibility resource: Using objects in R
-
-<img align = "left" src = "avatars/bobbi.gif" style="PADDING-RIGHT: 10px">
-
-Bobbi senses another opportunity to teach Leslie about reproducibility when Chelsea starts explaining how to use objects to improve precision. She describes a situation where the coefficient of determination is needed for a report about the correlation between access to water and access to sanitation. There are two options: (1) conduct the correlation and use the number from the correlation to compute the coefficient of determination without assigning the results to an object, and (2) assign the correlation results to an object and use the object to compute the coefficient. Leslie does not see how these are different, so Bobbi demonstrates:
+Kiara senses another opportunity to teach Leslie about reproducibility when Nancy starts explaining how to use objects to improve precision. She describes a situation where the coefficient of determination is needed for a report about the correlation between access to water and access to sanitation. There are two options: (1) conduct the correlation and use the number from the correlation to compute the coefficient of determination without assigning the results to an object, and (2) assign the correlation results to an object and use the object to compute the coefficient. Leslie does not see how these are different, so Kiara demonstrates:
 
 **Conduct without objects**
 
 ```{r}
 # correlation of sanitation and water access
-cor.test(waterData$perc.basic2015sani, waterData$perc.basic2015water)
+cor.test(water.educ$perc.basic2015sani, water.educ$perc.basic2015water)
 ```
 
 ```{r}
@@ -1006,24 +1515,22 @@ cor.test(waterData$perc.basic2015sani, waterData$perc.basic2015water)
 
 ```{r}
 # correlation of sanitation and water access
-corSaniWater <- cor.test(waterData$perc.basic2015sani, waterData$perc.basic2015water)
+corSaniWater <- cor.test(water.educ$perc.basic2015sani, water.educ$perc.basic2015water)
 corSaniWater
-```
 
-```{r}
 # coefficient of determination for 
 # sanitation and water access
 cod <- corSaniWater$estimate^2
 cod
 ```
 
-While the difference is small in this case, it is still a difference. Without knowing exactly how the correlation was rounded to compute the coefficient of determination, even differences this small hinder reproducibility. In addition, a small difference can change the statistical significance of a result, which might influence a policy, program, or funding decision. In other cases, a small difference can snowball into larger differences later if further analyses are conducted using the hand-calculated version of the statistic. When possible, use of the the tools and strategies available in R to get the reported statistic is highly recommended.
+While the difference is small in this case, it is still a difference. Without knowing exactly how the correlation was rounded to compute the coefficient of determination, even differences this small hinder reproducibility. In addition, a small difference can change the statistical significance of a result, which might influence a policy, program, or funding decision. In other cases, a small difference can snowball into larger differences later if additional analyses are conducted using the hand-calculated version of the statistic. When possible, use of the the tools and strategies available in R to get the reported statistic is highly recommended. 
 
-#### (BOX) Chelsea's clever code: Bringing in and merging original data from websites 
+#### Nancy's fancy code: Bringing in and merging original data from websites {#ch8nancy}
 
-<img align = "left" src = "avatars/chelsea.gif" style="PADDING-RIGHT: 30px">
+<img align = "left" src = "graphics/nancy.gif" style="PADDING-RIGHT: 30px">
 
-The data for this chapter were imported from the World Health Organization (WHO) and UNESCO websites. Leslie asks Chelsea if she can teach her this process. Chelsea starts by looking at the WHO and UNESCO websites and finding the available data. 
+The data for this chapter were imported from the World Health Organization (WHO) and UNESCO websites. Leslie asks Nancy if she can teach her this process. Nancy starts by looking at the WHO and UNESCO websites and finding the available data. 
 
 ```{r warning=FALSE, message = FALSE}
 # download the water data from WHO website
@@ -1031,7 +1538,7 @@ water <- read_csv("http://apps.who.int/gho/athena/data/GHO/WSH_WATER_SAFELY_MANA
 
 ```
 
-In viewing the data from this import, Leslie notices that the first two rows are not data but look like row headings. Chelsea shows her how to skip rows so that the first row of the data frame is the first row of data:
+In viewing the data from this import, Leslie notices that the first two rows are not data but look like row headings. Nancy shows her how to skip rows so that the first row of the data frame is the first row of data:
 
 ```{r warning=FALSE, message = FALSE}
 # download the water data from WHO website
@@ -1041,91 +1548,93 @@ water <- read_csv("http://apps.who.int/gho/athena/data/GHO/WSH_WATER_SAFELY_MANA
 
 ```
 
-This looks ok, although there are a lot of columns with headers that just say _rural_ or _urban_. Bobbi checks the WHO website and suggests that Leslie limit the data to the first column with the country names, the fourth column with the total percentage of people using at least basic drinking water services, and the seventh column with the total percentage of pepole using safely managed drinking water services. Leslie decides to try using one of the subsetting procedures to limit the data to these three columns: 
+This looks ok, although there are a lot of columns with headers that just say _rural_ or _urban_. Kiara checks the WHO website and suggests that Leslie limit the data to the first column with the country names (Country), the fourth column with the total percentage of people using at least basic drinking water services (Total), and the seventh column with the total percentage of pepole using safely managed drinking water services (Total_1). Leslie decides to try using `select()` to limit the data to these three columns: 
 
 ```{r}
 # limit data to 2015 basic and safe water
-water <- water[c(1, 4, 7)]
-# name the variables
-names(water) <- c("country", "perc.basic2015water", "perc.safe2015water")
+water.cleaned <- water %>%
+  select(Country, Total, Total_1) %>%
+  rename(country = 'Country', perc.basic2015water = 'Total', perc.safe2015water = 'Total_1')
 ```
 
-Leslie reviews the result and finds a very clean data frame with three variables: country, perc.basic2015water, and perc.safe2015water. She moves on to the sanitation data source and notices it resembles the water data; she uses her experience from the water data source to write some efficient code: 
+Leslie reviews the water.cleaned data frame and finds a very clean data frame with three variables: country, perc.basic2015water, and perc.safe2015water. She moves on to the sanitation data source and notices it resembles the water data; she uses her experience from the water data source to write some efficient code: 
 
-```{r warning=FALSE, message = FALSE}
+```{r}
 # get sanitation data
+sanitation <- read_csv("http://apps.who.int/gho/athena/data/GHO/WSH_SANITATION_SAFELY_MANAGED,WSH_SANITATION_BASIC?filter=COUNTRY:*;RESIDENCEAREATYPE:*&x-sideaxis=COUNTRY&x-topaxis=YEAR;GHO;RESIDENCEAREATYPE&profile=crosstable&format=csv", skip = 2)
+
 # limit to 2015 
 # name the variables consistent with water data
-sanitation <- read_csv("http://apps.who.int/gho/athena/data/GHO/WSH_SANITATION_SAFELY_MANAGED,WSH_SANITATION_BASIC?filter=COUNTRY:*;RESIDENCEAREATYPE:*&x-sideaxis=COUNTRY&x-topaxis=YEAR;GHO;RESIDENCEAREATYPE&profile=crosstable&format=csv", 
-                       skip = 2)
-sanitation <- sanitation[c(1, 4, 7)]
-names(sanitation) <- c("country", "perc.basic2015sani", "perc.safe2015sani")
+sanitation.cleaned <- sanitation %>%
+  select(Country, Total, Total_1) %>%
+  rename(country = 'Country', perc.basic2015sani = 'Total', perc.safe2015sani = 'Total_1')
 ```
 
-Leslie notices that poverty data is also available in the WHO data repository. She downloads population characteristics including median age for residents of each country along with the percentage of people living on one dollar per day or less. She notes that a number of countries have < 2.0 as the entry for the percentage of people living on a dollar or less per day. Because the value is not precise and the less than symbol cannot be included in a numeric variable type for analyses, Leslie decides to replace these values with 1 as the percentage of people living on less than a dollar per day. Although this is not precise, the entry of < 2.0 indicates these countries have between 0 and 1.99 percent living at this level of poverty, so 1.0 is a reasonable replacement.
+Leslie notices that poverty data is also available in the WHO data repository. She downloads population characteristics including median age for residents of each country along with the percentage of people living on one dollar per day or less. She notes that a number of countries have < 2.0 as the entry for the percentage of people living on a dollar or less per day. Because the value is not precise and the less than symbol cannot be included in a numeric variable type for analyses, Leslie decides to replace these values with 1 as the percentage of people living on less than a dollar per day. Although this is not perfect, the entry of < 2.0 indicates these countries have between 0 and 1.99 percent living at this level of poverty, so 1.0 is a reasonable replacement. 
+
+Kiara is a little uneasy with this but just decides to remind Leslie that she should explain exactly what she did when she makes a choice like this during data management. There is no way to reproduce her results unless the data management choices were clear in this case.
 
 ```{r}
 # get population data
-# replace <2.0 with 1
-# add variable names
-popData <- read_csv("data/who-income-data.csv", skip = 1)
-names(popData) <- c("country", "med.age", "perc.1dollar")
+pop <- read_csv("data/2015-who-income-data-ch8.csv", skip = 1)
 
+# add variable names and recode
+# change to numeric
+pop.cleaned <- pop %>%
+  rename(country = "Country", med.age = "2013", perc.1dollar = "2007-2013") %>%
+  mutate(perc.1dollar = as.numeric(recode(perc.1dollar, `&lt;2.0` = "1")))
 ```
 
 Next Leslie needs the UNESCO data for the percentage of males and females who complete primary and secondary school. She finds the data on the UNESCO website, and saves the Excel spreadsheet to her computer. To import an Excel spreadsheet, she installs the readxl package first and then uses the `read_xl()` command:
 
 ```{r}
 # bring in education data
-library(readxl)
-educ <- read_excel("data/outOfSchoolRate-primarySecondary-2015.xlsx", 
-                   skip = 4)
+educ <- readxl::read_excel("data/2015-outOfSchoolRate-primarySecondary-ch8.xlsx", skip = 4)
 
 # examine the education data
 View(educ)
 ```
 
-Leslie notices that the second column is blank and the variable names are not useful. She decides to remove the second column by using the square brackets [] and adding better variable names using the `names()` command:
+Leslie notices that the second column is blank and the variable names are not useful. She decides to remove the second column and add better variable names:
 
 ```{r}
-# remove second column
-educ <- educ[-2]
-
-# name the variables and change variable type
-# convert out-of-school percentage to in-school percentage
-names(educ) <- c("country", "perc.in.school", 
-                 "female.in.school", "male.in.school")
+# remove second column and rename the variables
+educ.cleaned <- educ %>%
+  select(-...2) %>%
+  rename(country = "Country", perc.in.school = "...3",
+  female.in.school = "...4", male.in.school = "...5")
 ```
 
-In viewing the data, Leslie also noticed that the numbers were aligned to the left in each cell, which usually indicates a character or string type variable. She looks at the environment and sees that all four variables are chr type. To change the three percentage variables to numeric, she uses the `as.numeric()` command. 
-
-Chelsea reminds Leslie that the data are percentages out-of-school and Leslie subtracts the percentage of females out-of-school from 100 to get a percentage of in-school females, males, and total.
+In viewing the data in the environment, Leslie noticed that the percentage variables were saved as character variables. To change the three percentage variables to numeric, she adds the `as.numeric()` command to the data management. Nancy reminds Leslie that the data are percentages out-of-school and Leslie goes ahead and subtracts the percentage of females out-of-school from 100 to get a percentage of in-school females, males, and total.
 
 ```{r}
-# change variable types
-educ$perc.in.school <- 100 - as.numeric(educ$perc.in.school)
-educ$female.in.school <- 100 - as.numeric(educ$female.in.school)
-educ$male.in.school <- 100 - as.numeric(educ$male.in.school)
+# change variable types and recode
+educ.cleaned <- educ %>%
+  select(-...2) %>%
+  rename(country = "Country", perc.in.school = "...3",
+  female.in.school = "...4", male.in.school = "...5") %>%
+  mutate(perc.in.school = 100 - as.numeric(perc.in.school)) %>%
+  mutate(female.in.school = 100 - as.numeric(female.in.school)) %>%
+  mutate(male.in.school = 100 - as.numeric(male.in.school)) 
 ```
 
 Leslie reviews the data after all this and determines that it is ready to merge with the water and sanitation data:
 
 ```{r}
 # review data
-summary(educ)
+summary(object = educ.cleaned)
+```
+
+```{r}
 
 # merge population, sanitation, water data frames by country
-popsan <- merge(popData, sanitation, by = "country")
-popsanwat <- merge(popsan, water, by = "country")
-waterData <- merge(popsanwat, educ, by = "country")
+pop.san <- merge(pop.cleaned, sanitation.cleaned, by = "country")
+pop.san.wat <- merge(pop.san, water.cleaned, by = "country")
+water.educ <- merge(pop.san.wat, educ.cleaned, by = "country")
 
 ```
-The resulting data frame includes `r nrow(waterData)` observations and `r length(waterData)` variables. 
-<br>
 
-
-> Gamification ideas for Chapter 7: Performance on student work in the achieving things, are you a coder or hacker, and chapter exercises in this chapter could be included as part of earning a continuous data analysis badge. Combine scores from this chapter and chapters 6, 8, 10, and 11. Set thresholds for earning a bronze, silver, or gold badge. Integrate badge earnings into Blackboard or other platforms students use to share their portfolios and achievements with prospective employers or degree programs. Do an R object scavenger hunt where students use R objects to find specific values provided by the instructor. For example, use R to compute the coefficients of determination for all possible correlations in the waterData data frame. Have students identify which two variables were involved in each analysis. Award students points toward an R-master badge.
-
+The resulting data frame includes `r nrow(water.educ)` observations and `r length(water.educ)` variables. 
 
 
 

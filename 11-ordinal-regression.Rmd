@@ -555,7 +555,7 @@ Create and interpret graphs and bivariate statistical tests to examine the relat
 
 ## Achievement 5: Estimate an ordinal regression model 
 
-For ordinal categorical variables, a model is needed that can account for the order of the outcome variable. Leslie looks over the job satisfaction variables and decides to apply the ordinal regression model to the salary satisfaction variable. 
+For ordinal categorical variables, a model is needed that can account for the order of the outcome variable [@norris2006ordinal]. Leslie looks over the job satisfaction variables and decides to apply the ordinal regression model to the salary satisfaction variable. 
 
 ### NHST for the ordinal regression model
 

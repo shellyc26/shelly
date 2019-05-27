@@ -509,7 +509,7 @@ ggplot(data = dat, mapping = aes(x = x, y = y)) +
 
 Compute the percent of counties with fewer than 10 drug poisoning deaths per 100,000 residents given the mean and standard deviation shown. Compare your answer with the value you estimated to see if it seems accurate. Interpret the computed value and describe how you made your estimate. 
 
-## Achievement 4: Computing and interpreting z-scores to compare observations to groups
+## Achievement 4: Computing and interpreting z-scores to compare observations to groups {#zscore}
 
 Kiara chimes in at this point to show off her favorite useful feature of the normal distribution. She tells Leslie that, regardless of what the mean and standard deviation are, a normally distributed variable has approximately: 
 

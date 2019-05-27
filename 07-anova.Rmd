@@ -2,14 +2,15 @@
 
 ## Achievements to unlock 
 
-The t-test and its alternatives worked great for comparing two groups, but what happens when there are three or more groups to compare? In this Chapter the R team will discuss analysis of variance (ANOVA), which is the statistical method used for comparing means across three or more groups. Like the t-test, ANOVA has underlying assumptions to be met and there are alternative methods to use when the assumptions are not met. Similar to $\chi^2$, ANOVA is an omnibus test, which means a significant result indicates there is a difference between the means, but is not useful in determining which means are different from each other. Instead of using standardized residuals, ANOVA uses planned contrasts and post-hoc tests to determine which means are statistically significantly different from one another. Instead of Cramer's $V$ or odds ratios for $\chi^2$ and Cohen's $d$ for t-tests, the $\eta^2$ and partial-$\eta^2$ are often reported as the effect size for ANOVA. Nancy and Kiara made a list of tasks for Leslie: 
+The t-test and its alternatives worked great for comparing two groups, but what happens when there are three or more groups to compare? In this Chapter the R team will discuss analysis of variance (ANOVA), which is the statistical method used for comparing means across three or more groups. Like the t-test, ANOVA has underlying assumptions to be met and there are alternative methods to use when the assumptions are not met. Similar to $\chi^2$, ANOVA is an omnibus test, which means a significant result indicates there is a difference between the means, but is not useful in determining which means are different from each other. Instead of using standardized residuals, ANOVA uses planned contrasts and post-hoc tests to determine which means are statistically significantly different from one another. Instead of Cramer's $V$ or odds ratios for $\chi^2$ and Cohen's $d$ for t-tests, the $\eta^2$ and $\omega^2$ are often reported as the effect size for ANOVA. Nancy and Kiara made a list of tasks for Leslie: 
 
 * Achievement 1: Using graphics and descriptive statistics to make a prediction
 * Achievement 2: Understanding and conducting one-way Analysis of Variance (ANOVA) 
 * Achievement 3: Choosing and using post-hoc tests and contrasts 
-* Achievement 4: Testing ANOVA assumptions
-* Achievement 5: Choosing and using alternative tests when ANOVA assumptions are not met
-* Achievement 6: Understanding and conducting two-way ANOVA
+* Achievement 4: Computing and interpreting effect sizes for ANOVA 
+* Achievement 5: Testing ANOVA assumptions
+* Achievement 6: Choosing and using alternative tests when ANOVA assumptions are not met
+* Achievement 7: Understanding and conducting two-way ANOVA
 
 Follow Nancy, Kiara, and Leslie through the examples and exercises to test some relationships.
 
@@ -55,7 +56,7 @@ Leslie finds that the USETECH variable has a minimum value of -1 and a maximum o
 
 > During a typical week, about what percentage of your total time at work would you normally spend using different types of electronic technologies (such as computers, tablets, smart phones, cash registers, scanners, GPS devices, robotic devices, and so on)?
 
-The valid responses should be between zero and 100 percent of the time, so Leslie decides to recode values outside this range to be `NA`. She goes to the GSS Data Explorer [@GSS] and looks up the variable to figure out how it was coded. Leslie examines the codebook and it shows that the two values outside the range are -1 and 999 (Figure \@ref(fig:gss.usetech))
+The valid responses should be between zero and 100 percent of the time, so Leslie decides to recode values outside this range to be `NA`. She goes to the GSS Data Explorer [@GSS] and looks up the variable to figure out how it was coded. Leslie examines the codebook and it shows that the two values outside the range are -1 and 999 (Figure \@ref(gss.usetech))
 
 ```{r gss.usetech, echo = FALSE, fig.cap="Screenshot of GSS Data Explorer 2018 USETECH variable."}
 knitr::include_graphics("graphics/chap7-gss-perc-time-tech.JPG")
@@ -136,7 +137,7 @@ gss.2018.cleaned <- gss.2018 %>%
 summary(object = gss.2018.cleaned)
 ```
 
-The variables for analysis look like they all contain valid response options now, but every variable appears to be either numeric data type or integer data type. For DEGREE, HAPPY, and SEX, the data type should be factor. Leslie also prefers to have the category labels in her factors rather than just numbers. She reviews the codebook for the degree variable (Figure \@ref(fig:gss.degree)) and the happy variable (Figure \@ref(fig:gss.happy)) and makes these changes to the data using `factor()` with `mutate()`. 
+The variables for analysis look like they all contain valid response options now, but every variable appears to be either numeric data type or integer data type. For DEGREE, HAPPY, and SEX, the data type should be factor. Leslie also prefers to have the category labels in her factors rather than just numbers. She reviews the codebook for the degree variable (Figure \@ref(gss.degree)) and the happy variable (Figure \@ref(gss.happy)) and makes these changes to the data using `factor()` with `mutate()`. 
 
 ```{r gss.degree, echo = FALSE, fig.cap="Screenshot of GSS Data Explorer 2018 DEGREE variable."}
 knitr::include_graphics("graphics/chap7-gss-degree.JPG")
@@ -344,13 +345,13 @@ techuse.by.deg
 
 ##### NHST Step 3: Compute the probability for the test statistic (p-value) 
 
-The p-value in this case is `r format(techuse.by.deg$p.value, scientific = FALSE)`. The value of an $F$-statistic being this large or larger happens about `r 100*as.numeric(format(techuse.by.deg$p.value, scientific = FALSE))`% of the time when the null hypothesis is true. 
+The p-value in this case is `r format(techuse.by.deg$p.value, scientific = FALSE)`. The value of an $F$-statistic being this large or larger happens a tiny percent of the time when the null hypothesis is true. 
 
 ##### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
 
 With a p-value of `r format(techuse.by.deg$p.value, scientific = FALSE)`, the ANOVA indicates that there is likely a difference among the means of time spent using technology based on degree. With Kiara's guidance, Leslie writes out the conclusion:
 
-> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p = `r format(techuse.by.deg$p.value, scientific = FALSE)`] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. 
+> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p < .05] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. 
 
 ### Unlock achievement 2: Check your understanding
 
@@ -431,7 +432,7 @@ Leslie asks about the columns in the Tukey's output. Kiara explains that the fir
 
 This makes total sense to Leslie and she combines the $F$-test results and post-hoc results into a single interpretation:
 
-> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p = `r format(techuse.by.deg$p.value, scientific = FALSE)`] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. Mean percent of time using technology is statistically significantly (p < .05) _lower_ for people with less than a high school diploma (m = `r round(use.stats[1,2], 1)`) compared to each of the other groups where the mean percent of time using technology ranges from `r round(use.stats[2,2], 1)` to `r round(use.stats[5,2], 1)`. 
+> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p < .05`] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. Mean percent of time using technology is statistically significantly (p < .05) _lower_ for people with less than a high school diploma (m = `r round(use.stats[1,2], 1)`) compared to each of the other groups where the mean percent of time using technology ranges from `r round(use.stats[2,2], 1)` to `r round(use.stats[5,2], 1)`. 
 
 ### Planned comparisons 
 
@@ -726,7 +727,7 @@ gss.2018.cleaned %>%
 ```
 
 
-> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p = `r format(techuse.by.deg$p.value, scientific = FALSE)`] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. A set of planned comparisons found that the mean time spent using technology was statistically significantly (p < .05) lower for (1) those with *< high school* education (m = 24.8) compared to those with *high school or junior college* (m = 51.7), (2) those with a high school education (m = 49.61) compared to those with any college (m = 67.0), (3) those with a junior college degree (m = 62.4) compared to those with more college than that (m = 68.2), and (4) those with a bachelor's (m = 67.9) compared to those with a master's degree (m = 68.7). Overall the patterns show statistically significant increases in time spent using technology for those with more education.
+> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p < .05] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. A set of planned comparisons found that the mean time spent using technology was statistically significantly (p < .05) lower for (1) those with *< high school* education (m = 24.8) compared to those with *high school or junior college* (m = 51.7), (2) those with a high school education (m = 49.61) compared to those with any college (m = 67.0), (3) those with a junior college degree (m = 62.4) compared to those with more college than that (m = 68.2), and (4) those with a bachelor's (m = 67.9) compared to those with a master's degree (m = 68.7). Overall the patterns show statistically significant increases in time spent using technology for those with more education.
 
 ### Unlock achievement 3: Check your understanding
 
@@ -778,7 +779,7 @@ The final thing Leslie wants to know is the cutoffs for small, medium, and large
 
 In this case, the effect size is medium. There is a medium strength relationship between degree and time using technology. Leslie copies her interpretation from above and adds effect size:
 
-> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p = `r format(techuse.by.deg$p.value, scientific = FALSE)`] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. A set of planned comparisons found that the mean time spent using technology was statistically significantly (p < .05) lower for (1) those with *< high school* education (m = 24.8) compared to those with *high school or junior college* (m = 51.7), (2) those with a high school education (m = 49.61) compared to those with any college (m = 67.0), (3) those with a junior college degree (m = 62.4) compared to those with more college than that (m = 68.2), and (4) those with a bachelor's (m = 67.9) compared to those with a master's degree (m = 68.7). Overall the patterns show statistically significant increases in time spent using technology for those with more education. The strength of the relationship between degree and time using technology was medium $\omega^2$ = .11.
+> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p < .05] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. A set of planned comparisons found that the mean time spent using technology was statistically significantly (p < .05) lower for (1) those with *< high school* education (m = 24.8) compared to those with *high school or junior college* (m = 51.7), (2) those with a high school education (m = 49.61) compared to those with any college (m = 67.0), (3) those with a junior college degree (m = 62.4) compared to those with more college than that (m = 68.2), and (4) those with a bachelor's (m = 67.9) compared to those with a master's degree (m = 68.7). Overall the patterns show statistically significant increases in time spent using technology for those with more education. The strength of the relationship between degree and time using technology was medium $\omega^2$ = .11.
 
 ## Achievement 5: Testing ANOVA assumptions {#assumptanova}
 
@@ -959,13 +960,13 @@ usetech.t.by.degree
 
 #### NHST Step 3: Compute the probability for the test statistic (p-value) 
 
-The p-value in this case is `r format(usetech.t.by.degree$p.value, scientific = FALSE)`. The value of an $F_{BF}$-statistic being this large or larger happens about `r 100*as.numeric(format(usetech.t.by.degree$p.value, scientific = FALSE))`% of the time when the null hypothesis is true. 
+The p-value in this case is `r format(usetech.t.by.degree$p.value, scientific = FALSE)`. The value of an $F_{BF}$-statistic being this large or larger happens a tiny percent of the time when the null hypothesis is true. 
 
 #### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
 
 Leslie writes her conclusion:
 
-> The results show a statistically significant difference in the mean of the transformed usetech variable by degree group [F(`r usetech.t.by.degree$parameter[1]`, `r usetech.t.by.degree$parameter[2]`) = `r round(usetech.t.by.degree$statistic, 2)`; p = `r format(usetech.t.by.degree$p.value, scientific = FALSE)`]. 
+> The results show a statistically significant difference in the mean of the transformed usetech variable by degree group [F(`r usetech.t.by.degree$parameter[1]`, `r usetech.t.by.degree$parameter[2]`) = `r round(usetech.t.by.degree$statistic, 2)`; p < .05]. 
 
 Leslie is interested in how the transformed data used in these calculations looks; she decides to compute the descriptive statistics and examine a graph of the transformed variable to better understand the results.
 
@@ -1046,7 +1047,7 @@ welch.usetech.by.degree
 
 #### NHST Step 3: Compute the probability for the test statistic (p-value) 
 
-The p-value in this case is `r format(welch.usetech.by.degree$p.value, scientific = FALSE)`. The value of an $F_{W}$-statistic being this large or larger happens about `r 100*as.numeric(format(welch.usetech.by.degree$p.value, scientific = FALSE))`% of the time when the null hypothesis is true. 
+The p-value in this case is `r format(welch.usetech.by.degree$p.value, scientific = FALSE)`. The value of an $F_{W}$-statistic being this large or larger happens a tiny percent of the time when the null hypothesis is true. 
 
 #### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
 
@@ -1122,11 +1123,11 @@ kw.usetech.by.degree
 
 #### NHST Step 3: Compute the probability for the test statistic (p-value) 
 
-The p-value in this case is `r format(kw.usetech.by.degree$p.value, scientific = FALSE)`. The value of an $H$-statistic being this large or larger happens about `r 100*as.numeric(format(kw.usetech.by.degree$p.value, scientific = FALSE))`% of the time when the null hypothesis is true. 
+The p-value in this case is `r format(kw.usetech.by.degree$p.value, scientific = FALSE)`. The value of an $H$-statistic being this large or larger happens a tiny percent of the time when the null hypothesis is true. 
 
 #### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
 
-The conclusion is that there is a difference in the mean rank for technology use by degree group (H(`r kw.usetech.by.degree$parameter`) = `r kw.usetech.by.degree$parameter`; p = `r format(kw.usetech.by.degree$p.value, scientific = FALSE)`). Like the ANOVA results, the KW test identifies if there is a difference somewhere among the means but does not identify which groups are different from one another. A post-hoc test like _Bonferroni_ or _Tukey_ could help. For KW, _Dunn's test_ of multiple comparisons is useful for identifying which groups are _statistically significantly_ different from which other groups.
+The conclusion is that there is a difference in the mean rank for technology use by degree group (H(`r kw.usetech.by.degree$parameter`) = `r kw.usetech.by.degree$parameter`; p < .05). Like the ANOVA results, the KW test identifies if there is a difference somewhere among the means but does not identify which groups are different from one another. A post-hoc test like _Bonferroni_ or _Tukey_ could help. For KW, _Dunn's test_ of multiple comparisons is useful for identifying which groups are _statistically significantly_ different from which other groups.
 
 #### Post-hoc test for Kruskal-Wallis
 
@@ -1319,7 +1320,7 @@ Nancy explains that the statistic column in the output is a column of $F$-statis
 library(broom)
 ```
 
-The p-values in this case were `r tidy(techuse.by.deg.sex)$p.value[1]`, `r tidy(techuse.by.deg.sex)$p.value[2]`, and `r tidy(techuse.by.deg.sex)$p.value[3]`. These are very tiny p-values, for example, the value of an $F$-statistic being as large or larger than the $F$-statistic for the DEGREE main effect happens about `r 100*tidy(techuse.by.deg)$p.value[1]`% of the time when the null hypothesis is true. 
+The p-values in this case were `r tidy(techuse.by.deg.sex)$p.value[1]`, `r tidy(techuse.by.deg.sex)$p.value[2]`, and `r tidy(techuse.by.deg.sex)$p.value[3]`. These are very tiny p-values, for example, the value of an $F$-statistic being as large or larger than the $F$-statistic for the DEGREE main effect happens a tiny percent of the time when the null hypothesis is true. 
 
 #### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
 
@@ -1483,6 +1484,8 @@ The coder and hacker exercises are an opportunity to apply the skills from this 
 
 Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 multiple choice questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 multiple choice questions correctly on your first try the rest correctly on your first or second try.
 
+Visit edge.sagepub.com/harris1e to complete the multiple choice questions and download the materials for the chapter exercises.
+
 Q1: What is the primary purpose of ANOVA?
 
 a. Comparing means across 3 or more groups 
@@ -1524,9 +1527,9 @@ Depending on your score in the knowledge check, choose either the coder or hacke
 2) Clean the happiness, sex, and tech use variables so they have clear variable names, category labels, and missing value coding 
 3) (**A1**) Use graphics and descriptive statistics to examine tech use on its own, by sex, and by happiness 
 4) (**A1**) Based on the graphs and statistics from question 3, make a prediction about what you would find when you compare tech use across groups for happiness and for sex 
-5) (**A2**, **A5**) Conduct the appropriate test to compare mean tech use across happiness groups. If the $F$-statistic is significant, use a post-hoc test to determine which means are statistically significantly different from each other. Interpret your results. 
+5) (**A2**, **A5**) Conduct the appropriate test to compare mean time using tech across happiness groups. If the $F$-statistic is significant, use a post-hoc test to determine which means are statistically significantly different from each other. Interpret your results. 
 6) (**A3**, **A5**) Check assumptions for the ANOVA and conduct an appropriate alternate analysis if it does not pass assumptions. Interpret your results. 
-7) (**A6**) Conduct a two-way ANOVA using sex and happiness. Interpret results and check assumptions.
+7) (**A6**) Conduct a two-way ANOVA with time using technology by sex and happiness. Interpret results and check assumptions.
 
 #### Chapter exercises: Hacker edition
 
@@ -1534,6 +1537,10 @@ Complete the coder edition and:
 
 * Use the graphics in #3 to hypothesize which happiness groups have different tech use means. Write planned comparisons instead to test your hypotheses and conduct an appropriate planned comparison analysis instead of post-hoc tests in #5. 
 * Conduct and interpret post-hoc test for the two-way ANOVA developed in #7 
+
+#### Instructor note
+
+Solutions to exercises can be found on the book website, along with *Ideas for Gamification* for those who want to *take it further*.
 
 ### BOXES
 
