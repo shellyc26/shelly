@@ -980,7 +980,7 @@ The distributions Nancy graphed above look quite similar, but have enough minor 
 
 Note that this test, the Mann-Whitney U, the K-S test, and the Kruskal-Wallis test are often interpreted as testing for _equal medians_. While none of these tests examine medians directly, the ordering and ranking of values is similar to how medians are identified, so there is some logic to this interpretation. However, if the distribution shape or spread (or both) are different, interpreting the results as comparing medians can be misleading. Remember to conduct visual and descriptive analyses before (or with) inferential analyses in order to interpret your results accurately. The Wilcoxon signed rank test should be accompanied by a histogram or boxplot comparing the groups to support or clarify the statistical results.
 
-### Alternative when the independent-samples t-test normality assumption fails: Mann-Whitney U test 
+### Alternative when the independent-samples t-test normality assumption fails: Mann-Whitney U test {#mannwhit}
 
 This test is an alternative to the independent-samples t-test when the continuous variable is not normally distributed. This test also relaxes the variable type assumption and can be used for ordinal variables in addition to continuous variables. Similar to the Wilcoxon signed-rank test, the Mann-Whitney U test puts all the values for the continuous (or ordinal) variable in order, assigns each value a rank, and compares ranks across the two groups [@gravetter2009statistics]. The formula for the test statistic includes the sums of the ranks, $R$, for each group along with the sample size $n$. 
 

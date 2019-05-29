@@ -1,4 +1,4 @@
-# The R-team attempts ANOVA and its alternatives
+# The R team attempts ANOVA and its alternatives
 
 ## Achievements to unlock 
 

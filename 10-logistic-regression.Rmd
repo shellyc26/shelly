@@ -1,263 +1,92 @@
 # Binary logistic regression
 
+So far the team has learned about descriptive and visual data analysis, probability distributions, several tests for comparing means and percents, and linear regression for predicting or explaining a continuous outcome. Kiara explains that the form of the linear regression model with the outcome variable on the left-hand side of the equation and the predictors or independent variables on the right-hand side is a common format and many of the concepts will transfer to other models that predict or explain other types of outcome variables. One of the more common types of outcome variables in the social sciences is a binary variable. Binary variables record information about whether or not a patient has had a breast cancer screening, whether or not a person owns a gun, whether or not someone voted in the last election, whether a state has an opioid policy, and any number of other measures. The regression model that is useful for predicting or explaining a binary variable is binary logistic regression. 
+
+Binary logistic regression uses a similar form to linear regression and the methods for developing and using the model are consistent with the linear regression model. Because the outcome is not continuous, however, the assumptions and some of the interpretations are different. In this chapter, the team will use binary logistic regression to examine predictors of library use. Consistent with real-life statistical practice, the chapter will start with importing and cleaning the data, followed by exploratory data analysis, developing and interpreting a logistic model, and checking model assumptions. 
+
+Kiara is excited to work on one of her favorite methods and creates a list of achievements to work on:
+
 ## Achievements to unlock
 
-Linear regression is great when the outcome of interest is continuous, but what about when it is categorical? Chelsea creates an outline for learning about *logistic regression* analyses: 
+*	Achievement 1: Using exploratory data analysis before developing a logistic regression model
+*	Achievement 2: Understanding the binary logistic regression statistical model
+*	Achievement 3: Estimating a simple logistic regression model and interpreting predictor significance and interpretation
+*	Achievement 4: Computing and interpreting two measures of model fit
+*	Achievement 5: Estimating a larger logistic regression model with categorical and continuous predictors 
+* Achievement 6: Interpreting the results of a larger logistic regression model 
+* Achievement 7: Checking logistic regression assumptions and using diagnostics to identify outliers and influential values
+* Achievement 8: Using the model to predict probabilities for observations that are outside the data set
+* Achievement 9: Adding and interpreting interaction terms in logistic regression 
+* Achievement 10: Using the likelihood ratio (LR) test to compare two nested logistic regression models 
 
-*	Achievement 1: Exploratory data analysis before developing a logistic regression model
-*	Achievement 2: The statistical model
-*	Achievement 3: Predictor significance and interpretation
-*	Achievement 4: Model fit
-*	Achievement 5: Adding variables to the model
-* Achievement 6: Interpretation for the larger model
-* Achievement 7: Logistic regression assumptions and diagnostics
-* Achievement 8: Predicting probabilities outside the data set
-* Achievement 9: Interaction terms in logistic regression 
-* Achievement 10: Comparing two nested models
+## Data, codebook, and packages for logistic regression practice 
 
-Follow Chelsea, Bobbi, and Leslie through the examples and exercises to test some relationships.
+Prepare to follow Leslie, Kiara, and Nancy through learning logistic regression in R: 
+
+* To practice data cleaning (see Box \@ref(ch10kiara)), download the **pew_libraries_2016_ch10.csv** data set from edge.sagepub.com/harris1e or download the raw data directly from the 2016 Libraries survey by Pew Research Center (see [@LibrariesPewResearch] for URL). 
+* To skip data cleaning, download the cleaned data set **pew_libraries_2016_cleaned_ch10.csv** from edge.sagepub.com/harris1e. 
+* Download the **pew_libraries_2016_codebook_ch10.docx" from edge.sagepub.com/harris1e or use the version that comes with the raw data file from Pew Research Center (see [@LibrariesPewResearch] for URL). 
+* Install the following packages if not already installed: <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse, odds.n.ends, car, lmtest</span> 
 
 ## The lively libraries problem
 
-Bobbi brings up a new topic with the group that she has been gaining interest in, the digital divide. She explains that the concept of a "digital divide" started in the 1970s but was not widely used until the 1990s, when it was adopted to describe the gap between households with internet access and households without internet access. In reading the Wikipedia page about the digital divide in the United States, she found that the current definition is broader and includes both having limited access to information and communication technologies (ICT) and a deficit in the ability to use information gained through access to ICTs. She finds that people are more likely to fall into this digital divide if they live in an area that has low population density, are poor, are a racial minority, have limited education, or have a disability [@RefWorks:92]. 
+Kiara brings up a new topic with the group that she has been gaining interest in, the digital divide. She explains that the concept of a "digital divide" started in the 1970s but was not widely used until the 1990s, when it was adopted to describe the gap between households with internet access and households without internet access. In reading the Wikipedia page about the digital divide in the United States, she found that the current definition is broader and includes both having limited access to information and communication technologies (ICT) and a deficit in the ability to use information gained through access to ICTs. She finds that people are more likely to fall into this digital divide if they live in an area that has low population density, are poor, are a racial minority, have limited education, or have a disability [@RefWorks:92]. 
 
-Bobbi explains that the consequences of being on the disadvantaged side of the digital divide often exacerbate other problems. One example of this is related to finding employment. In 2015, a report from the Pew Research Center found that 54% of Americans went online in their most recent job search to look for information about jobs, 45% have applied online for a job, and 79% overall used some online resource in their most recent job search [@RefWorks:93]. She goes on to explain that not only does searching for work rely on access to technology, but a large percent of the available jobs rely on having experience with technology [@RefWorks:94]. 
+Kiara explains that the consequences of being on the disadvantaged side of the digital divide often exacerbate other problems. One example of this is related to finding employment. In 2015, a report from the Pew Research Center found that 54% of Americans went online in their most recent job search to look for information about jobs, 45% have applied online for a job, and 79% overall used some online resource in their most recent job search [@RefWorks:93]. She goes on to explain that not only does searching for work rely on access to technology, but a large percent of the available jobs rely on having experience with technology [@RefWorks:94]. 
 
-Chelsea mentions that one place where internet access is publicly available is in libraries. She looks up some information and finds that almost 100% of libraries were connected to the internet by 2004 and that 98.9% of those libraries offer public access to the internet [@RefWorks:95]. As of 2016, 48% of people reported using the library in the last year and 29% of library users reported using computers, wifi, or internet at the library [@horrigan2016libraries]. While this seems promising, Chelsea finds that some of the characteristics associated with being on the disadvantaged side of the digital divide are also associated with a lack of library use [@horrigan2016libraries]. She also finds that the evidence is inconsistent about the association of age, sex, marital status, and socioeconomic status with library use [@RefWorks:91]. The one consistent finding has been that education level influences library use [@RefWorks:91]. 
+Nancy mentions that one place where internet access is publicly available is in libraries. She looks up some information and finds that almost 100% of libraries were connected to the internet by 2004 and that 98.9% of those libraries offer public access to the internet [@RefWorks:95]. As of 2016, 48% of people reported using the library in the last year and 29% of library users reported using computers, wifi, or internet at the library [@horrigan2016libraries]. While this seems promising, Nancy finds that some of the characteristics associated with being on the disadvantaged side of the digital divide are also associated with a lack of library use [@horrigan2016libraries]. She also finds that the evidence is inconsistent about the association of age, sex, marital status, and socioeconomic status with library use [@RefWorks:91]. The one consistent finding has been that education level influences library use [@RefWorks:91]. 
 
-Bobbi suggests they build a logistic regression model where the outcome is library use and the predictors are the factors related to the digital divide and library use. Chelsea finds a data source on the Pew Research Center website that collected information about library use and demographics in 2016. 
+Kiara suggests they build a logistic regression model where the outcome is library use and the predictors are the factors related to the digital divide and library use. Nancy finds a data source on the Pew Research Center website that collected information about library use and demographics in 2016.  
 
-## Achievement 1: Exploratory data analysis before developing a binary logistic or multinomial regression model
+## Achievement 1: Using exploratory data analysis before developing a logistic regression model
 
-Before Chelsea or Bobbi even says a word, Leslie knows what comes first, **exploratory data analysis**. She starts by cleaning and examining the library use variable, _libusea_. The codebook shows that the variable consists of responses to the question, "Have you personally ever visited a public library or used a public library bookmobile in person" with the following response options:
+Before Nancy or Kiara even says a word, Leslie knows what comes first, **exploratory data analysis**. She starts by importing the library data. Kiara takes one look and realizes how much recoding there is to do. She thinks it might be better to just work one-on-one with Leslie for a few minutes and bring Nancy back in once they have the data recoded in a reproducible way. Kiara and Leslie work together (see Box \@ref(ch10kiara)) to recode the raw data from edge.sagepub.com/harris1e into a clean data set. Follow along with the recoding in Box \@ref(ch10kiara) to create the `libraries.cleaned` object from the raw data and start in Section \@ref(logisticeda) or download the **pew_libraries_2016_cleaned_ch10.csv** clean data file from edge.sagepub.com/harris1e and import it:
 
-* Yes, have done this in the past 12 months (libusea = 1)
-* Yes, but not in the past 12 months (libusea = 2)
-* No, have never done this (libusea = 3)
-
-Binary logistic regression is used in the situation where the outcome variable has two categories. Leslie decides to recode the libusea variable so that it has two categories, 1 for library use in the last 12 months and 0 for the other two groups.
-
-```{r ach911}
-# bring in the data
-library(tidyverse)
-libraries <- read_csv("data/pewLibraries2016.csv")
-
-# examine the libusea variable
-table(libraries$libusea)
-
-# recode to 0 (never used or not used in last year) and 1 
-# for used library in last 12 months 
-libraries$uses.lib <- 1
-libraries$uses.lib[libraries$libusea > 1] <- 0 
-
-# check the recoding
-table(libraries$uses.lib)
-```
-
-Bobbi, Chelsea, and Leslie then take a look at the codebook for the data source. They find several of the variables associated in the past with library use. In addition, Chelsea is interested in whether being a parent is associated with using the library. They decide to start with the following potential predictors:
-
-* age: age in years  
-* sex: biological sex 
-* parent: is the participant a parent 
-* disa: lives with a disability
-* inc: income of the participant household 
-* race: race of participant 
-* educ2: education level of participant 
-* live1: rurality of participant
-
-
-Leslie examines the codebook and manages the data so that missing values are properly coded and categories are labelled for easier interpretation.
-
-Age was measured in years, with the following limitations: 
-
-* 97	97 or older 
-* 98	Don't know 
-* 99	Refused 
-
-```{r ach912}
-# clean the age variable by coding 98 and 99 as NA (missing)
-libraries$age[libraries$age > 97] <- NA 
-summary(libraries$age)
-```
-
-Sex was coded with 1 representing male and 2 representing female, parent was coded with 1 representing parent and 2 representing non-parent. Leslie adds labels and checks her work for these two variables:
-
-```{r ach913}
-# add category labels to sex
-libraries$sex <- recode_factor(libraries$sex, 
-                        `1` = "male", `2` = "female")
-summary(libraries$sex)
-
-# add category labels to parent variable and recode 8 and 9 to NA
-libraries$parent <- recode_factor(libraries$par, 
-                        `1` = "parent", `2` = "not parent")
-summary(libraries$parent)
-
-# add category labels to disability variable and recode 8 and 9 to NA
-libraries$disabled <- recode_factor(libraries$disa, 
-                        `1` = "yes", `2` = "no")
-summary(libraries$disabled)
-```
-
-The income variable is tricky to recode, with income categories in 10 thousand dollar increments up to 50 thousand dollars and then three categories at the higher end of 50 to under 75 thousand, 75 to under 100 thousand, 100 to under 150 thousand, and 150 thousand or more. Socioeconomic status income levels vary widely by the number of people living in a household and the geographic location of the household. Leslie decides to use the United States Census Bureau 2017 poverty thresholds and the income (inc) and people living in household (HH1) variables to create a variable indicating socioeconomic status. Leslie codes people at or below the poverty threshold for the number of people living in the household as **low** income. Consistent with the Census Bureau, Leslie also codes households above poverty and below 150 thousand to be medium income, and households abover 150 thousand in income to be high income. To be consistent with the categories available for income, Leslie rounded the threshold categories to the nearest 10 thousand dollars.
 
 ```{r}
-# manage income so 98 and 99 are NA
-libraries$inc[libraries$inc > 9] <- NA
-
-# recode by number of people per household and
-# income threshold 
-summary(libraries$hh1)
-libraries$inc.cat <- factor(if_else(libraries$hh1 == 1 & libraries$inc == 1 |
-                           libraries$hh1 == 2 & libraries$inc <= 2 |
-                           libraries$hh1 == 3 & libraries$inc <=2 | 
-                             libraries$hh1 == 4 & libraries$inc <= 3 | 
-                             libraries$hh1 == 5 & libraries$inc <= 3 | 
-                             libraries$hh1 == 6 & libraries$inc <= 4 | 
-                             libraries$hh1 == 7 & libraries$inc <= 4 | 
-                             libraries$hh1 == 8 & libraries$inc <= 5 , "low", 
-                           if_else(libraries$inc == 9, "high", "medium")))
-
-# check recoding
-table(libraries$inc.cat)
-
-```
-
-The race and ethnicity questions allow multiple answers, so cleaning the race variables will be complicated. First, the **hisp** variable is coded as:
-
-* 1 = Hispanic, Latino, or Spanish origin 
-* 2 = Not Hispanic, Latino, or Spanish origin
-
-The three race variables (race3m1, race3m2, and race3m3) allow the participants to choose as many as possible from the following: 
-
-* 1 =	White (e.g., Caucasian, European, Irish, Italian, Arab, Middle Eastern)
-* 2	=	Black or African-American (e.g., Negro, Kenyan, Nigerian, Haitian)
-* 3	=	Asian or Asian-American (e.g., Asian Indian, Chinese, Filipino, Vietnamese or other Asian origin groups)
-* 4	=	Some other race (SPECIFY) [IF NEEDED: What race or races is that?]
-* 5	= Native American/American Indian/Alaska Native
-* 6	= Pacific Islander/Native Hawaiian
-* 7	= Hispanic/Latino (e.g., Mexican, Puerto Rican, Cuban)
-* 8	= Don't know
-* 9	= Refused (e.g., non-race answers like American, Human, purple)
-
-Leslie decides to recode into four groups: 
-
-* Hispanic 
-* Non-Hispanic Black 
-* Non-Hispanic White 
-* Non-Hispanic Other or Mixed
-
-```{r}
-# clean race variable 
-libraries$raceth <- factor(if_else(libraries$hisp == 2 & 
-                              libraries$race3m1 == 2 &
-                              is.na(libraries$race3m2),  
-                            "Non-Hispanic Black", 
-                            if_else(libraries$hisp == 2 &
-                                      libraries$race3m1 == 1 &
-                                      is.na(libraries$race3m2),
-                                    "Non-Hispanic White",
-                                    if_else(libraries$hisp == 1 | 
-                                              libraries$race3m1 == 7 |
-                                              libraries$race3m2 == 7 |
-                                              libraries$race3m3 == 7, 
-                                    "Hispanic", "Non-Hisp Other or Mixed"))))
-table(libraries$raceth) 
-                                
-```
-
-Given that there are just seven people in the Non-Hispanic Other or Mixed category, Bobbi suggests they recode this category to be missing. Having few people in a category can make estimates from a regression model unstable since they are based on information from such a very small group. 
-
-```{r}
-# recode other and mixed to NA
-libraries$raceth[libraries$raceth == "Non-Hisp Other or Mixed"] <- NA
-libraries$raceth <- droplevels(libraries$raceth)
-table(libraries$raceth) 
+# import the libraries cleaned file
+libraries.cleaned <- read.csv("data/pew_libraries_2016_cleaned_ch10.csv")
 ```
 
 
-The education variable has 8 categories ranging from Less than high school through a post graduate or professional degree. Leslie decides to create 3 categories: less than high-school, high school through two-year degree, four year degree or more.
+Leslie is re-energized by the awesomeness of her clean data set. Kiara and Nancy are impressed! It is finally time to move to exploratory data analysis.
 
-```{r}
-# recode educ2 variable into 3 categories
-libraries$educ <- factor(if_else(libraries$educ2 < 3, "< HS", 
-                           if_else(libraries$educ2 < 6, 
-                                   "HS to 2-year degree",
-                                   "Four-year degree or more")))
-table(libraries$educ)
-                           
+### Exploratory data analysis {#logisticeda}
 
-```
+Leslie starts to look back through the earlier R days and is reminded of the <span style="font-family:Lucida Console, monospace;font-weight:bold">tableone</span> package that was useful for examining descriptive statistics for multiple variables at the same time (see Section \@ref(datamgmt)). Kiara thinks this is a great idea. They look at the data set and see that all of the variables except for age are categorical. For age, the appropriate descriptive statistics would be either $mean$ and $sd$ or $median$ and $IQR$ (see Section \@ref(centtend)) depending on whether it is normally distributed. Leslie makes a density plot to check: 
 
-```{r}
-# recode rurality variable
-libraries$rurality <- factor(if_else(libraries$live1 == 1, "urban", 
-                           if_else(libraries$live1 == 2, "suburban",
-                                   if_else(libraries$live1 < 8, 
-                                   "rural", NA_character_))))
-table(libraries$rurality)
-```
+```{r fig.cap="The distribution of age in the 2016 library use data set."}
+# open tidyverse
+library(package = tidyverse)
 
-
-### Exploratory data analysis 
-
-Before using bivariate analyses to examine differences between those who do and do not use the library, examine the variables of interest
-```{r fig.cap="The distribution of age in the 2016 library use data set (n = 1601)."}
 # examine the distribution of age 
-library(ggplot2)
-age.plot <- ggplot(data = libraries, aes(x = age)) + 
-  geom_density(fill = "#88398a") + 
+libraries.cleaned %>% 
+  ggplot(aes(x = age)) + 
+  geom_density(fill = "#7463AC") + 
   theme_minimal()
-age.plot
 ```
 
-One of the strategies used in some fields to develop a logistic regression model is to start with bivariate inferential tests for each of the potential predictors. Predictors that show a statistically significant relationship with the outcome are then entered in to the model. In this case there are five predictors that Leslie is interested in: sex, race, age, income, education, and political party. Rather than conducting five separate statistical tests, Chelsea suggests they write a function that conducts the appropriate test for each of the potential variables. In looking at the variable list, Leslie notes that most of the variables are categorical or factor data type, while one of the variables is continuous or numeric data type. She remembers reading about the **tableone** package which has a `CreateTableOne()` command that can be used to create a table with descriptive statistics and bivariate statistical test results for any or all of the variables in a data frame. 
-
-Leslie wants to show descriptive statistics for each category of the outcome, use chi-squared to examine whether there is a statistically significant relationship between the factor variables and the outcome, and use the appropriate test to examine the relationship between the numeric variable of **age** and the outcome. She starts by creating a smaller data frame to work with.
-
-#### Make a subset of the data frame
+This does not look very normal to Leslie. The others agree. Leslie looks at the help documentation for the `CreateTableOne()` command that can be used to create a table with descriptive statistics for any or all of the variables in a data frame. 
 
 ```{r}
-# subset to the variables possible for model
-libraries.small <- subset(libraries, select = c(uses.lib, sex, inc.cat, raceth, 
-                                                educ, age, parent,
-                                                disabled, rurality))
+# open tableone package
+library(package = tableone)
+
+# get a table of descriptive statistics
+table.desc <- CreateTableOne(data = libraries.cleaned)
+print(table.desc, nonnormal = 'age', showAllLevels = TRUE)
+
 ```
 
-Before creating the table with `CreateTableOne()` Leslie wants to check the assumptions of the independent samples t-test to see if it should be used to compare the mean value of age for library users and non-library users. She starts by listing the assumptions as a reminder:
+Hooray! The table looks great. Kiara has an idea to make this table even more useful before they move on to logistic regression. One of the strategies used in some fields to develop a logistic regression model is to start with *bivariate* inferential tests for each of the potential predictors. Predictors that show a statistically significant relationship with the outcome are then entered in to a larger model to see how they all work together to predict or explain the outcome of interest. 
 
-#### Check independent-samples t-test assumptions 
+In this case there are five predictors that Leslie is interested in: sex, race, age, income, education, and political party. Rather than conducting five separate statistical tests, Nancy suggests they take advantage of the built-in statistical testing in the <span style="font-family:Lucida Console, monospace;font-weight:bold">tableone</span> package. She explains that the `CreateTableOne()` function can be used to create a table with descriptive statistics *and* bivariate statistical test results for any or all of the variables in a data frame. 
 
-* continuous variable and two independent groups 
-* independent observations 
-* normal distribution in each group 
-* equal variances for each group 
+The outcome of interest is library use, which is a categorical variable with two categories. Examining the relationship between this categorical variable and each of the other variables in the data set requires statistical tests to examine (1) the relationship between two categorical variables, and (2) the relationship between one categorical variable and a non-normally distributed continuous variable (age). 
 
-The first two are met without any testing. For the normal distribution in each group, Leslie remembers there are two options, examine a graph or conduct the Shapiro-Wilk test for each group. She decides to use a graph to examine the distribution within the groups: 
+Leslie remembers that chi-squared is useful for examining whether there is a statistically significant relationship between two categorical variables (see Section \@ref(chisqtest)). She has to look up the test for one categorical variable (with two categories) and one continuous one. She finds the Mann-Whitney U test works for this (see Section \@ref(mannwhit)), and use the appropriate test to examine the relationship between the numeric variable of **age** and the outcome. Nancy thinks it is good to know which tests are being used, but `CreateTableOne()` automatically uses the appropriate test based on the data types. 
 
-```{r fig.cap = "Library use by age distribution in the US (2016)."}
-# check for normal distribution in each group
-# create a plot of library use by age distribution
-age.plot <- ggplot(data = libraries.small,
-       aes(x = age, group = as.factor(uses.lib),
-           fill = as.factor(uses.lib))) + 
-  geom_density(alpha = .5) + 
-  scale_fill_manual(values = c("dodgerblue2","#88398a"),
-                    labels = c("No", "Yes"), 
-                    name = "Library\nuse") +
-  theme_minimal()
-age.plot
-```
-
-Leslie notices that the graph shows non-normal distributions in the two groups and therefore the data fail this assumption. To test for equal variances, she uses the Levene test:
-
-```{r}
-# equal variances in each group
-library(car)
-leveneTest(y = age ~ factor(uses.lib), data = libraries.small)
-```
-
-Given that age fails the assumptions for the t-test, Leslie now has all the information she needs to create the table with the **tableone** package. Leslie reads the documentation for the package and notes that two commands are needed, `CreateTableOne()` and `print()`. The `CreateTableOne()` command takes arguments for `data =` to identify the data frame, `vars =` to identify the variables to include (if this is left out, all the variables in the data frame are included). To make the table with columns representing the categories of a variable like **uses.lib**, the `strata =` argument can be used. When the `strata =` argument is used, the descriptive statistics in the table will be the appropriate values for each variable within each category of the factor specified. So, in this case, using `strata = uses.lib` will result in descriptive statistics for the yes and no values of the uses.lib variable. 
+Leslie reads the documentation for the package and notes that two commands are needed, `CreateTableOne()` and `print()`. The `CreateTableOne()` command takes arguments for `data =` to identify the data frame, `vars =` to identify the variables to include (if this is left out, all the variables in the data frame are included). To make the table with columns representing the categories of a variable like **uses.lib**, the `strata =` argument can be used. When the `strata =` argument is used, the descriptive statistics in the table will be the appropriate values for each variable within each category of the factor specified. So, in this case, using `strata = uses.lib` will result in descriptive statistics for the yes and no values of the uses.lib variable. 
 
 In addition, when the `strata =` argument is used, the table shows the p-value association with a bivariate statistical test that is conducted as appropriate given the data types in the table. For variables in the table that are factor data types, this is chi-squared. For variables that are numeric data types, this is one-way ANOVA, which is equivalent to an independent samples t-test when the means are compared across two categories (instead of three or more).
 
@@ -266,81 +95,97 @@ In the second command, `print()` there are a number of options for changing the 
 
 ```{r}
 # get a table of descriptive statistics with bivariate tests 
-library(tableone)
-table.desc <- CreateTableOne(data = libraries.small, strata = 'uses.lib',
-               vars = c('sex', 'inc.cat', 'raceth',
-                        'educ', 'age', 'parent',
-                        'disabled', 'rurality'))
-print(table.desc, nonnormal = 'age', showAllLevels = TRUE)
+table.desc <- CreateTableOne(data = libraries.cleaned, 
+                             strata = 'uses.lib')
+print(table.desc, 
+      nonnormal = 'age', 
+      showAllLevels = TRUE)
 
 ```
 
-She finds that income and race were not statistically significantly associated with library use (p > .05), but all the other variables were. With this information she decides that the model will include age, sex, educ, parent, disabled, and rurality as predictors of library use. 
+The table looks great! Leslie sees that the library use variable is included both as the columns and in the rows. Nancy lets her know she can remove the variable from the table by adding a `vars =` argument and listing the variable to keep. Leslie thinks it is ok as it is for the purpose of reviewing it before logistic regression. She finds that income and race were not statistically significantly associated with library use (p > .05), but all the other variables were. With this information she decides that the model will include age, sex, educ, parent, disabled, and rurality as predictors of library use in the binary logistic regression. 
 
-Although it is a great option for making a table quickly, the `CreateTableOne()` command is missing standardized residuals for better understanding the significant chi-squared results for the relationships between library use and sex, education, parental status, disability status, political party, and rurality. Bobbi recommends that Leslie examine the frequencies and percents in the table to identify some possible categories that may be driving the significant results for the bivariate tests. Leslie notes that the library users (yes column) have a lower median age (med = 49 years) compared to library non-users (med = 53 years). Among those who use the library 55.3% are female, while of those who do not use the library, 59.2% are male. Of library users, 48.2% have a four-year degree or more, while of library non-users 34.1% have a four-year degree or more. So, library users tend to be older, female, and have higher education than non-users.
+Although it is a great option for making a table quickly, the `CreateTableOne()` command is missing standardized residuals for better understanding the significant chi-squared results for the relationships between library use and sex, education, parental status, disability status, political party, and rurality. Kiara recommends that Leslie examine the frequencies and percents in the table to identify some possible categories that may be driving the significant results for the bivariate tests. Leslie notes that the library users (yes column) have a lower median age (med = 49 years) compared to library non-users (med = 53 years). Among those who use the library 55.3% are female, while of those who do not use the library, 59.2% are male. Of library users, 48.2% have a four-year degree or more, while of library non-users 34.1% have a four-year degree or more. So, library users tend to be older, female, and have higher education than non-users.
 
-### Unlocking achievement 1: Check your understanding 
+### Unlock achievement 1: Check your understanding 
 
-Review the table created with the `CreateTableOne()` command and examine the patterns of library use and non-use by political party, disability, and rurality. Who are the library users? Who are the non-users in these groups?
+Review the table created with the `CreateTableOne()` command and examine the patterns of library use and non-use by parental status, disability, and rurality. Who are the library users? Who are the non-users in these groups?
 
-Use the chi-squared process from earlier chapters to get standardized residuals for the significant associations. Which groups have significantly higher of lower frequencies than expected based on the residuals?
+Use the chi-squared process from the chi-squared chapter to get standardized residuals for each of the the significant associations. Which groups have significantly higher of lower frequencies than expected based on the residuals?
 
-## Achievement 2: The statistical model
+## Achievement 2: Understanding the binary logistic regression statistical model
 
-Bobbi explains that logistic regression follows a similar format and process as linear regression but the outcome or dependent variable is _binary_ (e.g., library use, smoking status, voting). Because the outcome is binary, or consisting of two categories, the model predicts the probability that a person is in one of the categories. For example, a logistic regression might predict whether or not someone is a smoker, whether someone is incarcerated or not, whether someone votes or not, or any other outcome with two categories. In this case Leslie is interested in predicting what is associated with whether or not someone uses the library. After checking the recoding, Leslie knows that `r round(prop.table(table(libraries$libusea))[2])*100`% of people in the sample use the library. She has also learned about some of the characteristics of library users compared to non-users. The next step is to determine how individual characteristics (e.g., sex, age, education) work together to predict library use. 
+Kiara explains that binary logistic regression follows a similar format and process as linear regression but the outcome or dependent variable is _binary_ (e.g., library use, smoking status, voting) [@stoltzfus2011logistic]. Because the outcome is binary, or consisting of two categories, the model predicts the probability that a person is in one of the categories. For example, a logistic regression might predict whether or not someone is a smoker, whether someone is incarcerated or not, whether someone votes or not, or any other outcome with two categories. In this case Leslie is interested in predicting what is associated with whether or not someone uses the library. After checking the recoding, Leslie knows that `r round(prop.table(table(libraries.cleaned$libusea))[2])*100`% of people in the sample use the library. She has also learned about some of the characteristics of library users compared to non-users. The next step is to determine how individual characteristics (e.g., sex, age, education) work together to predict library use. 
 
 ### The statistical form of the model 
 
-Because the outcome variable is binary, the linear regression model will not work since it requires a normally distributed outcome. However, the linear regression statistical model can be transformed using the _logit transformation_ in order to be useful for modeling binary outcomes. Bobbi writes out statistical model for the logistic model:  
-\[
+Because the outcome variable is binary, the linear regression model will not work since it requires a continuous and normally distributed outcome. However, the linear regression statistical model can be transformed using the _logit transformation_ in order to be useful for modeling binary outcomes. Kiara writes out statistical model for the logistic model:  
+
+$$
+\begin{equation}
 p(y)=\frac{1}{1+e^{-(b_0 + b_1x_1 + b_2x_2)}} 
-\]
+ (\#eq:logistic)
+\end{equation}
+$$
 
-Leslie is not quite following it, so Bobbi explains each part:  
+Leslie is not quite following it, so Kiara explains each part:  
 
-* y is the binary outcome variable 
-* $x_1$, $x_2$, etc are predictors of the outcome (e.g., age, rurality)  
-* p(y) is the probability of the outcome (e.g., library use) 
+* y is the binary outcome variable (e.g., library use)
+* p(y) is the probability of the outcome (e.g., probability of library use) 
 * $b_0$ is the y-intercept 
+* $x_1$, $x_2$, etc are predictors of the outcome (e.g., age, rurality) 
 * $b_1$, $b_2$, etc are the slopes for $x_1$ $x_2$ 
 
 ### The logistic function 
 
-Bobbie suggests that examining a graph of the logistic function might help. The logistic function has a sigmoid shape that stretches from -$\infty$ to $\infty$ on the x-axis and from 0 to 1 on the y-axis. She explains to Leslie that the function can take any value along the x-axis and give the corresponding value between 0 and 1 on the y-axis. The logistic function looks like this:
+Kiarae suggests that examining a graph of the logistic function might help. The logistic function has a sigmoid shape that stretches from -$\infty$ to $\infty$ on the x-axis and from 0 to 1 on the y-axis. She explains to Leslie that the function can take any value along the x-axis and give the corresponding value between 0 and 1 on the y-axis. The logistic function looks like this:
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = "Example of logistic function."}
 # show logit function for glm
 ggplot(mtcars, aes(x=mpg, y=vs)) + 
-  stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE, colour = "#88398a") + 
+  stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE, colour = "deeppink") + 
   labs(x = "Values of input", y = "Value of outcome") +
   theme_minimal()
 ```
 
 The logistic function is defined as:
 
-\[\sigma(t)=\frac{e^t}{e^{t+1}}\]
+$$
+\begin{equation}
+\sigma(t)=\frac{e^t}{e^{t+1}}
+ (\#eq:logisticfunc)
+\end{equation}
+$$
 
 This equation can be simplified to:
 
-\[\sigma(t)=\frac{1}{1+e^{-t}}\]
+$$
+\begin{equation}
+\sigma(t)=\frac{1}{1+e^{-t}}
+ (\#eq:logisticfuncsimp)
+\end{equation}
+$$
 
 Where t is the value along the x-axis of the function and $\sigma(t)$ is the value of y for a specific value of t, or the probability of y given t. In the case of logistic regression, the value of t will be the right-hand side of the regression model, which looks something like $\beta_0+\beta_1x$ where x is an independent variable, $\beta_1$ is the coefficient for that variable, and $\beta_0$ is the slope. Substituting this regression model for t in the logistic function gives this:
 
-\[p(y)=\frac{1}{1+e^-(\beta_0+\beta_1x)}\]
+$$
+\begin{equation}
+p(y)=\frac{1}{1+e^-(\beta_0+\beta_1x)}
+ (\#eq:logisticfuncbetas)
+\end{equation}
+$$
 
-Bobbi explains that this is useful because it returns a probability of the outcome happening for any value of an independent predictor or set of independent predictors. To visualize how it works, consider the same logistic function from above with data points representing the values of a binary outcome variable: 
+Kiara explains that this is useful because it returns a probability of the outcome happening for any value of an independent predictor or set of independent predictors. To visualize how it works, consider the same logistic function from above with data points representing the values of a binary outcome variable: 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = "Example of logistic function with data points."}
-
-
 # show logit function for glm
 ggplot(mtcars, aes(x=mpg, y=vs)) + geom_point() +
-  stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE, colour = "#88398a") + 
+  stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE, colour = "deeppink") + 
   labs(x = "Value of x", y = "Value & probability of y") +
   theme_minimal()
 ```
 
-By starting at 20 on the x-axis, Bobbi traces a straight line up to the purple curve and from there she looks to the y-axis for a value. She finds that for a value of x = 20 in these data, the model would predict a probability of y around .44 or 44%:
+By starting at 20 on the x-axis, Kiara traces a straight line up to the purple curve and from there she looks to the y-axis for a value. She finds that for a value of x = 20 in these data, the model would predict a probability of y around .44 or 44%:
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap = "Example of logistic function with data points."}
 # show logit function for glm
@@ -354,86 +199,152 @@ probX = function(p, model) {
 d = probX(c(0.41), logr_vm)
 
 ggplot(mtcars, aes(x=mpg, y=vs)) + geom_point() +
-  stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE, colour = "#88398a") + 
-  geom_segment(data=d, aes(x=xval, xend=xval, y=0, yend=prob+.03), colour="grey") +
-  geom_segment(data=d, aes(x=10, xend=20, y=.44, yend=.44), colour="dodgerblue1") +
-  geom_text(data=d, aes(label=.44, x=9.5, y=.44), size=3, colour="dodgerblue1") +
+  stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE, colour = "deeppink") + 
+  geom_segment(data=d, aes(x=xval, xend=xval, y=0, yend=prob+.03), colour="dodgerblue2") +
+  geom_segment(data=d, aes(x=10, xend=20, y=.44, yend=.44), colour="dodgerblue2") +
+  geom_text(data=d, aes(label=.44, x=9.5, y=.44), size=3, colour="dodgerblue2") +
   labs(x = "Value of x", y = "Value & probability of y") +
   theme_minimal()
 ```
 
 
-So, Leslie asks, if this were a model predicting library use from age, it would predict a 44% probability of library use for a 20-year-old? Bobbi nods yes. She then mentions that, since this is lower than a 50% chance, the predicted value for library use for the 20-year-old would be no or 0.
+So, Leslie asks, if this were a model predicting library use from age, it would predict a 44% probability of library use for a 20-year-old? Kiara nods yes. She then mentions that, since this is lower than a 50% chance, and library use is a binary variable, the predicted value for library use for the 20-year-old would be no or 0.
 
-Chelsea has been listenting and now chimes in that, while finding the predicted probability of having the outcome (e.g., using the library) is interesting, it is not as useful when there are multiple variables in the model. At that point, knowing the influence of each variable on the probability of having the outcome would be better. This would be similar to having the coefficients in linear regression that allow interpretation of how much the value of the outcome changes with each one-unit increase or decrease in the value of a predictor. 
+Nancy has been listenting and now chimes in that, while finding the predicted probability of having the outcome (e.g., using the library) is interesting, it is not as useful when there are multiple variables in the model. At that point, knowing the influence of each variable on the probability of having the outcome would be better. This would be similar to having the coefficients in linear regression that allow interpretation of how much the value of the outcome changes with each one-unit increase or decrease in the value of a predictor. 
 
-With the regression equation being transformed, there is no direct link between the value of the coefficient for each predictor and the value of the outcome. Luckily, says Chelsea, someone figured this out already and there is a way to transform the model results to get a more interpretable value to describe the relationship between each independent variable and the outcome. 
+With the regression equation being transformed, there is no direct interpretation for how the value of the coefficient of each predictor is related to the value of the outcome. Luckily, says Nancy, someone figured this out already and there is a way to transform the model results to get a more interpretable value to describe the relationship between each independent variable and the outcome. 
 
-\[p(y)=\frac{1}{1+e^-(\beta_0+\beta_1x)}\]
+$$
+\begin{equation}
+p(y)=\frac{1}{1+e^{-(\beta_0+\beta_1x)}} 
+ (\#eq:logistic)
+\end{equation}
+$$
 
-First, the logistic model can be transformed to show odds on the left hand side of the equal sign. Odds are related to probability like this: $odds = \frac{p}{1+p}$, so substituting the logistic model in for p since it is equal to the probability of y, we get:
+First, the logistic model can be transformed to show odds on the left hand side of the equal sign. Odds are related to probability like this: $odds = \frac{p}{1+p}$, so substituting the logistic model in for $p$, we get:
 
-
-\[odds = \frac{\frac{1}{1+e^{-(\beta_0+\beta_1x)}}}{\frac{1}{1+e^{-(\beta_0+\beta_1x)}}}\]
+$$
+\begin{equation}
+odds = \frac{\frac{1}{1+e^{-(\beta_0+\beta_1x)}}}{1+\frac{1}{1+e^{-(\beta_0+\beta_1x)}}} 
+ (\#eq:odds)
+\end{equation}
+$$
 
 This equation simplifies to:
 
-\[odds = e^(\beta_0+\beta_1x)\]
+$$
+\begin{equation}
+odds = e^{\beta_0+\beta_1x}
+ (\#eq:oddssimp)
+\end{equation}
+$$
 
-This equation could then be used to determine the odds of the outcome for a given value of x. To be equivalent to the interpretation of the coefficients in linear regression, however, there is one more step. That is, what is the **increase or decrease** in the odds of the outcome with a one-unit increase in x? To the delight of Leslie, this is going to take a little more math to determine the **odds ratio**:
+Once $\beta_0$ and $\beta_1$ are estimated, this equation can be used to determine the odds of the outcome for a given value of $x$. To be equivalent to the interpretation of the coefficients in linear regression, however, there is one more step. That is, what is the **increase or decrease** in the odds of the outcome with a one-unit increase in x? To the delight of Leslie, this is going to take a little more math to determine the **odds ratio**:
 
-\[OR = \frac{e^{(\beta_0+\beta_1(x+1)}}{e^{(\beta_0+\beta_1x})}=e^{\beta_1}\]
+$$
+\begin{equation}
+OR = \frac{e^{\beta_0+\beta_1(x+1)}}{e^{\beta_0+\beta_1x}}=e^{\beta_1}
+ (\#eq:oddsrat)
+\end{equation}
+$$
 
-So, for every one unit increase in x, the odds of the outcome increase or decrease by $e^{\beta_1}$. Taking e to the power of $\beta_1$ is referred to as **exponentiating** $\beta_1$. After a model is estimated, the analyst will usually exponentiate the $\beta$s in order to have odds ratios to describe the relationships between each predictor and the outcome. 
+So, for every one unit increase in x, the odds of the outcome increase or decrease by $e^{\beta_1}$. Taking $e$ to the power of $\beta_1$ is referred to as **exponentiating** $\beta_1$. After a model is estimated, the analyst will usually exponentiate the $\beta$s in order to have odds ratios to describe the relationships between each predictor and the outcome. 
 
-### Estimating a simple logistic regression model in R
+Leslie has had about enough of the statistical theory for today and wants to move on to modeling library use. Nancy says they can start directly in R this time since the calculations are not as straightforward as they were for $\chi^2$ or $t$. 
+
+### Unlock achievement 2: Check your understanding
+
+In your own words, write out a statement that explains the different components of the logistic regression statistical model:
+
+$$
+\begin{equation}
+p(y)=\frac{1}{1+e^{-(\beta_0+\beta_1x)}} 
+ (\#eq:logistic)
+\end{equation}
+$$
+
+## Achievement 3: Estimating a simple logistic regression model and interpreting predictor significance and interpretation
+
+Leslie is ready and starts the NHST process. Kiara suggests they start with a simple logistic regression with just one predictor of library use, age. Leslie agrees and begins to write the null and alternate hypotheses. Leslie wants to know if they can use the logistic formula to write out the model before they start. Kiara thinks this seems like a strange thing to want to do, but she agrees. She reminds Leslie that Greek letters like $\beta$ are usually representing population statistics and are often replaced with letters from the Latin alphabet like $b$ for statistics from sample data. Leslie writes out the model:
+
+$$
+\begin{equation}
+p(uses.lib)=\frac{1}{1+e^{-(b_0+b_1\cdot{age})}} 
+ (\#eq:logistic.sm.mod)
+\end{equation}
+$$
+
+She has replaced $y$ with the name of the outcome variable and $x$ with the name of the predictor variable. This looks good to Kiara and they move on to NHST.
 
 #### NHST
 
 ##### NHST Step 1: Write the null and alternate hypotheses 
 
-H0: The model is no better than the baseline percent at predicting library use 
+The null and alternate hypotheses are similar to those in linear regression. For this logistic regression analysis, the outcome is library use and 49.5% of people in the data set use the library. So, without any other information, it is slightly more likely that a person selected from the data frame is *not* a library user. This is the **baseline** value. By using information like age, sex, and education, the logistic model may be better able to predict the probability of library use for a given person from the data set. This suggests a null hypothesis to test for the logistic model:
 
-HA: The model is better than the baseline at predicting library use
+H0: The model is no better than the baseline percent at predicting library use. 
+
+HA: The model is better than the baseline at predicting library use.
 
 ##### NHST Step 2: Compute the test statistic 
 
-The `glm()` or generalized linear model command can be used to estimate a binary logistic regression model. The `glm()` command takes several arguments. First, the formula is entered with the outcome variable on the left side of the model and the predictors on the right. After the formula, enter the name of the data source and the **family** or model type. Since there are different sorts of generalized linear models (glm) that are appropriate for different types of outcome variables, it is important to specify which type of model to estimate. Before estimating a full model with all the predictors identifying abover, Chelsea suggests they estimate a simple logistic model with one predictor variable. Leslie chooses age as the predictor and starts to write the code to predict library use by age:
+The `glm()` or **generalized linear model** function can be used to estimate a binary logistic regression model. The model is **generalized** because it takes the basic linear model and generalizes it to other situations. The `glm()` function takes several arguments. Before estimating the model it is important to understand how R is interpreting the order of the categories in the outcome variable. The `glm()` function will treat the first category as the reference group (the group without the outcome) and the second category as the group with the outcome. To see the order of uses.lib, just examine a table:
+
+```{r}
+# checking the order of the outcome variable categories
+table(x = libraries.cleaned$uses.lib)
+```
+
+It looks like the first category is *no* and the second is *yes*. This means the model will be predicting *yes* library use. While this is good for us, Kiara has had a lot of experience with the categories being in the opposite order and the resulting logistic regression models being difficult to interpret.  Luckily, Nancy knows how to do change the order of categories using `mutate()` and `relevel()`. She writes the code to demonstrate even though they do not need it (this time).
+
+```{r}
+# make no the reference group
+libraries.cleaned <- libraries.cleaned %>%
+  mutate(uses.lib = relevel(x = uses.lib, ref = "no"))
+
+# check the re-ordering
+table(x = libraries.cleaned$uses.lib)
+```
+
+With all the descriptive and bivariate tests done and a confirmation of the correct coding for their outcome variable, it is finally time for a logistic model. First, the formula is entered with the outcome variable on the left side of the equal sign and the predictors on the right. After the formula, enter the name of the data source and the **family** or model type. Since there are different sorts of generalized linear models (glm) that are appropriate for different types of outcome variables, it is important to specify which type of model to estimate. Leslie enters the model into the `glm()` function with age as the only predictor:
 
 ```{r}
 # estimate the library use model and print results
 lib.model.small <- glm(formula = uses.lib ~ age, 
-                 data = libraries.small,
+                 data = libraries.cleaned,
                  family = binomial("logit"))
-summary(lib.model.small)
+summary(object = lib.model.small)
 ```
 
-Unfortunately, Leslie notices that the `summary()` command results do not include the odds ratios or model fit and model significance. To get this information, Chelsea suggests they follow the model estimation with the `odds.n.ends()` command from the `odds.n.ends()` package. 
+Leslie does not know how to interpret the output, but she does notice that there are no odds ratios. Kiara explains that the output from `glm()` contains information about the significance of the predictors, but is missing several important pieces of information including the odds ratios, model significance, and model fit. To get this information, Nancy suggests they follow the model estimation with the `odds.n.ends()` command from the <span style="font-family:Lucida Console, monospace;font-weight:bold">odds.n.ends</span> package. 
 
 ```{r}
+# open odds.n.ends
+library(package = odds.n.ends)
+
 # get model fit, model significance, odds ratios
-library(odds.n.ends)
-odds.n.ends(lib.model.small)
+odds.n.ends(x = lib.model.small)
 ```
 
-Leslie wants to know more about the measures of significance and fit. Chelsea explains that the chi-squared statistic in logistic regression is computed by finding the difference between how well the model does with no predictors in it (the null model) and how well it does with all the predictors in it. A model with no predictors in it is a baseline or null model and just consists of the percent of people with the outcome. In this case, it is the percent of people who use the library. Looking at the model fit table, the percent of people who were observed with a value of 1 indicating they use the library was 773 out of 1571 or 49.2 percent. So, without any other information, we would predict that each person has a 49.2 percent probability of being a library user. If a person in the data set was a library user, their probability would be 100% chance of being a library user. The predicted probability would be 49.2% chance of being a library user. The difference between the observed probablity of library use would be 1 - .492 = .508 away from the correct observed value. If a person in the data was a library non-user, the predicted probability from the null model would still be .492 but the observed value would be 0. The difference between observed and predicted in this case is 0 - .492 = -.492. Finding the difference between observed values and the predicted values, squaring each difference, and summing the squared differences results in a value called the **deviance**. The deviance is therefore a measure of how well the model fits the data. If the differences between the observed values and the predicted values is small, the model is doing well. A smaller deviance is therefore an indicator of a better fitting model.
+Leslie wants to know more about the measures of significance and fit. Nancy explains that the $\chi^2$ statistic in logistic regression is computed by finding the difference between how well the model fits the data when it has no predictors in it (the null model) and how well it does with all the predictors in it. A model with no predictors in it is a baseline or null model and just consists of the percent of people with the outcome. In this case, it is the percent of people who use the library. Looking at the model fit table, the percent of people who were observed with a value of 1 indicating they use the library was 773 out of 1571 or 49.2%. So, without any other information, we would predict that each person has a 49.2%  probability of being a library user. 
+
+If a person in the data set was a library user, their probability would be 100% chance of being a library user. The predicted probability would be 49.2% chance of being a library user. The difference between the observed probablity of library use would be 1 - .492 = .508 away from the correct observed value. If a person in the data was a library non-user, the predicted probability from the null model would still be .492 but the observed value would be 0. The difference between observed and predicted in this case is 0 - .492 = -.492. Finding these difference between observed values (0s and 1s) and the predicted values (percents), squaring each difference, and adding up all the squared differences from each person in the data set results in a value called the **deviance**. The deviance is therefore a measure of how well the model fits the data. If the differences between the observed values and the predicted values is small, the deviance is small and the model is doing well. A smaller deviance is an indicator of a better fitting model.
 
 After the deviance is computed for the null model, or model without predictors, it is computed for the model with predictors in it. In this case the deviance is predicted for the model with age only as a predictor. If age is useful in making the model a better predictor of library use than the null model is, the deviance will be smaller for the model with age in it than it was for the null or baseline model. 
 
-The difference between the deviance for the null model and the deviance for a model with predictors in it has a chi-squared distribution and is used to determine whether the full model is doing a **statistically significantly** better job at predicting the observed values than the null model. In the `summary()` results from the model above you will find the null deviance of 2177.5 and the "residual" or model deviance of 2166.7. The difference between the two is 10.815, which you see at the top of the output from the `odds.n.ends()` command.
+The difference between the deviance for the null model and the deviance for a model with predictors in it has a $\chi^2$ distribution and is used to determine whether the full model is doing a **statistically significantly** better job at predicting the observed values than the null model. In the `summary()` results from the model above you will find the null deviance of 2177.5 and the "residual" or model deviance of 2166.7. The difference between the two is 10.815, which you see at the top of the output from the `odds.n.ends()` command as the model $\chi^2$.
 
 ##### NHST Step 3: Compute the probability for the test statistic (p-value)
 
-Once she knows a little more, Leslie is ready to report and interpret the model significance. She remembers that the chi-squared distribution shows the probability of getting a chi-squared test statistic as large (or larger) than the one computed in a sample the size of the data analyzed if the full model is no better than the baseline or null model. In this case, the sample size is 1601 for the libraries data frame but in the `odds.n.ends()` output it shows 1571 observations in the model fit contingency table. This is due to missing values in the outcome or predictor variables; the model only uses cases with complete data for all variables in the model.  
+Once she knows a little more, Leslie is ready to report and interpret the model significance. She remembers that the $\chi^2$ distribution shows the probability of getting a $\chi^2$ test statistic as large (or larger) than the one computed if the null hypothesis were true. In this case, the sample size is 1601 for the libraries data frame but in the `odds.n.ends()` output it shows 1571 observations in the model fit contingency table. This is due to missing values in the outcome or predictor variables; the model only uses cases with complete data for all variables in the model.  
 
-The `odds.n.ends()` output also shows the model chi-squared of 10.815 with the corresponding degrees of freedom of 1 and a p-value of .001. Visualizing a chi-squared distribution for an n of 1571 and 1 degree of freedom makes it clear why the p-value is so small. The probability that the chi-squared would be 10.815 if the model with age in it were no better than the null model is shown as the area under the curve to the right of the vertical purple line.
+The `odds.n.ends()` output also shows the model $\chi^2$ of 10.815 with the corresponding degrees of freedom of 1 and a p-value of .001. Visualizing a $\chi^2$ distribution for an $n$ of 1571 and 1 degree of freedom makes it clear why the p-value is so small. The probability that the $\chi^2$ would be 10.815 if the model with age in it were no better than the null model is shown as the area under the curve to the right of 10.815, which is barely any area at all.
 
-```{r}
+```{r echo = FALSE, fig.cap = "Chi-squared distribution with df = 1 and n = 1571."}
 # chi-squared distribution
 dat <- with(density(rchisq(1571, 1)), data.frame(x, y))
 ggplot(data = dat, mapping = aes(x = x, y = y)) +
   geom_line(color = "dodgerblue1", size = 1)+
-  geom_vline(xintercept = 10.815, color = "#88398a", size = 1) +
   theme_minimal() +
   xlab("Chi-squared statistic") + ylab("Probability")
 
@@ -441,49 +352,39 @@ ggplot(data = dat, mapping = aes(x = x, y = y)) +
 
 ##### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
 
-Leslie writes her final interpretation of model significance: A logistic regression model including age was statistically significantly better than a null model at predicting library use ($\chi^2$(1) = 10.82; p = .001). 
+Leslie interprets the results:
 
-### Unlocking achievement 2: Check your understanding 
+> The $\chi^2$ test statistic for a logistic regression model with age predicting library use had a p-value of .001. This p-value indicates there is a .1% chance of a $\chi^2$ statistic this large or larger if the null hypothesis were true. The null hypothesis is therefore rejected in favor of the alternate hypothesis that the model is better than the baseline at predicting library use. So, a logistic regression model including age was statistically significantly better than a null model at predicting library use ($\chi^2$(1) = 10.82; p = .001). 
 
-Use the code below to estimate a simple logistic model with sex as the only predictor model. Review the output to find and interpret model significance. Note that you may have to install and open the `odds.n.ends` library if you have not been following along.
+### Interpreting predictor significance 
 
-```{r}
-# simple logistic with sex predicting library use
-lib.by.sex <- glm(formula = uses.lib ~ sex, 
-                  data = libraries.small,
-                  family = binomial("logit"))
-odds.n.ends(lib.by.sex)
-```
-
-
-## Achievement 3: Predictor significance and interpretation
-
-The next thing to look at is predictor significance and interpretation. Leslie notices that the `summary()` and `odds.n.ends()` output both include values and significance statistics for the predictors. The `odds.n.ends()` output includes odds ratios, which are easier to interpret since the outcome is transformed by the logistic function and therefore not easy to interpret directly. 
+The next thing to look at is predictor significance and interpretation. Leslie notices that the `summary()` and `odds.n.ends()` output both include values and significance statistics for the age predictor. The `odds.n.ends()` output includes odds ratios, which Kiara says are easier to interpret since the outcome is transformed by the logistic function and therefore the coefficients from `summary()` are not easy to interpret directly. 
 
 ### Computing odds ratios
 
 ```{r}
 # run the odds.n.ends code again
-odds.n.ends(lib.model.small)
+odds.n.ends(x = lib.model.small)
 ```
 
 ### Odds ratio significance 
 
-Chelsea reminds Leslie that the interpretation of an odds ratio is the increase (or decrease) in odds with a one unit increase in the predictor. For example, the age variable has an odds ratio of .99. This could be interpreted as, "The odds of library use decrease by 1 percent for every one year increase in age." Leslie thinks this sounds familiar but she is a little confused about why it is 1 percent and how this applies to factor data type predictors. For example, in running the simple logistic model with sex instead of age as the predictor, Leslie noticed the sex variable shows female in the table and does not show the male category. It does not seem to make sense to increase one unit in being or not being female.
+Nancy reminds Leslie that the interpretation of an odds ratio is the increase (or decrease) in odds with a one unit increase in the predictor. For example, the age variable has an odds ratio of .99. This could be interpreted as, "The odds of library use decrease by 1 percent for every one year increase in age." Leslie thinks this sounds familiar but she is a little confused about why it is 1 percent. Kiara explains that the 1 percent comes from subtracting the odds ratio of .99 from 1, which is one strategy for making the odds ratio easier to interpret. She goes on to say that it would be just as correct, although a little more confusing, to state that "The odds of library use are .99 times as high with every one year increase in age." Kiara explains that, in order to make the interpretation clearer, subtracting the value of smaller odds ratios from 1 and treating the result as a percent decrease in odds is preferred.
 
-Chelsea explains that the 1 percent comes from subtracting the odds ratio of .99 from 1, which is one strategy for making the odds ratio easier to interpret. She goes on to say that it would be just as correct, although a little more confusing, to state that "The odds of library use are .99 times as high with every one year increase in age." Chelsea explains that, in order to make the interpretation clearer, subtracting the value of the odds ratio from 1 and treating the result as a percent decrease in odds is preferred.
+In the *check your understanding* exercise, Leslie noticed the sex variable shows female in the table and does not show the male category. It does not seem to make sense to increase one unit in being or not being female. Kiara explains that, for factor (or categorical) predictors, the odds ratio is interpreted with respect to the category that is not shown. This category is called the **reference group**. So, male is the reference group for the sex variable and the 1.80 odds ratio would be interpreted as females having 1.80 times higher odds of being library users compared to males (the reference group). 
+This sounds good to Leslie. She thinks she has it. For continuous predictors, it is an increase (or decrease) in odds for every one unit increase in the predictor. For categorical variables it is the increase (or decrease) in odds of the category shown compared to its reference group. Kiara nods, this is exactly right. 
 
-Bobbi takes over to explain the difference with factor variables as predictors. For factor (or categorical) variables, the odds ratio is interpreted with respect to the category that is not shown. This category is called the reference group. So, male is the reference group for the sex variable and the 1.80 odds ratio would be interpreted as females have 1.80 times higher odds of being library users compared to males (the reference group). 
-
-The significance of an odds ratio is determined by its confidence interval. The confidence interval shows where the true or population value of the relationship likely lies. A confidence interval that includes 1 indicates that the true or population value of the relationship could be 1. The interpretation of an odds ratio of 1 is that the odds are 1 times higher or 1 times as high for one group compared to another. This is essentially the same odds. So, when the confidence interval includes 1, the odds ratio could be 1 and this indicates the odds of the outcome are not statistically significantly different for one group compared to another.
+Leslie asks what they do about the significance of the odds ratios. Kiara explains that the significance of an odds ratio is determined by its confidence interval. Just as the other confidence intervals they have discussed, the confidence interval for the odds ratio shows where the true or population value of the odds ratio likely lies. A confidence interval that includes 1 indicates that the true or population value of the relationship could be 1. The interpretation of an odds ratio of 1 is that the odds are 1 times higher or 1 times as high for one group compared to another. This is essentially the same odds. So, when the confidence interval includes 1, the odds of the outcome are not statistically significantly different for one group compared to another.
 
 ### Interpreting significant odds ratios 
 
 The odds ratio for the age variable is less than one and the confidence interval does not include one. The intepretation of this odds ratio would therefore be: *The odds of library use are .9% lower for every one year increase in age (OR = .991; 95% CI: .986 - .996)*.
 
-The odds ratio for the sex variable is greater than one and the confidence interval does not include one. The interpretation of this odds ratio would be: *The odds of library use are 1.80 times higher for females compared to males (OR = 1.80; 95% CI: 1.47 - 2.19)*. If space permits, you could add: *The true value of this odds ratio likely lies between 1.47 and 2.19.*
+The odds ratio for the sex variable is greater than one and the confidence interval does not include one. The interpretation of this odds ratio would be: *The odds of library use are 1.80 times higher for females compared to males (OR = 1.80; 95% CI: 1.47 - 2.19)*. If space permits, the confidence interval could be explained a little more: *The true value of this odds ratio likely lies between 1.47 and 2.19 in the population that the sample came from.*
 
-### Using NHST to organize the interpretation of odds ratios
+### Using NHST to organize the significance testing of odds ratios
+
+Kiara thinks it might be useful to be a little more formal about the significance testing for the predictors in the model. Leslie starts the NHST process with Kiara's help.
 
 #### NHST Step 1: Write the null and alternate hypotheses
 
@@ -493,102 +394,140 @@ HA: Library use is associated with age.
 
 #### NHST Step 2: Compute the test statistic
 
-For each predictor there are two possible test statistics to use to determine statistical significance. The `summary()` command following a `glm()` command includes a z-statistic comparing the coefficient estimate against zero. Leslie looks back at her notes about z-statistics and is reminded that the z-statistic computed in previous chapters was used to measure how many standard deviations away from a mean an individual score is. In this case, Chelsea explains, the z-statistic is measuring how different the coefficient is from 0. In the case of the age variable, dividing the estimate of `r round(lib.model.small$coefficients[2], 3)` by its standard error of .003 gives a z-statistic of -3.28, which indicates that the estimated coefficient is 3.28 standard errors below zero. 
+For each predictor there are two possible test statistics to use to determine statistical significance. The `summary()` command following a `glm()` command includes a z-statistic comparing the coefficient estimate against zero. Leslie looks back at her notes about z-statistics and is reminded that the z-statistic computed in previous chapters was used to measure how many standard deviations away from a mean an individual score is. In this case, Nancy explains, the z-statistic is measuring how different the coefficient is from 0. In the case of the age variable, dividing the estimate of `r round(lib.model.small$coefficients[2], 3)` by its standard error of .003 gives a z-statistic of -3.28, which indicates that the estimated coefficient for age is 3.28 standard errors below zero. 
 
-```{r echo = FALSE}
-summary(lib.model.small)
+```{r lib.mod.sm, echo = FALSE}
+summary(object = lib.model.small)
 ```
 
-The z-distribution is a normal distribution with a mean of 0 and a standard deviation of 1. The graph below shows a z-distribution to visualize how often a z-score of -3.28 would happen if there were no relationship between age and library use in a sample of 1571 observations: 
+The z-distribution is a normal distribution with a mean of 0 and a standard deviation of 1. The graph below shows a z-distribution to visualize how often a z-score of -3.28 or a larger negative value would happen if there were no relationship between age and library use in a sample of 1571 observations: 
 
 ```{r echo = FALSE, fig.cap="z distribution for sample size of 1571."}
 p1 <- ggplot(data = data.frame(x = c(-3, 3)), aes(x)) +
   stat_function(fun = dnorm, n = 1571, args = list(mean = 0, sd = 1), colour = "dodgerblue2") + 
   ylab("Probability") + xlab("z statistic") + 
-  geom_vline(xintercept = -3.28, color = "#88398a", size = 1) +
   theme_minimal() +
   xlim(-5,5) 
 p1
 ```
 
-As usual, the area under the curve to the left of the vertical line is the percent of the time you would get a z-statistic of -3.28 or more extreme under the null hypothesis of no relationship between age and library use. Given this area is very small, the p-value of .00105 in the table of results makes sense. There is a .105% probability that this sample came from a population where there is no relationship between age and library use. Therefore, there is a statistically significant relationship between age and library use (z = -3.28; p = .001).
+#### NHST Step 3: Calculate the probability that your test statistic is at least as big as it is if there is no relationship (i.e., the null is true) 
+
+As usual, the area under the curve to the left of the test statistic is the percent of the time you would get a z-statistic of -3.28 or more extreme under the null hypothesis of no relationship between age and library use. Given this area is very small, the p-value of .00105 in the table of results makes sense. There is a .105% probability that this sample came from a population where there is no relationship between age and library use. Therefore, there is a statistically significant relationship between age and library use (z = -3.28; p = .001).
 
 The other way to determine statistical significance of predictors is to examine the confidence intervals around the odds ratios:
 
 ```{r echo = FALSE}
-odds.n.ends(lib.model.small)
+odds.n.ends(x = lib.model.small)
 ```
 
-The odds ratio for age is .991 with a 95% CI of .990 - .996. The confidence interval shows the range where the odds ratio likely is in the population given what is going on in the sample. Because the confidence interval does not include 1, this indicates that the odds ratio is statistically significantly different from 1. The interpretation would be that *the odds of library use are .9% lower for every one year increase in age (OR: .991; 95% CI: .986 - .996)*.
+#### NHST Step 4 & 5: Reject or retain the null hypothesis based on the probability
 
-### Unlocking achievement 3: Check your understanding
+The odds ratio for age is .991 with a 95% CI of .990 - .996. The confidence interval shows the range where the odds ratio likely is in the population given what is going on in the sample. Because the confidence interval does not include 1, this indicates that the odds ratio is statistically significantly different from 1. The interpretation would be: *The null hypothesis of no relationship between library use and age is rejected. The odds of library use are .9% lower for every one year increase in age in the sample (OR: .991; 95% CI: .986 - .996). The 95% confidence interval indicates that the odds of library use are .4 - 1.4% lower with each one year increase in age in the population that the sample came from.*
 
-Examine the z-statistic and its p-value along with the OR and 95% CI for the sex variable in the model with sex predicting library use. Write a statement about the statistical significance of the predictor using the z statistic and p-value and another statement using the odds ratio and confidence interval.
+### Unlock achievement 3: Check your understanding 
 
-## Achievement 4: Model fit
+Use the code below to estimate a simple logistic model with sex as the only predictor model. Review the output to find and interpret model significance and the odds ratio for sex as a predictor of library use.
 
-Leslie remembers that, for linear regression, the $R^2$ statistic measured how well the model fit the observed data by measuring how much of the variability in the outcome was explained by the model. Chelsea explains that the concept of variance is appropriate for continuous but not categorical variables, so a different measure is needed. There are several to choose from including the *percent correctly predicted* which is sometimes referred to as the *Count $R^2$*. 
+```{r}
+# simple logistic with sex predicting library use
+lib.by.sex <- glm(formula = uses.lib ~ sex, 
+                  data = libraries.cleaned,
+                  family = binomial("logit"))
+odds.n.ends(x = lib.by.sex)
+```
+
+## Achievement 4: Computing and interpreting two measures of model fit
+
+Leslie remembers that, for linear regression, the $R^2$ statistic measured how well the model fit the observed data by measuring how much of the variability in the outcome was explained by the model. Nancy explains that the concept of variance is appropriate for continuous but not categorical variables, so a different measure is needed. There are several to choose from including the *percent correctly predicted* which is sometimes referred to as the *Count $R^2$*. 
 
 ### Percent correctly predicted or Count $R^2$
 
-Bobbi explains that the percent correctly predicted by the model is computed using the predicted probabilities, or fitted values, for each of the observations and comparing these probabilities to the true value of the outcome. For example, if a person in the data set were predicted to have a 56 percent chance of library use, this would be transformed into a "yes" or "1" value of the outcome. This would then be compared to the person's actual library use. If the predicted probability of the outcome is 50% or higher and the true value of the outcome is 1 or yes, the two match and this is considered a correct prediction.
+Kiara explains that the percent correctly predicted by the model is computed using the predicted probabilities, or fitted values, for each of the observations and comparing these probabilities to the true value of the outcome. For example, if a person in the data set were predicted to have a 56 percent chance of library use, this would be transformed into a "yes" or "1" value of the outcome. This would then be compared to the person's actual library use. If the predicted value and the true value match, this is considered a correct prediction.
 
 Likewise, if the predicted probability for library use is less than 50%, they are considered to be a "no" or "0" for library use. Comparing this to the true value for that person would indicate whether the model was correct or incorrect. The total number of people the model gets correct out of the total number of people in the data set is the *percent correctly predicted* or *Count $R^2$*.
 
 The `odds.n.ends()` command includes a table showing the precent correctly predicted in each category of the outcome. These two values can be added together to determine the overall percent correctly predicted:
 
 ```{r echo = FALSE}
-odds.n.ends(lib.model.small)
+odds.n.ends(x = lib.model.small)
 ```
 
-Leslie sees that the model correctly predicted 338 of those who used the library and 500 of those who do not use the library. She computes the overall percent correctly predicted of 838 / 1571 or `r round(100*(838/1571))`%. One alternative to the percent correctly predicted is the Adjusted Count $R^2$, which adjusts the Count $R^2$ for the number of people in the largest of the two categories of the outcome. The argument behind this adjustment is that a null model, or a model with no predictors, could get a good percent correctly predicted just due to the percent of people in a single category. 
+Leslie sees that the model correctly predicted 338 of those who used the library and 500 of those who do not use the library. She computes the overall percent correctly predicted of 838 / 1571 or `r round(100*(838/1571))`%. One alternative to the percent correctly predicted is the *Adjusted Count* $R^2$, which adjusts the *Count* $R^2$ for the number of people in the largest of the two categories of the outcome. The argument behind this adjustment is that a null model, or a model with no predictors, could get a good percent correctly predicted just due to the bigger percent of people in a single category. 
 
-For the library use data, the most common category is library non-use (or 0) with 798 of the 1571 participants who were in the estimated model. Without knowing anything about library use, you could predict everyone in the data set was a non-user and be right 798 / 1571 or 50.8% of the time. Using the age predictor, the model is right 53% of the time. While this is not a huge increase, it did classify 40 additional people correctly compared to using the base percentages.
+$$
+\begin{equation}
+R^2_{count} = \frac{n_{correct}}{n_{total}}
+ (\#eq:countRsq)
+\end{equation}
+$$
 
-Chelsea says that interpreting this statistic is pretty straightforward and would go something like this: *The model using age to predict library use was correct 53% of the time.*
+$$
+\begin{equation}
+R^2_{count.adj} = \frac{n_{correct}-n_{most.common.outcome}}{n_{total}-n_{most.common.outcome}}
+ (\#eq:countRsqAdj)
+\end{equation}
+$$
+
+For the library use data, the most common category is library non-use (or 0) with 798 of the 1571 participants with complete data for the model. Without knowing anything about library use, you could predict everyone in the data set was a non-user and be right $\frac{798}{1571}$ or 50.8% of the time. Using the age predictor, the model is right $\frac{338+500}{1571}$ or 53% of the time. While this is not a huge increase, it did classify 40 additional people correctly compared to using the base percentages.
+
+Nancy says that interpreting this statistic is pretty straightforward and would go something like this: *The model using age to predict library use was correct 53% of the time (Count $R^2$ = .53).*
+
+The adjusted count $R^2$ would be $\frac{338+500-798}{1571-798}$ or .05. The interpretation could then be written: *There were 5% more correct predictions by the age model than by the baseline (Adjusted Count $R^2$ = .05).* 
+
+Both of these interpretations of fit are correct. It is up to the analyst to decide which they prefer or which may make more sense for their audience.
 
 ### Sensitivity and specificity 
 
-Leslie is interested in the last two values in the `odds.n.ends()` output. Chelsea explains that sometimes it is useful to know whether the model is better at predicting people with the outcome or people without the outcome. The measures used for these two concepts are sensitivity and specificity. Sensitivity determines the percent of the 1s or "yes" values the model got correct, while specificity computes the percent of 0s or "no" values the model got correct. In this case, the sensitivity is 43.7% while the specificity is 62.7%. The model is better at predicting the no values than the yes values. These percents could also be computed from the frequency table in the output, the model predicted 500 of the 798 people in the 0 category correctly (62.7%) and 338 of the 773 in the 1 category correctly (43.7%). 
+Leslie is interested in the last two values in the `odds.n.ends()` output. Nancy explains that sometimes it is useful to know whether the model is better at predicting people with the outcome or people without the outcome. The measures used for these two concepts are sensitivity and specificity. Sensitivity determines the percent of the 1s or "yes" values the model got correct, while specificity computes the percent of 0s or "no" values the model got correct. In this case, the sensitivity is 43.7% while the specificity is 62.7%. The model is better at predicting the no values than the yes values. These percents could also be computed from the frequency table in the output, the model predicted 500 of the 798 people in the 0 category correctly (62.7%) and 338 of the 773 in the 1 category correctly (43.7%). 
 
-### Unlocking achievement 4 
+### Unlock achievement 4 
 
-Compute and interpret the percent correctly predicted for the model with sex as the only predictor.
+Compute and interpret the count and adjusted count $R^2$ values for the model with sex as the only predictor.
 
-## Achievement 5: Adding variables to the model
+## Achievement 5: Estimating a larger logistic regression model with categorical and continuous predictors
 
-Now that she has worked through the different parts of model development and interpretation, Leslie is ready to estimate and interpret the model with all six predictors. She starts by using the `glm()` command and follows the steps used in the simple linear regression analysis.
+Now that she has worked through the different parts of model development and interpretation, Leslie is ready to estimate and interpret the model with all six predictors. First she writes out the model:
+
+$$
+\begin{equation}
+p(uses.lib)=\frac{1}{1+e^{-(b_0+b_1\cdot{age}+b_2\cdot{sex}+b_3\cdot{educ}+b_4\cdot{parent}+b_5\cdot{disabled}+b_6\cdot{rurality})}} 
+ (\#eq:logistic.b.mod)
+\end{equation}
+$$
+
+Kiara reviews the model and it looks good. Leslie starts by using the `glm()` command and follows the steps she used in the simple linear regression analysis.
 
 ```{r}
 # estimate the library use model and print results
 lib.model <- glm(formula = uses.lib ~ age + sex + educ + parent + disabled + rurality, 
-                 data = libraries.small, na.action = na.exclude,
+                 data = libraries.cleaned, 
+                 na.action = na.exclude,
                  family = binomial("logit"))
-results <- odds.n.ends(lib.model)
+odds.n.ends(x = lib.model)
 ```
 
 ### NHST Step 1: Write the null and alternate hypotheses
 
-HO: Age, sex, education, parent status, disability status, and rurality do not help to explain library use. 
+Kiara suggest they try writing the hypotheses in a more specific way. The null and alternate used for the first model would be fine here, but it is also nice to explicitly state what is being tested.
 
-HA: Age, sex, education, parent status, disability status, and rurality do help to explain library use. 
+HO: A model including age, sex, education, parent status, disability status, and rurality is no better than the baseline at explaining library use. 
+
+HA: A model including age, sex, education, parent status, disability status, and rurality is better than the baseline at explaining library use.  
 
 ### NHST Step 2: Compute the test statistic
 
-The chi-squared test statistic was computed by the `odds.n.ends()` command above.
+The chi-squared test statistic of $\chi^2$ = 97.066 was computed by the `odds.n.ends()` command above. 
 
 ### NHST Step 3: Compute the probability for the test statistic (p-value)
 
-The chi-squared distribution shows the probability of getting a test statistic as large (or larger) than the one computed in a sample the size of the data analyzed if the full model is no better than the baseline or null model. In this case, the sample size is 1601 for the libraries data frame but in the `odds.n.ends()` output it shows 1553 observations in the model fit contingency table. The `odds.n.ends()` output also shows the model chi-squared of 97.07 with the corresponding degrees of freedom of 8 and very small p-value. Visualizing a chi-squared distribution with 8 degrees of freedom makes it clear why the p-value is so small. The probability that the chi-squared would be 97.07 if the full model were no better than the null model is shown as the area under the curve to the right of the vertical purple line.
+The chi-squared distribution shows the probability of getting a test statistic as large (or larger) than 97.066 if the null hypothesis were true. In this case, the sample size is 1601 for the libraries data frame but in the `odds.n.ends()` output it shows 1553 observations in the model fit contingency table. The `odds.n.ends()` output also shows the model chi-squared of 97.066 with the corresponding degrees of freedom of 8 and very small p-value. Visualizing a chi-squared distribution with 8 degrees of freedom makes it clear why the p-value is so small. The probability that the chi-squared would be 97.07 if the full model were no better than the null model is shown as the area under the curve to the right of the vertical purple line.
 
-```{r}
+```{r fig.cap = "Chi-squared distribution with n = 1553 and df = 8."}
 # chi-squared distribution
 dat <- with(density(rchisq(1553, 8)), data.frame(x, y))
 ggplot(data = dat, mapping = aes(x = x, y = y)) +
     geom_line(colour = "dodgerblue2", size = 1)+
-  geom_vline(xintercept = 97.07, color = "#88398a", size = 1)+
-  geom_segment(aes(x = 27, xend = 105, y = .0002, yend = .0001), colour = "dodgerblue2") +
-    #geom_area(mapping = aes(x = ifelse(x < 10 , x, 0)), fill = "#88398a") + ylim(0,.2) +
   theme_minimal() +
   xlab("Chi-squared statistic") + ylab("Probability")
 
@@ -596,13 +535,15 @@ ggplot(data = dat, mapping = aes(x = x, y = y)) +
 
 ##### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
 
-A logistic regression model including age, sex, education, parental status, disability status, and rurality was statistically significantly better than the baseline probability at predicting library use ($\chi^2$(8) = 97.07; p < .001). 
+With a very tiny probability of getting a $\chi^2$ as large as 97.066 or larger if the null were true, the null hypothesis is rejected. Leslie writes the conclusion: 
 
-### Unlocking achievement 5: Check your understanding 
+> A logistic regression model including age, sex, education, parental status, disability status, and rurality was statistically significantly better than the baseline probability at predicting library use ($\chi^2$(8) = 97.07; p < .001). 
+
+### Unlock achievement 5: Check your understanding 
 
 Remove the disability predictor and re-run the model. Find and interpret model significance.
 
-## Achievement 6: Interpretation for the larger model
+## Achievement 6: Interpreting the results of a larger logistic regression model
 
 The `summary()` and `odds.n.ends()` output both include values and significance statistics for the predictors. The `odds.n.ends()` output includes odds ratios, which are easier to interpret given the form of the logistic function used in computing the results. 
 
@@ -610,22 +551,22 @@ The `summary()` and `odds.n.ends()` output both include values and significance 
 
 ```{r}
 # run the odds.n.ends code again
-odds.n.ends(lib.model)
+odds.n.ends(x = lib.model)
 ```
 
 ### Odds ratio significance 
 
-Leslie summarizes what she remembers about the significance of odds ratios from the simple logistic models. The significance of an odds ratio is determined by the range of its confidence interval. The confidence interval shows where the true or population value of the relationship likely lies. A confidence interval that includes 1 indicates that the true or population value of the relationship could be 1. The interpretation of an odds ratio of 1 is that the odds are 1 times higher or 1 times as high for one group compared to another. This is essentially the same odds. So, when the confidence interval includes 1, the odds ratio could be 1 and this indicates it is not statistically significantly different from 1.
+Leslie summarizes what she remembers about the significance of odds ratios from the simple logistic models. The significance of an odds ratio is determined by the range of its confidence interval. The confidence interval shows where the true or population value of the odds ratio likely lies. A confidence interval that includes 1 indicates that the true or population value of the relationship could be 1. The interpretation of an odds ratio of 1 is that the odds are 1 times higher or 1 times as high for one group compared to another. This is essentially the same odds. So, when the confidence interval includes 1, the odds ratio could be 1 and this indicates it is not statistically significantly different from 1.
 
 ### Interpreting odds ratios greater than 1
 
 As suggested in the previous section, odds ratios greater than one indicate an increase in the odds of the outcome with a one-unit increase in a numeric variable or in comparison with the reference group for a factor variable. If the odds ratio is greater than one **and** the confidence interval does not include one, the odds ratio suggests a statistically significant increase in the odds of the outcome. 
 
-Leslie notices that there are several factor type variables in this larger model that have more than two categories. Bobbi explains that, for factor variables with more than two categories, the odds ratio is interpreted with respect to the reference group for all other groups. So, for rurality, the group not shown is the rural group. The odds ratio for the suburban group is 1.29, so the interpretation would be that individuals in suburban areas have 1.29 times higher odds of library use compared to people in rural areas. Likewise, people in urban areas have 1.27 times higher odds of library use compared to people in rural areas.
+Leslie notices that there are several factor type variables in this larger model that have more than two categories. Kiara explains that, for factor variables with more than two categories, each odds ratio is interpreted with respect to the *reference group* for that variable. So, for rurality, the group not shown is the rural group indicating that *rural* is the reference group. The odds ratio for the suburban group is 1.29, so the interpretation would be that individuals in suburban areas have 1.29 times higher odds of library use compared to people in rural areas. Likewise, people in urban areas have 1.27 times higher odds of library use compared to people in rural areas.
 
 #### Interpreting significant odds ratios greater than 1 
 
-The odds ratio for the sex variable is greater than one and the confidence interval does not include one. The interpretation of this odds ratio would be: *The odds of library use are 1.99 times higher for females compared to males (95% CI: 1.61 - 2.45)*. If space permits, Bobbi suggests that Leslie could add: *The true value of this odds ratio likely lies between 1.61 and 2.45.* The four-year degree category of education has a significant odds ratio greater than one and less than high school is the reference group. Leslie inteprets this as the odds of library use are 2.02 times higher for those with a four-year degree compared to those with less than a high school education (OR = 2.02; 95% CI: 1.39 - 2.94).
+The odds ratio for the sex variable is greater than one and the confidence interval does not include one. The interpretation of this odds ratio would be: *The odds of library use are 1.99 times higher for females compared to males (95% CI: 1.61 - 2.45)*. If space permits, Kiara suggests that Leslie could add: *The true value of this odds ratio likely lies between 1.61 and 2.45.* The four-year degree category of education has a significant odds ratio greater than one and less than high school is the reference group. Leslie inteprets this as the odds of library use are 2.02 times higher for those with a four-year degree compared to those with less than a high school education (OR = 2.02; 95% CI: 1.39 - 2.94).
 
 #### Interpreting non-significant odds ratios greater than 1
 
@@ -669,69 +610,70 @@ The odds of library use are 1.99 times higher for females compared to males (95%
 
 ### Compute and interpret model fit 
 
-The model correctly predicted 426 of the 765 who use the library and 508 of the 788 who do not use the library. Overall it was correct for 934 / 1553 of the observations or 60.1% of the time. It was better at classifying those who do not use the library (specificity = 64.5%) than those who use the library (sensitivity = 55.7%).
+The model correctly predicted 426 of the 765 who use the library and 508 of the 788 who do not use the library. Overall it was correct for $\frac{934}{1553}$ of the observations or 60.1% of the time (Count $R^2$ = .601). It was better at classifying those who do not use the library (specificity = 64.5%) than those who use the library (sensitivity = 55.7%).
 
-### Unlocking achievement 6: Check your understanding 
+### Unlock achievement 6: Check your understanding 
 
 Which of the following would be the most appropriate interpretation if the relationship between age in years and library use had an odds ratio of .56 with a 95% confidence interval of .34 to 1.23:
 
-* The odds of library use are 44% lower for each year older someone gets (OR = .56; 95% CI: .34 - 1.23).* 
+* The odds of library use are 44% lower for each year older someone gets (OR = .56; 95% CI: .34 - 1.23). 
 * There is no statistically significant association between age and library use (OR = .56; 95% CI: .34 - 1.23). 
 * The odds of library use are 56% lower for each year older someone gets (OR = .56; 95% CI: .34 - 1.23). 
 * There is no statistically significant association between age and library use (OR = .44; 95% CI: .34 - 1.23). 
 
-## Achievement 7: Logistic regression assumptions and diagnostics
+## Achievement 7: Checking logistic regression assumptions and using diagnostics to identify outliers and influential values
 
-Leslie is excited to be finished with the analyses! Bobbi reminds her that it is important to check the assumptions of every model to be sure to use the There are three assumptions for logistic regression: independence of observations, linearity, and no multicollinearity. We can use the generalized variance inflation factor (GVIF) to check for multicollinearity. The GVIF is similar to the VIF used for logistic regression, but modified to account for the categorical outcome. Linearity can be checked by graphing the log-odds of the outcome against each numeric predictor to see if the relationship is linear, falling along a line.
+Leslie is excited to be finished with the analyses! Kiara reminds her that it is important to check the assumptions of every model. There are three assumptions for logistic regression: independence of observations, linearity, and no multicollinearity. Kiara introduces the generalized variance inflation factor (GVIF) to check for multicollinearity. The GVIF is similar to the VIF used for linear regression, but modified to account for the categorical outcome. Linearity can be checked by graphing the log-odds of the outcome against each continuous predictor to see if the relationship is linear (i.e., falling along a line).
 
-In addition, like with linear regression, diagnostics can aid in identifying whether there are outliers and influentual observations that may problematic. The same statistics are used in logistic as in linear regression to identify these observations.
+In addition, like with linear regression, diagnostics can aid in identifying whether there are outliers and influentual observations that may problematic. The same statistics are used in logistic as in linear regression to identify outliers and influential observations.
 
 ### Assumption: Independence of observations
 
-Chelsea reminds Leslie that independence of observations is about whether there are observations in the data that are dependent on each other. For example, siblings, close friends, or spouses are more likely to share some behaviors or characteristics than unrelated people and would therefore influence the amount of variation in the data and violate the independence of observations assumptions. Checking independence of observations is not test, but instead is based on the way the data were collected. In this case, the Pew Research Center conducted a phone survey where they selected a single person in a randomly selected household. This data collection strategy is likely to result in independent observations. The assumption is met.
+Kiara reminds Leslie that independence of observations is about whether there are observations in the data that are dependent on each other. For example, siblings, close friends, or spouses are more likely to share some behaviors or characteristics than unrelated people and would therefore influence the amount of variation in the data and violate the independence of observations assumptions. Checking independence of observations is not test, but instead is based on the way the data were collected. In this case, the Pew Research Center conducted a phone survey where they selected a single person in a randomly selected household. This data collection strategy is likely to result in independent observations. The assumption is met.
 
 ### Assumption: Linearity 
 
 In linear regression the linearity assumption is checked by examining the relationship between each continuous predictor and the outcome variable. For logistic regression, the outcome variable is binary, so its relationship with another variable will never be linear. Instead of plotting the relationship of the outcome with each continuous predictor, linearity is tested by plotting the log-odds of the predicted probabilities for the outcome against each of the continuous predictors in the model. 
 
-By examining the relationship between the predicted probabilities and a continuous predictor, we can see whether the predictions are equally accurate along the range of the values of the predictor. For example, are the predicted values equally good for people with a younger age compared to people with an older age. Bobbi helps Leslie compute the log-odds, or logit, of the predicted values by showing her that the predicted probabilities are stored in the model object in R. She points out the model in the environment and clicks on the small arrow to the left of the model name. All the information stored in the model is shown and Bobbi points out the item that says **fitted.values**, which is the predicted probabilities for each observation in the data frame. She then shows Leslie how to compute the log odds from this and use it in a graph:
+By examining the relationship between the predicted probabilities and a continuous predictor, we can see whether the predictions are equally accurate along the range of the values of the predictor. For example, are the predicted values equally accurate for people with a younger age compared to people with an older age. Kiara helps Leslie compute the log-odds, or logit, of the predicted values by showing her that the predicted probabilities are stored in the model object in R. She points out the model in the environment and clicks on the small arrow to the left of the model name. All the information stored in the model is shown and Kiara points out the item that says **fitted.values**, which is the predicted probabilities for each observation in the data frame. She then shows Leslie how to compute the log odds from this and use it in a graph:
 
 ```{r fig.cap="Checking linearity of the age variable for the model of library use."}
 # make a variable of the logit of the outcome
-logitUse <- log(lib.model$fitted.values/(1-lib.model$fitted.values))
+logit.use <- log(lib.model$fitted.values/(1-lib.model$fitted.values))
 
-# make a small data frame with the logit and the predictor
-linearityData <- data.frame(logitUse, age = lib.model$model$age)
+# make a small data frame with the logit variable and the age predictor
+linearity.data <- data.frame(logit.use, age = lib.model$model$age)
 
-# create a plot 
-ggplot(linearityData, aes(x = age, y = logitUse))+
+# create a plot with linear and actual relationships shown
+linearity.data %>%
+  ggplot(aes(x = age, y = logit.use))+
   geom_point(color = "gray") +
-  geom_smooth(se = FALSE, color = "deeppink") + 
-  geom_smooth(method = lm, se = FALSE, color = "dodgerblue1") + theme_minimal() +
-  ylab("Log-odds of library use predicted prob") 
-
+  geom_smooth(se = FALSE, aes(color = "Loess curve")) + 
+  geom_smooth(method = lm, se = FALSE, aes(color = "linear model")) + 
+  theme_minimal() +
+  labs(y = "Log-odds of library use predicted probability") +
+  scale_color_manual(name="Type of fit line", values=c("dodgerblue2", "deeppink"))
 
 ```
 
-The graph shows the pink Loess curve fairly close to the blue line with the exception of the lowest ages. In this case, the blue line represents a linear relationship and the pink line represents the actual relationship. It is up to the analyst to determine whether the actual relationship is close enough to linear to meet this assumption. If the assumption is not met, this variable might be removed from analysis or recoded. Chelsea mentions that she has heard about spline regression as one way to deal with problems of linearity in linear and logistic regression (see Box). In this case it might be worth noting that the data frame includes people as young as 16 years old; it is possible that there are different predictors of library use before adulthood and restricting the age range of the data frame could be another option. 
+The graph shows the pink Loess curve fairly close to the blue line with the exception of the youngest ages. In this case, the blue line represents a linear relationship and the pink line represents the actual relationship. It is up to the analyst to determine whether the actual relationship is close enough to linear to meet this assumption. If the assumption is not met, this variable might be removed from analysis or recoded. Nancy mentions that she has heard about spline regression as one way to deal with problems of linearity in linear and logistic regression (see Box \@ref(ch10nancy)). In this case it might be worth noting that the data frame includes people as young as 16 years old; it is possible that there are different predictors of library use before adulthood and restricting the age range of the data frame could be another option for addressing this deviation from linearity. 
 
 ### Assumption: No perfect multicollinearity
 
-The GVIF is similar to the VIF in linear regression. It examines how well each predictor variable in the model is explained by the group of other predictor variables. If a predictor is well explained by the others, it is redundant and unnecessary. For the GVIF, often a threshold of $GVIF^(2(1/(2*Df)))$ < 2 is used as a cutoff with values of 2 or higher indicating a failed multicollinearity assumption. The **car** library is needed and the same `vif()` command as was used for the linear model can be used here:
+The GVIF is similar to the VIF in linear regression. It examines how well each predictor variable in the model is explained by the group of other predictor variables. If a predictor is well explained by the others, it is redundant and unnecessary. For the GVIF, often a threshold of $GVIF^{\frac{1}{2*Df}}$ < 2 is used as a cutoff with values of 2 or higher indicating a failed multicollinearity assumption. The <span style="font-family:Lucida Console, monospace;font-weight:bold">car</span> package is needed and the same `vif()` command as was used for the linear model can be used here:
 
 ```{r}
 # compute GVIF 
-library(car)
-vif(lib.model)
+car::vif(lib.model)
 ```
 
 None of the values in the right-hand column have a value of 2 or higher, so there is no discernable problem with mulitcollinearity.
 
-Overall, the assumption checking revealed a possible problem with age as a predictor, especially at the youngest ages. The other assumptions were met. It might be useful to restrict the age variable to adults or to transform the age variable. 
+Overall, the assumption checking revealed a possible problem with age as a predictor, mostly at the youngest ages. The other assumptions were met. It might be useful to restrict the age variable to adults or to transform the age variable. 
 
 ### Model diagnostics
 
-Like with linear regression, assumptions are only half the story for checking the quality of a statistical model. Model *diagnostics* are also useful for determining whether there are are any observations that are having an unusual impact on the  model. Leslie reminds herself that an outlier is an observation with unusual values, regression outliesr have unusual values of the outcome given the value(s) of predictor(s), and influential observations change the regression coefficients. 
+Like with linear regression, assumptions are only half the story for checking the quality of a statistical model. Model *diagnostics* are also useful for determining whether there are are any observations that are having an unusual impact on the  model. Leslie reminds herself that an outlier is an observation with unusual values, regression outliers have unusual values of the outcome given the value(s) of predictor(s), and influential observations change the regression coefficients. 
 The same measures can be used to help identify outliers and influential values. 
 
 #### Using standardized residuals to find outliers 
@@ -742,24 +684,27 @@ Standardized residuals are computed using the `rstandard()` command and can be a
 
 ```{r}
 # get standardized residuals and add to data frame
-libraries.small$standardized <- rstandard(lib.model)
+libraries.cleaned <- libraries.cleaned %>%
+  mutate(standardized = rstandard(lib.model))
 
 # check the residuals for large values > 2
-summary(libraries.small$standardized)
-subset(libraries.small, abs(libraries.small$standardized) > 2)
+libraries.cleaned %>%
+  drop_na(standardized) %>%
+  summarize(max.resid = max(abs(standardized))) 
 ```
 
-It looks like none of the standardized residuals are larger than 1.96 or less than -1.96, so the standardized residuals did not reveal any outliers. A graph of the standardized residuals confirms they were all fairly close to 1 for those who used the library and close to -1 for those who did not. So, most predicted probabilities were about one standard deviation above or below the mean predicted probability.
+The maximum absolute value of a standardized residual was less than 1.96, so the standardized residuals did not reveal any outliers. A graph of the standardized residuals confirms they were all fairly close to 1 for those who used the library and close to -1 for those who did not. So, most predicted probabilities were about one standard deviation above or below the mean predicted probability.
 
 ```{r echo = FALSE, fig.cap = "Standardized residuals for library use model."}
 # plot standardized residuals
-ggplot(data = libraries.small, aes(x = as.integer(rownames(libraries.small)), 
-                                   y = standardized,
-                                   color = factor(uses.lib))) + 
+libraries.cleaned %>%
+  ggplot(aes(x = as.integer(rownames(libraries.cleaned)),
+             y = standardized,
+             color = factor(uses.lib))) + 
   geom_point() + 
   scale_color_manual(values=c("dodgerblue3", "#88398a"), 
                        name="Library use") +
-    scale_x_continuous(breaks = c(0,250,500,750,1000,1250,1500)) +
+  scale_x_continuous(breaks = c(0,250,500,750,1000,1250,1500)) +
   xlab("observation number") +
   theme_minimal()
 
@@ -767,94 +712,75 @@ ggplot(data = libraries.small, aes(x = as.integer(rownames(libraries.small)),
 
 #### Using df-betas to find influential values
 
-Next Leslie uses the df-betas to find influential values. Chelsea reminds Leslie that the df-beta removes each observation from the data frame, conducts the analysis again, and compares the results with the existing model. Observations with high df-betas (more than 2) may be influencing the model, causing large differences in the intercept or coefficients. Leslie remembers that df-betas are computed for the intercept and each variable in the model, so there could be several lines of code to write to get the df-beta for each variable. Bobbi thinks she has seen something in the car package that might help. She checks the documentation and finds that the car package has a command that will compute not only the df-betas but also Cook's Distance and Leverage, the other measures they were planning to use. 
+Next Leslie uses the df-betas to find influential values. Kiara reminds Leslie that the df-beta removes each observation from the data frame, conducts the analysis again, and compares the results with the existing model. Observations with high df-betas (more than 2) may be influencing the model, causing large differences in the intercept or coefficients. Leslie remembers that df-betas are computed for the intercept and each variable in the model, so there could be several lines of code to write to get the df-beta for each variable. Kiara thinks she has seen something in the <span style="font-family:Lucida Console, monospace;font-weight:bold">car</span> package that might help. She checks the documentation and finds that the <span style="font-family:Lucida Console, monospace;font-weight:bold">car</span> package has a command that will compute not only the df-betas but also Cook's Distance and Leverage, the other measures they were planning to use. 
 
-Bobbi explains to Leslie and Chelsea that the `influence.measures()` command in the car package results in a list of three things: a data frame containing the values of df-beta, df-fit, the covariance ratio, Cook's Distance, and Leverage (called hat). The data frame containing the values is the first thing in the list, so it can be accessed as the first item in the list or by the name of the list entry, infmat.
+Kiara explains to Leslie and Nancy that the `influence.measures()` function in the <span style="font-family:Lucida Console, monospace;font-weight:bold">car</span> package results in a list of three things: a data frame containing the values of df-beta, df-fit, the covariance ratio, Cook's Distance, and Leverage (called hat). The data frame containing these values is the first thing in the list and is named *infmat.*
 
-To get started, Bobbi makes sure she has the car library installed and open and then tries the `influence.measures()` command. To get a general idea of what is in the data frame of influence statistics, she prints a summary of the infmat list entry:
+Nancy is excited to try a new function and types `influence.measures()` with the `model = lib.model` argument. To get a general idea of what is in the data frame of influence statistics, she prints a summary of the infmat list entry:
 
 ```{r}
 # get influence statistics
-influence.lib.mod <- influence.measures(lib.model)
+influence.lib.mod <- influence.measures(model = lib.model)
 
 # summarize data frame with dfbetas, cooks, leverage 
-summary(influence.lib.mod$infmat)
+summary(object = influence.lib.mod$infmat)
 
 ```
 
-The entries starting with `dfb.` are the df-betas. A quick look through the summary shows that none of the variables had df-betas larger than 2, so, by this measure, there were no influential observations. 
+The output entries starting with `dfb.` are the df-betas. A quick look through the summary shows that none of the variables had df-betas larger than 2, so, by this measure, there were no influential observations. 
 
 #### Using Cook's Distance to find influential values
 
-Chelsea reminds Leslie about the next measure of influence, Cook's Distance. Chelsea explains that it is typically called Cook's D and is computed in a similar way to df-beta. For Cook's D, each observation is removed and the model is re-estimated without it. Cook's D then combines the differences between the models with and without an observation for *all the parameters* together instead of one at a time like the df-betas. A high Cook's D would indicate that removing the observation made a big difference and therfore it might be considered influential. Chelsea explains that cutoff for a high Cook's D value is usually 4/n. With 1553 observations used in this model, Leslie determines that a Cook's D greater than `r 4/1553` will be problematic. It looks like there may be a few observations that fit this description, so Leslie wants to determine which observations they are to take a closer look. Bobbi suggests taking a subset of the cook.d column from the data frame and include only values greater than the cutoff. The subsetting is complicated this time because the data frame with the numbers is one of the entries in a list. To make the process a little clearer, Leslie decides to save the data frame object outside the list and then take the subset.
+Kiara reminds Leslie about the next measure of influence, Cook's Distance. Kiara explains that it is typically called Cook's D and is computed in a similar way to df-beta. For Cook's D, each observation is removed and the model is re-estimated without it. Cook's D then combines the differences between the models with and without an observation for *all the parameters* together instead of one at a time like the df-betas. A high Cook's D would indicate that removing the observation made a big difference and therfore it might be considered influential. 
+
+Kiara explains that cutoff for a high Cook's D value is usually 4/n. With 1553 observations used in this model, Leslie determines that a Cook's D greater than `r 4/1553` will be problematic. It looks like there may be a few observations that fit this description, so Leslie wants to determine which observations they are to take a closer look. Kiara suggests taking a subset of the cook.d column from the data frame and include only values greater than the cutoff. The subsetting is complicated this time because the data frame with the numbers is one of the entries in a list. To make the process a little clearer, Leslie decides to save the data frame object outside the list and then take the subset.
 
 ```{r}
 # save the data frame 
 influence.lib <- data.frame(influence.lib.mod$infmat)
 
 # observations with high Cook's D
-subset(influence.lib, influence.lib$cook.d > 4/1553)
+influence.lib %>% 
+  filter(cook.d > 4/1553)
 ```
 
-It looks like there are 10 observations with Cook's D values that indicate some possible influence. 
+Counting the rows in the output, it looks like there are 10 observations with Cook's D values that indicate some possible influence. 
 
 #### Using Leverage to find influential values 
 
-The last measure to look at, says Chelsea, is leverage. Leslie looks back to the linear regression chapter and reads that leverage is the influence that the observed value of the outcome has on the predicted value of the outcome. Leverage values range between 0 and 1. To determine which leverage values indicate influential observations, a cutoff of 2(k+1)/n is often used. In this case, the cutoff is 2(9+1)/1553 = `r 2*(9+1)/1553`.
+The last measure to look at, says Kiara, is leverage. Leslie looks back to the linear regression chapter and reads that leverage is the influence that the observed value of the outcome has on the predicted value of the outcome. Leverage values range between 0 and 1. To determine which leverage values indicate influential observations, a cutoff of $\frac{2(k+1)}{n}$ is often used. In this case, the cutoff is $\frac{2(9+1)}{1553}$ = `r 2*(9+1)/1553`.
 
 ```{r}
-# observations with high Cook's D
-subset(influence.lib, influence.lib$hat > 2*(9+1)/1553)
+# observations with high Leverage
+influence.lib %>% 
+  filter(hat > 2*(9+1)/1553)
 ```
 
-A review of the row numbers for the observations that have high Cook's D or high leverage finds that none of these observations are in both lists. 
-
-#### Summarizing outliers and influential values
-
-Although for this model, there are no observations that are outlying or influential by more than one metric, Leslie thinks it would be useful to have all the observations identified by these four measures in a single list or table. Leslie writes a little code to do this:
+It is hard to tell from this output if any of the values are outlying or influential by more than one metric. Leslie suggests writing code that looks for problem hat and cook.d values together. She tries writing it herself with Nancy looking over her shoulder, ready to help:
 
 ```{r}
-# merge the outlier influential measures with the libraries data frame
-libraries.small$id <- rownames(libraries.small)
-influence.lib$id <- rownames(influence.lib)
-libraries.small <- merge(libraries.small, influence.lib, by = "id")
-
-# sum the number of times observations were outliers/influential
-libraries.small$outlierInfl <- as.numeric(abs(libraries.small$standardized) > 2) + 
-  as.numeric(libraries.small$hat > 2*(9+1)/1553) +
-  as.numeric(libraries.small$cook.d > 4/1553)+
-  as.numeric(abs(libraries.small$dfb.1_) > 2) +
-  as.numeric(abs(libraries.small$dfb.age) > 2) +
-  as.numeric(abs(libraries.small$dfb.sxfm) > 2) +
-  as.numeric(abs(libraries.small$dfb.edom) > 2) +
-  as.numeric(abs(libraries.small$dfb.et2d) > 2) +
-  as.numeric(abs(libraries.small$dfb.prnp) > 2) +
-  as.numeric(abs(libraries.small$dfb.dsbl) > 2) +
-  as.numeric(abs(libraries.small$dfb.rrltys) > 2) + 
-  as.numeric(abs(libraries.small$dfb.rrltyr) > 2)
-
-# get a summary of the outlierInfl variable
-summary(libraries.small$outlierInfl)
-               
+# observations with high Leverage
+influence.lib %>% 
+  filter(hat > 2*(9+1)/1553 & cook.d > 4/1553)
 
 ```
 
-It looks like none of the observations were problematic! 
+It looks like none of the observations is problematic by more than one measure.
 
-### Unlocking achievement 7: Check your understanding 
+### Unlock achievement 7: Check your understanding 
 
 Which of the following are logistic regression model assumptions:
 
-* Independence of observations*  
+* Independence of observations  
 * Cook's Distance 
 * Standardized residuals 
-* Linearity* 
+* Linearity 
 
-## Achievement 8: Predicting probabilities outside the data set
+## Achievement 8: Using the model to predict probabilities for observations that are outside the data set
 
 Logistic regression models are not only useful for examining relationships between predictors and binary outcomes, they can also be used to predict probabilities for hypothetical or new cases that are not in the data frame. Leslie finds this interesting and wants to try predicting the probability of library use for her brother and her parents. Her brother is 35 years old, male, with a four-year degree, is not a parent, and lives in a rural area. Her parents are 65 and 68 years old, female and male, with four-year degrees, are parents, and live in a rural areas. 
 
-Chelsea shows her how to make a small new data frame to use that includes the data for her brother and parents and then use the `predict()` command to predict their probabilities of library use:
+Nancy shows her how to make a small new data frame to use that includes the data for her brother and parents and then use the `predict()` command to predict their probabilities of library use:
 
 ```{r}
 # make a new data frame containing the observations of interest 
@@ -870,37 +796,39 @@ predictions <- predict(lib.model, newdata, type = "response")
 predictions
 ```
 
-The model predicts that Leslie's brother has a 48.7% probability of library use, her mom has a 64.8% probability of library use, and her dad has a 47.4% probability of library use. Leslie notices that her dad and brother have very similar probabilities, while her mom is much  more likely to be a library user. The only difference in the data between her dad and brother is age, while mom is female rather than male. 
+The model predicts that Leslie's brother has a 48.7% probability of library use, her mom has a 64.8% probability of library use, and her dad has a 47.4% probability of library use. Leslie notices that her dad and brother have very similar probabilities, while her mom is much  more likely to be a library user. The only difference in the data between her dad and brother is age, while mom is female rather than male. She looks back at the odds ratios and sees that the odds of library use are 1.99 times higher for females compared to males (95% CI: 1.61 - 2.45), so that must be what made the difference!
 
-### Unlocking achievement 8: Check your understanding
+### Unlock achievement 8: Check your understanding
 
-Create a small data frame that includes your personal characteristics and those of a couple relatives or friends. Predict the probability of library use for the people in your small data frame. Does it seems correct? Do you want to go to the library now?
+Create a small data frame that includes your personal characteristics and those of two relatives or friends. Predict the probability of library use for the people in your small data frame. Does it seems correct? Do you want to go to the library now? There are a lot of good books there!
 
-## Achievement 9: Interaction terms in logistic regression 
+## Achievement 9: Adding and interpreting interaction terms in logistic regression 
 
-Leslie starts thinking about when she used to go to the library as a kid. She remembers it was always her mom who took her to the library and she wonders if sex and parent status might work together to influence the odds of library use. Chelsea thinks that is an interesting question that could be answered by adding an interaction term to the model. An interaction term examines how two (or more) variables might work together to influence an outcome. Visualizing this idea might be the most useful way to start exploring it:
+Leslie starts thinking about when she used to go to the library as a kid. She remembers it was always her mom who took her to the library and she wonders if sex and parent status might work together to influence the odds of library use. Nancy thinks that is an interesting question that could be answered by adding an interaction term to the model. An interaction term examines how two (or more) variables might work together to influence an outcome. Visualizing this idea might be the most useful way to start exploring it:
 
 ```{r fig.cap = "Parent status and library use."}
 # the relationship between parent status and library use
-ggplot(data = subset(libraries.small, !is.na(libraries.small$parent)), 
-       aes(x = parent, fill = factor(uses.lib))) +
+libraries.cleaned %>%
+  drop_na(parent) %>%
+  ggplot(aes(x = parent, fill = factor(uses.lib))) +
   geom_bar(position = "dodge") +
   theme_minimal() +
   labs(x = "Parent status", y = "Number of participants") +
-  scale_fill_manual(values=c("dodgerblue1", "#88398a"), 
+  scale_fill_manual(values=c("#78A678", "#7463AC"), 
                        name="Library use") 
 ```
 
-It looks like more parents are library users than non-users, while fewer non-parents are users than non-users of the library. What is the relationship by sex?
+It looks like there are more parents who are library users than there are parents who are non-users, while fewer non-parents are users than non-users of the library. What is the relationship by sex?
 
 ```{r fig.cap = "Library use by sex."}
-
-ggplot(data = subset(libraries.small, !is.na(libraries.small$parent)), 
-       aes(x = sex, fill = factor(uses.lib))) +
+# library use by sex
+libraries.cleaned %>%
+  drop_na(parent) %>%
+  ggplot(aes(x = sex, fill = factor(uses.lib))) +
   geom_bar(position = "dodge") +
   theme_minimal() +
   labs(x = "Sex", y = "Number of participants") +
-  scale_fill_manual(values=c("dodgerblue1", "#88398a"), 
+  scale_fill_manual(values=c("#78A678", "#7463AC"), 
                        name="Library use") 
 
 ```
@@ -909,38 +837,51 @@ Males are more likely to be non-users of the library than to be users, while fem
 
 ```{r fig.cap = "Library use by sex and parent status."}
 # the relationship between parent status and library use
-ggplot(data = subset(libraries.small, !is.na(libraries.small$parent)), 
-       aes(x = parent, fill = factor(uses.lib))) +
+libraries.cleaned %>%
+  drop_na(parent) %>%
+  ggplot(aes(x = parent, fill = factor(uses.lib))) +
   geom_bar(position = "dodge") +
   theme_minimal() +
   labs(x = "Parent status", y = "Number of participants") +
-  scale_fill_manual(values=c("dodgerblue2", "#88398a"), 
+  scale_fill_manual(values=c("#78A678", "#7463AC"), 
                        name="Library use", labels = c("No", "Yes")) + 
   facet_grid("sex")
 ```
 
-The relationship does seem to change, with males who are parents now slightly more likely to be library users than non-users. Likewise, there is an even bigger gap between library use and non-use among males who are not parents. 
+It does look like there is a difference between males and females who are parents and non-parents. For females, both parents and non-parents are more often library users than they are non-users. For males, non-parents are not library users and parents are fairly equally library users and non-users. This suggests that sex and parental status **interact** to influence library use. That is, the two characteristics work together to influence the outcome.
 
-This possible interaction between sex and parental status can be included in the logistic regression model by adding a term, `+ sex*parent` to the formula. Bobbi explains that, when an interaction is included in a model, it is customary to also include the interacting variables separately. In a model with interaction terms, the non-interaction terms are typically called *main effects*. Leslie adds the interaction term to the model, leaving all of the main effects as they were: 
+This possible interaction between sex and parental status can be included in the logistic regression model by adding a term, `+ sex*parent` to the formula. Kiara explains that, when an interaction is included in a model, it is customary to also include the interacting variables separately. In a model with interaction terms, the terms that are not part of the interaction are typically called *main effects*. Leslie adds the interaction term to the model, leaving all of the main effects as they were. She starts by writing out the model first to make sure she remembers what she is testing.
+
+$$
+\begin{equation}
+p(uses.lib)=\frac{1}{1+e^{-(b_0+b_1\cdot{age}+b_2\cdot{sex}+b_3\cdot{educ}+b_4\cdot{parent}+b_5\cdot{disabled}+b_6\cdot{rurality}+b_7\cdot{sex\cdot{parent}})}} 
+ (\#eq:logistic.int.mod)
+\end{equation}
+$$
+
+Now that she has the model in mind, she uses `glm()` to estimate it:
 
 ```{r}
 # estimate the library use model and print results
 lib.model.int <- glm(formula = uses.lib ~ age + sex + educ + parent + disabled + rurality + sex*parent, 
-                 data = libraries.small,
+                 data = libraries.cleaned,
                  family = binomial("logit"))
-odds.n.ends(lib.model.int)
+odds.n.ends(x = lib.model.int)
 ```
+
+To organize her work, Leslie uses the NHST process.
 
 ### NHST
 
 #### NHST Step 1: Write the null and alternate hypotheses 
 
 HO: A model including age, sex, education, parent status, disability status, rurality, and an interaction between sex and parent status is useful in explaining library use.
+
 HA: A model including age, sex, education, parent status, disability status, rurality, and an interaction between sex and parent status is not useful in explaining library use.
 
 #### NHST Step 2: Compute the test statistic 
 
-The test statistic was computed in the `odds.n.ends` process and is $\chi^2$ = 97.84 with 9 degrees of freedom.
+The test statistic is $\chi^2$ = 97.84 with 9 degrees of freedom.
 
 #### NHST Step 3: Compute the probability for the test statistic (p-value)
 
@@ -952,7 +893,7 @@ The model including age, sex, education, parent status, disability status, rural
 
 ### Compute and interpret odds ratios 
 
-Age, sex, having a four-year degree or more, and parental status were statistically significant predictors of library use. For every one year increase in age, the odds of library use decreased by 1% (OR = .99; 95% CI: .984 - .996). Females have 1.69 times higher odds of library use compared to males (OR = 1.69; 95% CI: 1.11 - 2.57) and those with a four-year degree have 2.03 times higher odds of library use compared to those with less than a high school education (OR = 2.03; 95% CI: 1.40 - 2.96). People who are not parents have 30% lower odds of library use compared to those who are parents (OR = .70; 95% CI: .51 - .97). Disability status and rurality were not significantly associated with library use and those with between high school and a 2-year degree were no more or less likely to use the library than those with less education. There was no significant interaction between sex and parent status on the odds of library use. 
+Age, sex, having a four-year degree or more, and parental status were statistically significant predictors of library use. For every one year increase in age, the odds of library use decreased by 1% (OR = .99; 95% CI: .984 - .996). Females have 1.69 times higher odds of library use compared to males (OR = 1.69; 95% CI: 1.11 - 2.57) and those with a four-year degree have 2.03 times higher odds of library use compared to those with less than a high school education (OR = 2.03; 95% CI: 1.40 - 2.96). People who are not parents have 30% lower odds of library use compared to those who are parents (OR = .70; 95% CI: .51 - .97). Disability status and rurality were not significantly associated with library use and those with between high school and a 2-year degree were no more or less likely to use the library than those with less education. There was no statistically significant interaction between sex and parent status on the odds of library use. 
 
 ### Compute and interpret model fit 
 
@@ -962,86 +903,92 @@ The model correctly predicted 425 of 765 of those who use the library and 506 of
 
 #### Independence of observations 
 
-The data source is the same as above; this assumption is met.
+The data source is the same as for the previous analyses; this assumption is met. 
 
 #### No multicollinearity 
 
 ```{r}
 # compute GVIF 
-vif(lib.model.int)
+car::vif(lib.model.int)
 ```
 
-The sex variable and sex*parent interaction violate the multicollinearity assumption. 
+The $GVIF^{\frac{1}{2*df}}$ > 2 for the sex variable and the sex*parent interaction violate the multicollinearity assumption. This assumption is not met.  
 
 #### Linearity
 
-```{r fig.cap="Checking linearity of the age variable for the extended model of library use."}
+```{r fig.cap="Checking linearity of the age variable for the extended model of library use with interaction."}
 # make a variable of the logit of the outcome
-logitUse.int <- log(lib.model.int$fitted.values/(1-lib.model.int$fitted.values))
+logit.use.int <- log(lib.model.int$fitted.values/(1-lib.model.int$fitted.values))
 
-# make a small data frame with the logit and the predictor
-linearityData.int <- data.frame(logitUse.int, age = lib.model.int$model$age)
+# make a small data frame with the logit variable and the age predictor
+linearity.data.int <- data.frame(logit.use.int, age.int = lib.model.int$model$age)
 
-# create a plot 
-ggplot(linearityData.int, aes(x = age, y = logitUse))+
+# create a plot with linear and actual relationships shown
+linearity.data.int %>%
+  ggplot(aes(x = age.int, y = logit.use.int))+
   geom_point(color = "gray") +
-  geom_smooth(se = FALSE, color = "deeppink") + 
-  geom_smooth(method = lm, se = FALSE, color = "dodgerblue1") + theme_bw() +
-  ylab("Log-odds of library use predicted prob") 
-
-
+  geom_smooth(se = FALSE, aes(color = "Loess curve")) + 
+  geom_smooth(method = lm, se = FALSE, aes(color = "linear model")) + 
+  theme_minimal() +
+  labs(y = "Log-odds of library use predicted probability", x = "age") +
+  scale_color_manual(name="Type of fit line", values=c("dodgerblue2", "deeppink"))
 ```
 
-The linearity concerns from the prior version of the model are gone. There is a small deviation from linearity at the upper end of the age range, but mostly age is no longer a linearity problem.
+The linearity concerns are similar as with the prior version of the model. There is a large deviation from linearity at the younger end of the age range, and some more minor deviations throughout.
 
-Given that the interaction term was not statistically significant and the model violated the multicollinearity assumption (although it now meets the linearity assumption), it may be preferable to report the previous model without the interaction term. However, there is a statistical test that can be used to determine whether a larger model is statistically significantly better than a smaller model. The test is called the Likelihood Ratio (LR) test. 
+Given that the interaction term was not statistically significant and the model violated the multicollinearity and linearity assumptions, it seems preferable to report the previous model without the interaction term as the final model. However, there is a statistical test that can be used to determine whether a larger model is statistically significantly better than a smaller model. The test is called the Likelihood Ratio (LR) test. 
 
-### Unlocking achievement 9: Check your understanding 
+### Unlock achievement 9: Check your understanding 
 
 List and define the three assumptions for a logistic regression model. 
 
-## Achievement 10: Comparing two nested models
+## Achievement 10: Using the likelihood ratio (LR) test to compare two nested logistic regression models
 
-The LR test compares two *nested* models where one model includes a subset of the variables in the other model. So, for example, the simple logistic regression models at the beginning of this chapter could be compared statistically to the larger models. In addition, the larger model without the interaction could be compared to the model with the interaction term. Models where the variables of one are completely different from the variables in the other cannot be compared with this test. 
+Kiara explains that the LR test compares two **nested** models where one model includes a subset of the variables in the other model. So, for example, the simple logistic regression model with age as the only predictor could be compared statistically to any of the larger models because they all have the age variable in them. The small model is nested in each of the larger models. In addition, the larger model without the interaction could be compared to the model with the interaction term. *Models where the variables of one are completely different from the variables in the other cannot be compared with this test.*
 
-The idea behind the LR test is to determine if the additional variables in a model make the model better enough to warrant the  complexity of adding more variables. The lmtest package has the `lrtest()` command, which can be used to compare two nested models. The LR test computes the difference between the log-likelihoods for the two models and multiplies this by two; the result has a chi-squared distribution.
+The idea behind the LR test is to determine if the additional variables in a model make the model *better enough* to warrant the complexity of adding more variables to the model. The <span style="font-family:Lucida Console, monospace;font-weight:bold">lmtest</span> package has the `lrtest()` function, which can be used to compare two nested models. The LR test computes the difference between the log-likelihoods for the two models and multiplies this by two; the result has a $\chi^2$ distribution.
 
 ### Using NHST to organize and conduct an LR test
 
+Leslie goes through the steps of NHST for the LR test with a little help from Nancy on using `lrtest()`.
+
 #### NHST Step 1: Write the null and alternate hypotheses
 
-HO: The model with the interaction term is no different than the model without at explaining library use.
-HA: The interaction term model is better than the other model at explaining library use.
+HO: The larger model with the interaction term is the same at explaining library use compared to the model without the interaction term. 
+
+HA: The interaction term model is better than the smaller model at explaining library use. 
 
 #### NHST Step 2: Compute the test statistic
 
-```{r}
-# open the lmtest package
-library(lmtest)
+Nancy shows Leslie how to use `lrtest()`. The two arguments for the test are the two models to compare. It does not matter which model is listed as the first argument and which is listed second. Nancy adds the small model first and the larger model with the interaction term second: 
 
+```{r}
 # compare simple logistic with age to
 # full library use model 
-lrtest(lib.model, lib.model.int)
-
+lmtest::lrtest(object = lib.model, lib.model.int)
 ```
+
+The output from `lrtest()` shows the test statistic is $\chi^2$ = .77.
 
 #### NHST Step 3: Compute the probability of the test statistic
 
-The probability of the test statistic is included in the output from the `lrtest()` command. The test statistic is $\chi^2$ = .77 with a p-value of .38. 
+Leslie sees that the probability of the test statistic is included in the output from the `lrtest()` command. The test statistic of $\chi^2$ = .77 has a p-value of .38. 
 
 #### NHST Steps 4 & 5: Make a decision and write a conclusion 
 
-The null hypothesis is retained; the model with the interaction term is no different from the model without in explaining library use ($\chi^2$ = .77; p = .38). 
+The null hypothesis is retained; the model with the interaction term is no different in explaining library use from the model without the interaction term ($\chi^2$ = .77; p = .38). 
 
-Given that the larger model is no better, it is typically preferred to use the smaller model to aid in interpretation. The more complex a model becomes, the more difficult it is to interpret the model. Generally speaking (not always), parsimony is preferable.
+When the larger model is not statistically significantly better, it is often preferred to use the smaller model to aid in interpretation. The more complex a model becomes, the more difficult it is to interpret the model. Generally speaking (not always), parsimony is preferable. However, there are exceptions to this when the larger model has variables in it that are important to understanding the outcome. 
 
-### Complete interpretation of final model
+### Complete interpretation of final model 
 
-> A logistic regression model with age, sex, education, parent status, and disability status was statistically significantly better than a baseline model at explaining library use ($\chi^2$(8) = 97.07; p < .001). A likelihood ratio test of this model with a second model that included an interaction between sex and parent status showed that the larger model was not statistically significantly better than the smaller model ($\chi^2$ = .77; p = .38), so the smaller model was retained. The odds of library use are 1.99 times higher for females compared to males (95% CI: 1.61 - 2.45). The odds of library use are 2.02 times higher for those with a four-year degree compared to those with less than a high school education (OR = 2.02; 95% CI: 1.39 - 2.94). The odds of library use are not statistically significantly different for urban residents compared to rural residents (OR = 1.27; 95% CI: .98 - 1.66. The odds of library use are 1% lower for every one year increase in a person's age (OR = .99; 95% CI: .985 - .997) and the odds of library use are 23% lower for people who are not parents than they are for those who are parents (OR = .77; 95% CI: .60 - .99). Assumption checking revealed a possible problem with the linearity of the age predictor, especially at the youngest ages. The other assumptions were met. Diagnostics did not find any problematic outlying or influential values.
+Leslie puts everything together to create a paragraph to report the final logistic regression results:
 
-### Unlocking achievement 10: Check your understanding 
+> A logistic regression model with age, sex, education, parent status, and disability status was statistically significantly better than a baseline model at explaining library use ($\chi^2$(8) = 97.07; p < .001). A likelihood ratio test of this model with a second model that included an interaction between sex and parent status showed that the larger model was not statistically significantly better than the smaller model ($\chi^2$ = .77; p = .38), so the smaller model was retained. The odds of library use are 1.99 times higher for females compared to males (95% CI: 1.61 - 2.45). The odds of library use are 2.02 times higher for those with a four-year degree compared to those with less than a high school education (OR = 2.02; 95% CI: 1.39 - 2.94). The odds of library use are not statistically significantly different for urban residents compared to rural residents (OR = 1.27; 95% CI: .98 - 1.66. The odds of library use are 1% lower for every one year increase in a person's age (OR = .99; 95% CI: .985 - .997) and the odds of library use are 23% lower for people who are not parents than they are for those who are parents (OR = .77; 95% CI: .60 - .99). Assumption checking revealed a possible problem with the linearity of the age predictor, especially at the youngest ages. The other assumptions were met. Diagnostics did not find any problematic outlying or influential values. 
 
-In your own words, write a brief definition of each of the LR test and how it might be used.
+### Unlock achievement 10: Check your understanding 
+
+Use the LR test to compare the model with only age in it and the model with all variables but no interaction term. Interpret the results. 
 
 ## Chapter summary 
 
@@ -1057,15 +1004,19 @@ Prior to conducting a logistic regression analysis, it is useful to examine how 
 
 The statistical form of the binary logistic regression model is: 
 
-\[
+$$
+\begin{equation}
 p(y)=\frac{1}{1+e^{-(b_0 + b_1x_1 + b_2x_2)}} 
-\]
+ (\#eq:logistic)
+\end{equation}
+$$
 
-Where: 
-* y is the binary outcome variable 
-* $x_1$, $x_2$, etc are predictors of the outcome (e.g., age, rurality)  
-* p(y) is the probability of the outcome (e.g., becoming a zombie) 
+Where:
+
+* y is the binary outcome variable (e.g., library use)
+* p(y) is the probability of the outcome (e.g., probability of library use) 
 * $b_0$ is the y-intercept 
+* $x_1$, $x_2$, etc are predictors of the outcome (e.g., age, rurality) 
 * $b_1$, $b_2$, etc are the slopes for $x_1$ $x_2$ 
 
 
@@ -1075,7 +1026,7 @@ The coefficients and coefficient standard errors for predictors are transformed 
 
 #### Achievement 4 recap: Model fit 
 
-The percent of observations that are correctly classified into an outcome category is one measure of model fit that is easy to compute and interpret.
+The percent of observations that are correctly classified into an outcome category is one measure of model fit that is easy to compute and interpret. This measure is called the Count $R^2$. Adjusting the Count $R^2$ to account for the baseline frequencies results in another measure of fit that quantifies how much better the model is at predicting the value of the outcome than the baseline was; this is the Adjusted Count $R^2$.
 
 #### Achievement 5 recap: Adding variables to the model 
 
@@ -1089,7 +1040,7 @@ The interpretation of larger models is the same as for the simple logistic regre
 
 Binary logistic regression has three assumptions: independent observations, linearity, and no multicollinearity. The assumptions can be checked using the same tools used in linear regression.
 
-Outliers and influential values can be identified using standardized residuals, df-betas, Cook's D, and Leverage statistics. The lmtest package has a command that will produce most of these metrics. Large values for two or more of these measures suggest an observation could be an outlier or influential value. 
+Outliers and influential values can be identified using standardized residuals, df-betas, Cook's D, and Leverage statistics. The <span style="font-family:Lucida Console, monospace;font-weight:bold">lmtest</span> package has a command that will produce most of these metrics. Large values for two or more of these measures suggest an observation could be an outlier or influential value. 
 
 #### Achievement 8 recap: Predicting probabilities outside the data set
 
@@ -1109,9 +1060,11 @@ The coder and hacker exercises are an opportunity to apply the skills from this 
 
 Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 multiple choice questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 multiple choice questions correctly on your first try the rest correctly on your first or second try.
 
+Visit edge.sagepub.com/harris1e to complete the multiple choice questions and download the materials for the chapter exercises.
+
 Q1: Which of the follow is not an assumption for binary logistic regression? 
 
-a. Normally distributed variables* 
+a. Normally distributed variables 
 b. No multicollinearity 
 c. Linearity 
 d. Independence of observations
@@ -1120,7 +1073,7 @@ Q2: A significant odds ratio of 2.5 for BMI as a a continuous predictor of heart
 
 a. Those with BMI have 2.5 times higher odds of heart disease compared to those without BMI. 
 b. Those with heart disease have 2.5 times higher odds of having BMI compared to those without heart disease.
-c. The odds of heart disease are 2.5 times higher for every one point increase in BMI.*
+c. The odds of heart disease are 2.5 times higher for every one point increase in BMI.
 d. There are 2.5 times as many with heart disease as without among those with BMI.
 
 Q3: A confidence interval indicates a significant odds ratio when... 
@@ -1135,11 +1088,11 @@ Q4: For a categorical predictor in a logistic regression model, what is the comp
 a. null group 
 b. independent group 
 c. standard group
-d. reference group*
+d. reference group
 
 Q5: Computing the percent correctly predicted by the model is one way to determine... 
 
-a. model fit* 
+a. model fit 
 b. model significance 
 c. predictor significance 
 d. if assumptions are met
@@ -1148,15 +1101,15 @@ d. if assumptions are met
 
 Depending on your score in the knowledge check, choose either the coder or hacker edition of the chapter exercises. Use the data from this chapter and the appropriate tests to examine additional predictors of library use.
 
-1) Import the library data from this chapter
-2) Create a small library data frame including variables for age, sex, parental status, education, and registered to vote (reg).
-3) Clean the variables in the small data frame. Use the strategies shown in this chapter for age, sex, parental status, and education. Write new code to clean the reg variable. The reg variable has the following options; recode 8 and 9 to be NA and make sure the other three categories have logical names:
+1) Import the library data that has not been cleaned from this chapter 
+2) Create a small library data frame including variables for age, sex, parental status, education, and registered to vote (reg). 
+3) Follow the strategies in Box \@ref(ch10kiara) to clean the variables in the small data frame. Write new code to clean the reg variable. The reg variable has the following options; recode 8 and 9 to be NA and make sure the other three categories have logical names:
     + 1 - You are absolutely certain that you are registered to vote at your current address;
     + 2 - You are probably registered, but there is a chance your registration has lapsed; 
     + 3 - You are not registered to vote at your current address 
     + 8 - Don't know 
     + 9 - Refused 
-4) (**A1**) Use the tableone package to create a table showing the bivariate relationships between library use and all of the variables *except voting* in the new data frame. 
+4) (**A1**) Use `CreateTableOne()` to create a table showing the bivariate relationships between library use and all of the variables in the data frame. 
 5) (**A2**) Write out the statistical form of the model explaining library use by age, sex, parental status, and education.
 6) Use `glm()` to run the model corresponding to the formula you wrote out and `odds.n.ends()` to get model significance, model fit, and odds ratios with confidence intervals. 
 7) (**A4**) Discuss model significance and model fit.
@@ -1169,17 +1122,21 @@ Depending on your score in the knowledge check, choose either the coder or hacke
 
 Complete #1 - 2 from the coder edition and subset the data so that the observations are removed when age is under 18 years old. Complete #3 - 9 using ALL variables to explain library use, including voting. After estimating and interpreting the model, add an interaction between sex and voting to your preferred model. Compare the preferred model with and without the new interaction term using the likelihood ratio test. Based on the results of the LR test, choose a final model. 
 
-### BOX(ES)
+#### Instructor note
 
-#### [BOX] Chelsea's clever code: Forest plots for odds ratios and confidence intervals
+Solutions to exercises can be found on the book website, along with *Ideas for Gamification* for those who want to *take it further*.
 
-<img align = "left" src = "avatars/chelsea.gif" style="PADDING-RIGHT: 10px"> 
+### BOXES
 
-Visualizing odds ratios is a great way to show the relationships between the predictors and the outcome. Using the odds ratio table from the `odds.n.ends()` output, Chelsea shows Leslie how this might work:
+#### Nancy's fancy code: Forest plots for odds ratios and confidence intervals {#ch10nancy}
+
+<img align = "left" src = "graphics/nancy.gif" style="PADDING-RIGHT: 10px"> 
+
+Visualizing odds ratios is a great way to show the relationships between the predictors and the outcome. Using the odds ratio table from the `odds.n.ends()` output, Nancy shows Leslie how this might work:
 
 ```{r fig.cap = "Association between demographic characteristics and library use."}
 # get odds ratio table from lib.model
-odds.lib.mod <- data.frame(odds.n.ends(lib.model)[4])
+odds.lib.mod <- data.frame(odds.n.ends(x = lib.model)[4])
 
 # make row names a variable
 odds.lib.mod$var <- row.names(odds.lib.mod)
@@ -1188,36 +1145,39 @@ odds.lib.mod$var <- row.names(odds.lib.mod)
 names(odds.lib.mod) <- c("OR", "lower", "upper", "variable")
 
 # forest plot of odds ratios from lib.model
-ggplot(data = odds.lib.mod, aes(x = variable, y = OR, ymin = lower, ymax = upper)) +
+odds.lib.mod %>%
+  ggplot(aes(x = variable, y = OR, ymin = lower, ymax = upper)) +
         geom_pointrange(color = "dodgerblue1") + 
         geom_hline(yintercept = 1, lty = 2, color = "deeppink", size = 1) +  
         coord_flip() +  
         xlab("Variable from library use model") + ylab("Odds ratio (95% CI)") +
         theme_minimal()
-
-
 ```
 
 The vertical line at 1 makes it very clear which of the odds ratios have confidence intervals that cross over one and which do not. Odds ratios with confidence intervals that fall completely on the right side of the dotted line show statistically significant increased odds of the outcome for the group shown compared to the reference group. Odds ratios with confidence intervals on the left side of the dotted line show decreased odds of the outcome compared to the reference group. 
 
-Leslie thinks this is a great way to show significant increases and decreases in odds, but is a little concerned about the odds ratios below 1 since the range is limited compared to odds ratios above 1. That is, the confidence interval is bounded so that it has to be between zero and 1, while odds ratios above 1 can be between 1 and $\infty$. So, odds ratios and confidence intervals for decreased odds are going to seem more narrow, even if the decrease is relatively large. Chelsea explains that they can transform the axis so that the odds ratios and confidence intervals below 1 are on a scale where the relative increase or decrease in odds is represented more consistently.
+Leslie thinks this is a great way to show significant increases and decreases in odds, but is a little concerned about the odds ratios below 1 since the range is limited compared to odds ratios above 1. That is, the confidence interval is bounded so that it has to be between zero and 1, while odds ratios above 1 can be between 1 and $\infty$. So, odds ratios and confidence intervals for decreased odds are going to seem more narrow, even if the decrease is relatively large. Nancy explains that they can transform the axis so that the odds ratios and confidence intervals below 1 are on a scale where the relative increase or decrease in odds is represented more consistently.
 
-Leslie asks Chelsea if they can clean up the names of the variables shown on the y-axis while they are working on the graph formatting. Chelsea says this can be done in two ways. The first way is to recode the variable in the data frame and either overwrite the existing values or make a new variable with the recoded values. The second way is to recode directly in the graph, which would not change anything in the data frame. Leslie decides to change the data frame by adding a new variable called **clean.varnames** with updated values. 
+Leslie asks Nancy if they can clean up the names of the variables shown on the y-axis while they are working on the graph formatting. Nancy says this can be done in two ways. The first way is to recode the variable in the data frame and either overwrite the existing values or make a new variable with the recoded values. The second way is to recode directly in the graph, which would not change anything in the data frame. Leslie decides to change the data frame by adding a new variable called **clean.varnames** with updated values. 
 
 ```{r fig.cap = "Association between demographic characteristics and library use."}
 # clean variable names for graph 
-odds.lib.mod$clean.varnames <- recode(odds.lib.mod$variable, "'sexfemale' = 'Female';
-                                      'ruralityurban' = 'Urban residence';
-                                      'ruralitysuburban' = 'Suburban residence'; 
-                                      'parentnot parent' = 'Not parent';
-                                      'educHS to 2-year degree' = 'HS to 2-year degree'; 
-                                      'educFour-year degree or more' = 'Four-year degree or more'; 
-                                      'disabledno' = 'Not disabled';
-                                      'age' = 'Age'")
+odds.lib.mod.cleaned <- odds.lib.mod %>%
+  mutate(variable = recode(variable, 
+                           "sexmale" = "Male",
+                           "ruralityurban" = "Urban residence",
+                           "ruralitysuburban" = "Suburban residence",
+                           "parentparent" = "Parent",
+                           "educHS to 2-year degree" = "HS to 2-year degree",
+                           "educFour-year degree or more" = "Four-year degree or more",
+                           "disabledyes" = "Disabled",
+                           "age" = "Age",
+                           "(Intercept)" = "Intercept"))
 
 # modify graph to include clean variable names
 # change scale of y-axis (flipped) to log scale for visualization
-ggplot(data = odds.lib.mod, aes(x = clean.varnames, y = OR, ymin = lower, ymax = upper)) +
+odds.lib.mod.cleaned %>%
+  ggplot(aes(x = variable, y = OR, ymin = lower, ymax = upper)) +
   geom_pointrange(color = "dodgerblue1") +
   geom_hline(yintercept = 1, lty = 2, color = "deeppink", size = 1) + 
   scale_y_log10(breaks = c(0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10), minor_breaks = NULL)+
@@ -1227,15 +1187,12 @@ ggplot(data = odds.lib.mod, aes(x = clean.varnames, y = OR, ymin = lower, ymax =
   theme_minimal() 
 ```
 
-Leslie prefers this version with the clean variable names and the log scale for the y-axis, which seems to show the decreased odds on a much more even scale with the increased odds. She wonders if there is a way to order the variables by the value of the odds ratio to see if that would make it faster to determine the strongest predictors both above and below 1. Chelsea reminds Leslie that she can order by the odds ratio using the `reorder()` option within the `ggplot()` command. Leslie also thinks including the intercept is not necessary. She tries deleting the intercept and reordering the variables by the value of the odds ratio:
+Leslie prefers this version with the clean variable names and the log scale for the y-axis, which seems to show the decreased odds on a much more even scale with the increased odds. She wonders if there is a way to order the variables by the value of the odds ratio to see if that would make it faster to determine the strongest predictors both above and below 1. Nancy reminds Leslie that she can order by the odds ratio using the `reorder()` option within the `ggplot()` command. Leslie also thinks including the intercept is not necessary. She tries deleting the intercept and reordering the variables by the value of the odds ratio:
 
 ```{r fig.cap = "Association between demographic characteristics and library use."}
 # reorder the variable names by odds ratio size
-ggplot(data = subset(odds.lib.mod, clean.varnames != "(Intercept)"), 
-       aes(x = reorder(clean.varnames, OR), 
-                                y = OR, 
-                                ymin = lower, 
-                                ymax = upper)) +
+odds.lib.mod.cleaned %>%
+  ggplot(aes(x = reorder(variable, OR), y = OR, ymin = lower, ymax = upper)) +
   geom_pointrange(color = "dodgerblue1") +
   geom_hline(yintercept = 1, lty = 2, color = "deeppink", size = 1) + 
   scale_y_log10(breaks = c(0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10), minor_breaks = NULL)+
@@ -1243,12 +1200,287 @@ ggplot(data = subset(odds.lib.mod, clean.varnames != "(Intercept)"),
   xlab("Variable from library use model") + 
   ylab("Odds ratio (95% CI)") +
   theme_minimal() 
+
 ```
 
-That looks great! It is now clear that a high level of education and being female are associated with the largest increases in the odds of library use compared to their reference groups. Not being a parent is associated with the biggest decrease in odds of library use compared to its reference group. Leslie is happy with this version of the graph.
+That looks great! It is now clear that a high level of education is associated with the largest increases in the odds of library use compared to its reference group and being male is associated with the biggest decrease in odds of library use compared to being female. Leslie is happy with this version of the graph.
+
+#### Kiara's reproducibility resource: Cleaning the library data {#ch10kiara}
+
+<img align = "left" src = "graphics/kiara.gif" style="PADDING-RIGHT: 10px"> 
+
+Kiara has Leslie bring in the data and get out the codebook so they can work on recoding it for analyses.
+
+```{r ach911}
+# bring in the data
+libraries <- read.csv("data/pew_libraries_2016_ch10.csv")
+```
+
+The data set is quite enormous with `r length(libraries)` observations and `r ncol(libraries)` variables. Kiara, Nancy, and Leslie then take a look at the codebook for the data source. They find several of the variables associated in the past with library use. In addition, Nancy is interested in whether being a parent is associated with using the library. They decide to start with the following potential predictors:
+
+* age: age in years  
+* sex: biological sex 
+* par: is the participant a parent 
+* disa: lives with a disability
+* inc: income of the participant household 
+* race3m1, race3m2, race3m3: race of participant 
+* educ2: education level of participant 
+* live1: rurality of participant
+* hh1: how many people live in the household
+* hisp: Hispanic ethnicity
 
 
+Leslie examines the codebook and comes up with a management plan for the data so that missing values are properly coded and categories are labelled for easier interpretation. She also thinks a subset would work well so that the data source is not so overwhelming. She starts by limiting the data set to the 12 variables they decided on:
 
-> Gamification ideas for Chapter 9: Performance on student work in the achievements unlocked, are you a coder or hacker, and chapter exercises in this chapter could be included as part of earning a categorical data analysis badge. Combine scores from this chapter and chapters 5 and 10. Set thresholds for earning a bronze, silver, or gold badge. Integrate badge earnings into Blackboard or other platforms students use to share their portfolios and achievements with prospective employers or degree programs. 
+```{r}
+# open the tidyverse
+library(package = tidyverse)
 
+# subset library data set to variables of interest
+libraries.cleaned <- libraries %>%
+  select(libusea, age, sex, par, disa, inc, race3m1, race3m2, race3m3, educ2, live1, hh1, hisp)
+
+# check the new data frame 
+summary(object = libraries.cleaned)
+
+```
+
+Now that the data frame is a more manageable size, Leslie starts the process of recoding to make sure the missing values are treated logically, the variables are a reasonable data type, and labels are added to the categories for any categorical variables. She starts by looking in the codebook and finding the age variable. Age was measured in years, with the following limitations: 
+
+* 97	97 or older 
+* 98	Don't know 
+* 99	Refused 
+
+```{r ach912}
+# subset library data set eight variables of interest
+libraries.cleaned <- libraries %>%
+  select(libusea, age, sex, par, disa, inc, race3m1, race3m2, race3m3, educ2, live1, hh1, hisp) %>%
+  mutate(age = na_if(age, 98))%>%
+  mutate(age = na_if(age, 99))
+
+# check the recoding 
+summary(object = libraries.cleaned$age)
+```
+
+Next Leslie looks at the sex variable, which was recorded with 1 representing male and 2 representing female. The parent variable, par, was coded with 1 representing parent and 2 representing non-parent. The disa variable was recorded with 1 representing disability and 2 representing no disability. Leslie adds labels and checks her work for these three variables:
+
+```{r ach913a}
+# subset library data set eight variables of interest
+libraries.cleaned <- libraries %>%
+  select(libusea, age, sex, par, disa, inc, race3m1, race3m2, race3m3, educ2, live1, hh1, hisp) %>%
+  mutate(age = na_if(age, 98)) %>%
+  mutate(age = na_if(age, 99)) %>%
+  mutate(sex, sex = recode_factor(.x = sex, `1` = "male", `2` = "female")) %>%
+  mutate(parent = recode_factor(.x = par, `1` = "parent", `2` = "not parent")) %>%
+  mutate(disabled = recode_factor(.x = disa, `1` = "yes", `2` = "no"))
+
+# check the recoding 
+summary(object = libraries.cleaned)
+```
+
+use variable, _libusea_. The codebook shows that the variable consists of responses to the question, "Have you personally ever visited a public library or used a public library bookmobile in person" with the following response options:
+
+* Yes, have done this in the past 12 months (libusea = 1)
+* Yes, but not in the past 12 months (libusea = 2)
+* No, have never done this (libusea = 3)
+
+Binary logistic regression is used in the situation where the outcome variable has two categories. Leslie decides to recode the libusea variable so that it has two categories, 1 for library use in the last 12 months and 0 for the other two groups. 
+
+```{r ach913}
+# subset library data set eight variables of interest
+libraries.cleaned <- libraries %>%
+  select(libusea, age, sex, par, disa, inc, race3m1, race3m2, race3m3, educ2, live1, hh1, hisp) %>%
+  mutate(age = na_if(age, 98)) %>%
+  mutate(age = na_if(age, 99)) %>%
+  mutate(sex, sex = recode_factor(.x = sex, `1` = "male", `2` = "female")) %>%
+  mutate(parent = recode_factor(.x = par, `1` = "parent", `2` = "not parent")) %>%
+  mutate(disabled = recode_factor(.x = disa, `1` = "yes", `2` = "no")) %>%
+  mutate(uses.lib = recode_factor(.x = libusea, `1` = "yes", `2` = "no", `3` = "no"))
+
+# check the recoding 
+summary(object = libraries.cleaned$uses.lib)
+```
+
+The income variable is tricky to recode, with income categories in Figure \@ref(fig:income.code).
+
+```{r income.code, echo = FALSE, fig.cap="Screenshot of income variable in codebook."}
+knitr::include_graphics("graphics/chap10-income-codebook.JPG")
+```
+
+Socioeconomic status varies widely by the number of people living in a household, household income, and the geographic location of the household. Leslie decides to use the United States Census Bureau 2017 poverty thresholds and the income (inc) and people living in household (HH1) variables to create a variable indicating socioeconomic status. Leslie codes people at or below the poverty threshold for the number of people living in the household as **low** income. Consistent with the Census Bureau, Leslie also codes households above poverty and below 150 thousand to be medium income, and households at or above 150 thousand in income to be high income. To be consistent with the categories available for income, Leslie rounded the threshold categories to the nearest 10 thousand dollars.
+
+```{r}
+# subset library data set eight variables of interest
+libraries.cleaned <- libraries %>%
+  select(libusea, age, sex, par, disa, inc, race3m1, race3m2, race3m3, educ2, live1, hh1, hisp) %>%
+  mutate(age = na_if(age, 98)) %>%
+  mutate(age = na_if(age, 99)) %>%
+  mutate(sex, sex = recode_factor(.x = sex, `1` = "male", `2` = "female")) %>%
+  mutate(parent = recode_factor(.x = par, `1` = "parent", `2` = "not parent")) %>%
+  mutate(disabled = recode_factor(.x = disa, `1` = "yes", `2` = "no")) %>%
+  mutate(uses.lib = recode_factor(.x = libusea, `1` = "yes", `2` = "no", `3` = "no")) %>%
+  mutate(ses = factor(if_else(hh1 == 1 & inc == 1 |
+                           hh1 == 2 & inc <= 2 |
+                           hh1 == 3 & inc <= 2 | 
+                             hh1 == 4 & inc <= 3 | 
+                             hh1 == 5 & inc <= 3 | 
+                             hh1 == 6 & inc <= 4 | 
+                             hh1 == 7 & inc <= 4 | 
+                             hh1 == 8 & inc <= 5 , "low", 
+                           if_else(inc == 9, "high", "medium"))))
+
+# check recoding for SES
+summary(object = libraries.cleaned$ses)
+
+```
+
+The race and ethnicity questions allow multiple answers, so cleaning the race variables will be complicated. First, the **hisp** variable is coded as:
+
+* 1 = Hispanic, Latino, or Spanish origin 
+* 2 = Not Hispanic, Latino, or Spanish origin
+
+The three race variables (race3m1, race3m2, and race3m3) allow the participants to choose as many as possible from the following: 
+
+* 1 =	White (e.g., Caucasian, European, Irish, Italian, Arab, Middle Eastern)
+* 2	=	Black or African-American (e.g., Negro, Kenyan, Nigerian, Haitian)
+* 3	=	Asian or Asian-American (e.g., Asian Indian, Chinese, Filipino, Vietnamese or other Asian origin groups)
+* 4	=	Some other race (SPECIFY) [IF NEEDED: What race or races is that?]
+* 5	= Native American/American Indian/Alaska Native
+* 6	= Pacific Islander/Native Hawaiian
+* 7	= Hispanic/Latino (e.g., Mexican, Puerto Rican, Cuban)
+* 8	= Don't know
+* 9	= Refused (e.g., non-race answers like American, Human, purple)
+
+Leslie decides to recode into four groups: 
+
+* Hispanic 
+* Non-Hispanic Black 
+* Non-Hispanic White 
+* Non-Hispanic Other or Mixed
+
+```{r}
+# subset library data set eight variables of interest
+libraries.cleaned <- libraries %>%
+  select(libusea, age, sex, par, disa, inc, race3m1, race3m2, race3m3, educ2, live1, hh1, hisp) %>%
+  mutate(age = na_if(age, 98)) %>%
+  mutate(age = na_if(age, 99)) %>%
+  mutate(sex, sex = recode_factor(.x = sex, `1` = "male", `2` = "female")) %>%
+  mutate(parent = recode_factor(.x = par, `1` = "parent", `2` = "not parent")) %>%
+  mutate(disabled = recode_factor(.x = disa, `1` = "yes", `2` = "no")) %>%
+  mutate(uses.lib = recode_factor(.x = libusea, `1` = "yes", `2` = "no", `3` = "no")) %>%
+  mutate(ses = factor(if_else(hh1 == 1 & inc == 1 |
+                           hh1 == 2 & inc <= 2 |
+                           hh1 == 3 & inc <= 2 | 
+                             hh1 == 4 & inc <= 3 | 
+                             hh1 == 5 & inc <= 3 | 
+                             hh1 == 6 & inc <= 4 | 
+                             hh1 == 7 & inc <= 4 | 
+                             hh1 == 8 & inc <= 5 , "low", 
+                           if_else(inc == 9, "high", "medium")))) %>%
+  mutate(raceth = factor(if_else(hisp == 2 & 
+                              race3m1 == 2 &
+                              is.na(race3m2),  
+                            "Non-Hispanic Black", 
+                            if_else(hisp == 2 &
+                                      race3m1 == 1 &
+                                      is.na(race3m2),
+                                    "Non-Hispanic White",
+                                    if_else(hisp == 1 | 
+                                              race3m1 == 7 |
+                                              race3m2 == 7 |
+                                              race3m3 == 7, 
+                                    "Hispanic", "Non-Hisp Other or Mixed")))))
+
+# check recoding for raceth
+summary(object = libraries.cleaned$raceth)
+
+```
+
+Given that there are just seven people in the Non-Hispanic Other or Mixed category, Kiara suggests they recode this category to be missing. Having few people in a category can make estimates from a regression model unstable since they are based on information from such a very small group. 
+
+```{r}
+# recode other and mixed to NA
+# subset library data set eight variables of interest
+libraries.cleaned <- libraries %>%
+  select(libusea, age, sex, par, disa, inc, race3m1, race3m2, race3m3, educ2, live1, hh1, hisp) %>%
+  mutate(age = na_if(age, 98)) %>%
+  mutate(age = na_if(age, 99)) %>%
+  mutate(sex, sex = recode_factor(.x = sex, `1` = "male", `2` = "female")) %>%
+  mutate(parent = recode_factor(.x = par, `1` = "parent", `2` = "not parent")) %>%
+  mutate(disabled = recode_factor(.x = disa, `1` = "yes", `2` = "no")) %>%
+  mutate(uses.lib = recode_factor(.x = libusea, `1` = "yes", `2` = "no", `3` = "no")) %>%
+  mutate(ses = factor(if_else(hh1 == 1 & inc == 1 |
+                           hh1 == 2 & inc <= 2 |
+                           hh1 == 3 & inc <= 2 | 
+                             hh1 == 4 & inc <= 3 | 
+                             hh1 == 5 & inc <= 3 | 
+                             hh1 == 6 & inc <= 4 | 
+                             hh1 == 7 & inc <= 4 | 
+                             hh1 == 8 & inc <= 5 , "low", 
+                           if_else(inc == 9, "high", "medium")))) %>%
+  mutate(raceth = factor(if_else(hisp == 2 & 
+                              race3m1 == 2 &
+                              is.na(race3m2),  
+                            "Non-Hispanic Black", 
+                            if_else(hisp == 2 &
+                                      race3m1 == 1 &
+                                      is.na(race3m2),
+                                    "Non-Hispanic White",
+                                    if_else(hisp == 1 | 
+                                              race3m1 == 7 |
+                                              race3m2 == 7 |
+                                              race3m3 == 7, 
+                                    "Hispanic", NA_character_)))))
+
+# check recoding for raceth
+summary(object = libraries.cleaned$raceth)
+```
+
+Holy cow! This is a lot of recoding. Leslie is about ready to be done with R for the day. Kiara cheers her on, there are only two variables left to recode, the education variable and the urban and rural residence variable. Leslie looks in the codebook and finishes up the recoding and cleaning. The education variable has 8 categories ranging from Less than high school through a post graduate or professional degree. Leslie decides to create 3 categories: less than high-school, high school through two-year degree, four year degree or more. She goes with the urban, suburban, and rural categories for the live1 recoding. Finally, Leslie decides to clean up the final data set so that it just has the variables she needs. She does this by using `select()`.  
+
+```{r}
+# complete cleaning
+libraries.cleaned <- libraries %>%
+  select(libusea, age, sex, par, disa, inc, race3m1, race3m2, race3m3, educ2, live1, hh1, hisp) %>%
+  mutate(age = na_if(age, 98)) %>%
+  mutate(age = na_if(age, 99)) %>%
+  mutate(sex, sex = recode_factor(.x = sex, `1` = "male", `2` = "female")) %>%
+  mutate(parent = recode_factor(.x = par, `1` = "parent", `2` = "not parent")) %>%
+  mutate(disabled = recode_factor(.x = disa, `1` = "yes", `2` = "no")) %>%
+  mutate(uses.lib = recode_factor(.x = libusea, `1` = "yes", `2` = "no", `3` = "no")) %>%
+  mutate(ses = factor(if_else(hh1 == 1 & inc == 1 |
+                                hh1 == 2 & inc <= 2 |
+                                hh1 == 3 & inc <= 2 |
+                                hh1 == 4 & inc <= 3 |
+                                hh1 == 5 & inc <= 3 |
+                                hh1 == 6 & inc <= 4 |
+                                hh1 == 7 & inc <= 4 |
+                                hh1 == 8 & inc <= 5 , "low",
+                              if_else(inc == 9, "high", "medium")))) %>%
+  mutate(raceth = factor(if_else(hisp == 2 & 
+                                   race3m1 == 2 &
+                                   is.na(race3m2),
+                                 "Non-Hispanic Black",
+                                 if_else(hisp == 2 &
+                                           race3m1 == 1 &
+                                           is.na(race3m2),
+                                         "Non-Hispanic White",
+                                         if_else(hisp == 1 |
+                                                   race3m1 == 7 |
+                                                   race3m2 == 7 |
+                                                   race3m3 == 7,
+                                                 "Hispanic", NA_character_))))) %>%
+  mutate(educ = factor(if_else(libraries$educ2 < 3, "< HS",
+                               if_else(libraries$educ2 < 6,
+                                       "HS to 2-year degree",
+                                       "Four-year degree or more")))) %>%
+  mutate(rurality = factor(if_else(libraries$live1 == 1, "urban",
+                                   if_else(libraries$live1 == 2, "suburban",
+                                           if_else(libraries$live1 < 8,
+                                                   "rural", NA_character_))))) %>%
+  select(- c(libusea, par, disa, inc, race3m1, race3m2, race3m3, educ2, live1, hh1, hisp))
+
+# check recoding for raceth
+summary(object = libraries.cleaned)
+```
 

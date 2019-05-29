@@ -1229,8 +1229,7 @@ Bobbi shows Leslie the `vif()` command to check VIF values for the model above:
 
 ```{r}
 # VIF for model with poverty 
-library(car)
-vif(pregByPovExemptCo)
+car::vif(pregByPovExemptCo)
 ```
 
 The VIF values are quite small, especially given that the lower limit of the VIF is one. There is no problem with multicollinearity with this model. The model meets the assumption of no perfect multicollinearity. Bobbi explains to Leslie that the rest of the assumption checking and diagnostics are conducted and interpreted in the same way as they were for the simple linear regression model. 
@@ -1684,6 +1683,6 @@ This is some very advanced data management, so Leslie feels a little lost, but i
 <img align = "center" src = "graphics/data_no_comic.JPG">
 
 
-> Gamification ideas for Chapter 8: Performance on student work in the achieving things, are you a coder or hacker, and chapter exercises in this chapter could be included as part of earning a continuous data analysis badge. Combine scores from this chapter and chapters 6, 7, 10, and 11. Set thresholds for earning a bronze, silver, or gold badge. Integrate badge earnings into Blackboard or other platforms students use to share their portfolios and achievements with prospective employers or degree programs. Conduct an R graphing challenge where students have to answer a research question in a short presentation without talking and using only graphs. Award points for clear and appropriate graphs, good storytelling, use of multiple graph types, use of unusual graph types (e.g., maps), and graph formatting skills.
+
 
 

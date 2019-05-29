@@ -437,7 +437,7 @@ Which of the following is true about the observed and expected values for voting
 * There are more people than expected who want to make it easy to vote and are Black Non-Hispanic 
 * There are more people than expected who want people to prove they want to vote and are Black Non-Hispanic
 
-## Achievement 3: Calculating the chi-squared statistic for the test of independence by hand and with R 
+## Achievement 3: Calculating the chi-squared statistic for the test of independence by hand and with R {#chisqtest}
 
 ### Summing the differences between observed and expected values
 

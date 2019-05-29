@@ -212,7 +212,7 @@ While the numbers look ok, Nancy suggests that this table is poorly formatted an
 * Clear column and row labels
     + row/column sample size if different from overall
     
-### Data management 
+### Data management {#datamgmt}
     
 In order to format this table so it is clear, Nancy advises that Leslie use some of the tools from Chapter 1 and some new tools. The first thing to do might be to add **labels** to the transgender variable so that it is clear which categories the frequencies represent. Leslie reminds herself that **labels** are the words that describe each category of a categorical or factor type variable. Before she can add labels, Leslie needs to know what type of variable the transgender variable is. Leslie starts by examining the data type of the variable with the `class()` command: 
 
@@ -351,7 +351,7 @@ Nancy asks Leslie if she knows what the different types of parentheses stand for
 
 While dividing variables that are continuous or **numeric** data type into groups can be useful in some cases, Nancy suggests that there are descriptive statistics to examine numeric variables directly. Leslie knows all about these statistics, which include measures of the **central tendency** and **spread** of the values for a **numeric** variable.
 
-### Defining and calculating central tendency
+### Defining and calculating central tendency {#centtend}
 
 Leslie remembers from her statistics courses that central tendency is a measure of the center, or typical value, of a variable and that there are three measures of central tendency: mean, median, and mode. 
 
@@ -555,7 +555,7 @@ The mean is 51,200, the median and mode are both 41,000. So the mean, median, an
 
 The mode is sometimes used is to identify the most common (or typical) category of a **factor** variable. For example, she says, in the tables above, the mode of the transgender variable is *Not transgender* with over 150 thousand observations in that category. 
 
-### Messy data and computing measures of central tendency 
+### Messy data and computing measures of central tendency {#messy}
 
 Using these commands with variables from a data frame is similar. Nancy wants to show Leslie how to create a histogram and compute the mean, median, and mode for the PHYSHLTH variable from the BRFSS data set. PHYSHLTH is the number of physically unhealthy days a survey participant has had in the last 30 days. Looking at page 11 of the BRFSS codebook it appears that the values of 77 and 99 should be coded as missing before examining the variable. It also looks like 88 should be coded as zero. Leslie copies and pastes her data management code from much earlier in the day. Nancy is eager to keep coding and slides the laptop over to type in the new code for changing 77 and 99 to NA. She also recodes PHYSHLTH to be 0, which is a little complicated:
 
