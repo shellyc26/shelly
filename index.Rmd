@@ -108,7 +108,7 @@ gss.2016$agecat <- as.factor(gss.2016$agecat)
 
 #SHELLY'S ALTERNATIVE (see email comment about logic)
 
-gss.Test = gss.2016 %>%
+gss.Test <- gss.2016 %>%
   mutate(agecat = case_when(
     age < 30 ~ "18-29",
     age >= 30 & age < 60 ~ "30-59",
