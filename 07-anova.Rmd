@@ -1,0 +1,1661 @@
+# The R team attempts ANOVA and its alternatives
+
+## Achievements to unlock 
+
+The t-test and its alternatives worked great for comparing two groups, but what happens when there are three or more groups to compare? In this Chapter the R team will discuss analysis of variance (ANOVA), which is the statistical method used for comparing means across three or more groups. Like the t-test, ANOVA has underlying assumptions to be met and there are alternative methods to use when the assumptions are not met. Similar to $\chi^2$, ANOVA is an omnibus test, which means a significant result indicates there is a difference between the means, but is not useful in determining which means are different from each other. Instead of using standardized residuals, ANOVA uses planned contrasts and post-hoc tests to determine which means are statistically significantly different from one another. Instead of Cramer's $V$ or odds ratios for $\chi^2$ and Cohen's $d$ for t-tests, the $\eta^2$ and $\omega^2$ are often reported as the effect size for ANOVA. Nancy and Kiara made a list of tasks for Leslie: 
+
+* Achievement 1: Using graphics and descriptive statistics to make a prediction
+* Achievement 2: Understanding and conducting one-way Analysis of Variance (ANOVA) 
+* Achievement 3: Choosing and using post-hoc tests and contrasts 
+* Achievement 4: Computing and interpreting effect sizes for ANOVA 
+* Achievement 5: Testing ANOVA assumptions
+* Achievement 6: Choosing and using alternative tests when ANOVA assumptions are not met
+* Achievement 7: Understanding and conducting two-way ANOVA
+
+Follow Nancy, Kiara, and Leslie through the examples and exercises to test some relationships.
+
+## The tech use problem
+
+On her way to meet Nancy and Leslie, Kiara's cell phone battery is getting low. She turns off the phone and puts it in her backpack until she can get somewhere to charge it. While she continues her walk to campus, she notices that almost every person she walks past is using their cell phone. She starts thinking about her cell phone use and all the ways she is looking at screens and using technology throughout the day. Certainly it seems very different than her life just 10 years earlier when she rarely used a cell phone. She thinks about the time she spends with her friends and how they all seem to be using phones or have phones nearby during gatherings. Her colleagues at work spend most of their time in front of computer screens in addition to having cell phones on. She remembers talking to her friend Paaige, who is studying communication, about how phones and other new communication technologies are changing the way humans interact with each other and with the world.
+
+When she gets to her meeting with Nancy and Leslie she asks them how much of their time awake each day they think they spend looking at a screen or using technology. Both of them say A LOT, maybe close to 60 or 70 percent. Nancy mentions that one of her favorite forms of exercise is walking to play Pokemon GO and Kiara describes listening to podcasts whenever she has a spare moment and playing app games like Tetris and Candy Crush when in line at the grocery store or elsewhere. Leslie remembers being on vacation and the sheer panic and disconnectedness that she felt when she thought she had lost her cell phone only to find it 10 minutes later under the seat of the rideshare she was in (that she had requested *using her phone*). This story reminds Nancy of being on vacation with her friend Kristen, who dropped her phone while riding bikes and the two of them spent a panicked half-hour retracing every step only to be extremely relieved to find that it had been turned in at a restaurant by some good human being.
+
+After this discussion they start to look up technology use and how it may be influencing the culture and the health and mental health of people. Leslie starts reading about how text messaging has become common and tolerated in social situations while at the same time viewed as an interruption that can signal a lack of care by the texter for others who are present [@cahir2015people]. Kiara finds some research linking cell phone use to college students having lower satisfaction with life [@lepp2014relationship], lower test scores and grade point averages [@lepp2015relationship; @bjornsen2015relations], and more sedentary behavior [@barkley2016mobile]. A couple of studies found that cell phone use was associated with stress, sleep disorders, and depression symptoms among recent college graduates [@thomee2011mobile; @rosen2016sleeping]. 
+
+Nancy starts looking for some publicly available data on technology use and finds a technology use variable in the General Social Survey (GSS). She downloads a GSS data set with 2018 data that includes demographics and a variable measuring the percent of time the survey participant estimates using technology each day. Kiara goes ahead and loads and summarizes the data. Because the data are saved in an R data file with the file extension .rda, loading the data only requires the `load()` command.  To follow along, download the **pew_apr_19-23_2017_weekly_ch5.csv** data set from edge.sagepub.com/harris1e and save it before loading.
+
+```{r}
+# load GSS rda file
+load(file = "data/gss2018.rda")
+```
+
+Leslie notices that the data frame is automatically named GSS. She thinks it might be good to specify the year the data were collected by changing the data frame name to gss.2018 and changes the name of a data frame by assigning the data frame to a new object and then removing the old object:
+
+```{r}
+# assign GSS to gss.2018
+gss.2018 <- GSS
+
+# remove GSS
+rm(GSS)
+```
+
+Once the data are loaded and well-named, it is time to get started. 
+
+## Achievement 1: Using graphics and descriptive statistics to make a prediction
+
+### Data management
+
+Leslie gets out the codebook to look at how the variables of interest were coded. Much of the research seemed to be with younger adults who were in college or who were recent college grads, which could be a unique group given their high level of education and the existence of cell phones for a large part of their young lives. With this in mind, the three decide to examine five variables: USETECH, HAPPY, SEX, AGE, DEGREE. Leslie uses `summary(gss.2018)` to examine the variables. 
+
+```{r}
+# examine the variables
+summary(object = gss.2018)
+```
+
+Leslie finds that the USETECH variable has a minimum value of -1 and a maximum of 999. The question used to get this variable was: 
+
+> During a typical week, about what percentage of your total time at work would you normally spend using different types of electronic technologies (such as computers, tablets, smart phones, cash registers, scanners, GPS devices, robotic devices, and so on)?
+
+The valid responses should be between zero and 100 percent of the time, so Leslie decides to recode values outside this range to be `NA`. She goes to the GSS Data Explorer [@GSS] and looks up the variable to figure out how it was coded. Leslie examines the codebook and it shows that the two values outside the range are -1 and 999 (Figure \@ref(gss.usetech))
+
+```{r gss.usetech, echo = FALSE, fig.cap="Screenshot of GSS Data Explorer 2018 USETECH variable."}
+knitr::include_graphics("graphics/chap7-gss-perc-time-tech.JPG")
+```
+
+Using the `mutate()` command with `na_if()` from <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span>, she recodes these two values. The `na_if()` function recodes specific values of a variable to `NA` for missing. In this case, Leslie is making the **USETECH** variable **NA** if it has the value of -1 or of 999. The `na_if()` function takes two arguments, `x =` for the name of the variable to recode and `y =` for the value to change to **NA**.
+
+```{r}
+# recode USETECH to valid range
+library(tidyverse)
+gss.2018.cleaned <- gss.2018 %>% 
+  mutate(USETECH = na_if(x = USETECH, y = -1)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 999)) 
+
+# check recoding
+summary(object = gss.2018.cleaned$USETECH)
+```
+
+Although it was not shown in the codebook, Leslie sees in the output from `summary()` that there is also a value of 998 that is outside the valid range of values. Happy that she found it before it messed up her results, Leslie adds another line of code to her data management and tries again:
+
+```{r}
+# recode USETECH to valid range
+gss.2018.cleaned <- gss.2018 %>% 
+  mutate(USETECH = na_if(x = USETECH, y = -1)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 999)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 998)) 
+
+# check recoding
+summary(object = gss.2018.cleaned$USETECH)
+```
+
+This looks much better. Leslie notes that there are a lot of **NA** values for this variable. The other variables of interest are: AGE, DEGREE, SEX, and HAPPY. Leslie looks at the codebook for age and finds: 
+
+* 89 = 89 or older 
+* 98 = "Don't know" 
+* 99 = "No answer"
+
+She decides to recode the 98 and 99 responses to be **NA**. Instead of starting new data management code, she just adds on to the existing code:
+
+```{r}
+# recode USETECH and AGE to valid ranges
+gss.2018.cleaned <- gss.2018 %>% 
+  mutate(USETECH = na_if(x = USETECH, y = -1)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 999)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 998)) %>% 
+  mutate(AGE = na_if(x = AGE, y = 98)) %>% 
+  mutate(AGE = na_if(x = AGE, y = 99))
+
+# check recoding
+summary(object = gss.2018.cleaned)
+```
+
+The three other variables, SEX, DEGREE, and HAPPY are categorical variables. The codebook shows some categories that might be better coded as **NA**: 
+
+* DEGREE 
+   + 8 = "Don't know" 
+   + 9 = "No answer" 
+* HAPPY
+   + 8 = "Don't know"
+   + 9 = "No answer" 
+   + 0 = "Not applicable"
+   
+```{r}
+# recode variables of interest to valid ranges
+gss.2018.cleaned <- gss.2018 %>% 
+  mutate(USETECH = na_if(x = USETECH, y = -1)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 999)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 998)) %>% 
+  mutate(AGE = na_if(x = AGE, y = 98)) %>% 
+  mutate(AGE = na_if(x = AGE, y = 99)) %>% 
+  mutate(DEGREE = na_if(x = DEGREE, y = 8)) %>% 
+  mutate(DEGREE = na_if(x = DEGREE, y = 9)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 8)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 9)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 0))
+
+# check recoding
+summary(object = gss.2018.cleaned)
+```
+
+The variables for analysis look like they all contain valid response options now, but every variable appears to be either numeric data type or integer data type. For DEGREE, HAPPY, and SEX, the data type should be factor. Leslie also prefers to have the category labels in her factors rather than just numbers. She reviews the codebook for the degree variable (Figure \@ref(gss.degree)) and the happy variable (Figure \@ref(gss.happy)) and makes these changes to the data using `factor()` with `mutate()`. 
+
+```{r gss.degree, echo = FALSE, fig.cap="Screenshot of GSS Data Explorer 2018 DEGREE variable."}
+knitr::include_graphics("graphics/chap7-gss-degree.JPG")
+```
+
+```{r gss.happy, echo = FALSE, fig.cap="Screenshot of GSS Data Explorer 2018 HAPPY variable."}
+knitr::include_graphics("graphics/chap7-gss-happy.JPG")
+```
+
+The `factor()` function has the `x =` argument for the name of the variable to change to a factor and the `labels =` argument to list the labels for each of the categories in the factor variable. Leslie makes sure she lists the categories in the appropriate order for both the variables.
+
+```{r}
+# recode variables of interest to valid ranges
+gss.2018.cleaned <- gss.2018 %>% 
+  mutate(USETECH = na_if(x = USETECH, y = -1)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 999)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 998)) %>% 
+  mutate(AGE = na_if(x = AGE, y = 98)) %>% 
+  mutate(AGE = na_if(x = AGE, y = 99)) %>% 
+  mutate(DEGREE = na_if(x = DEGREE, y = 8)) %>% 
+  mutate(DEGREE = na_if(x = DEGREE, y = 9)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 8)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 9)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 0)) %>% 
+  mutate(SEX = factor(SEX, labels = c("male","female"))) %>%
+  mutate(DEGREE = factor(x = DEGREE, labels = c("< high school",
+                                                "high school", "junior college",
+                                                "bachelor", "graduate"))) %>% 
+  mutate(HAPPY = factor(x = HAPPY, labels = c("very happy", 
+                                              "pretty happy",
+                                              "not too happy")))
+# check recoding
+summary(object = gss.2018.cleaned)
+```
+
+### Exploratory data analysis
+
+Leslie and Kiara predict that people with higher educational degrees use technology more. They check this with the mean and standard deviation computed for each group. To get the mean and standard deviation for each degree category, they use `group_by()` with DEGREE and then `summarize()` with the mean and standard deviation listed. At the last second, Leslie remembers to drop the NA with `drop_na()` so that `mean()` and `sd()` will work.
+
+```{r}
+# mean and sd of age by group
+use.stats <- gss.2018.cleaned %>% 
+  drop_na(USETECH) %>%
+  group_by(DEGREE) %>%
+  summarize(m.techuse = mean(USETECH),
+            sd.techuse = sd(USETECH))
+use.stats
+```
+
+Leslie and Kiara think they may be right about tech use increasing with higher degree groups. The mean portion of time using tech gets higher with each degree group. Leslie notices that the standard deviations are quite large and, for the less than high school group, the standard deviation is larger than the mean. She remembers back to Section \@ref(mean.spread) and thinks that a large spread might mean that the distribution is **platykurtic** with more observations in the tails than a normal distribution would have. 
+
+Nancy thinks maybe a set of boxplots would provide a little bit of insight into how the data are distributed in each of the groups and how the groups compare to each other. She creates a boxplot with some  
+
+```{r fig.cap="Distribution of time spent using technology by degree."}
+# graph usetech
+gss.2018.cleaned %>%
+  drop_na(USETECH) %>%
+  ggplot(aes(y = USETECH, x = DEGREE)) + 
+  geom_boxplot(aes(fill = DEGREE), alpha = .8) + 
+  geom_jitter(aes(color = DEGREE), alpha = .3) +
+  scale_fill_manual(values = c("#78A678", "dodgerblue2","#7463AC", 
+                               "deeppink", "gray80"), guide = FALSE) +
+  scale_color_manual(values = c("#78A678", "dodgerblue2","#7463AC", 
+                                "deeppink", "gray80"), guide = FALSE) +
+  theme_minimal() + 
+  labs(x = "Degree", y = "Percent of time spent using technology") 
+```
+
+Leslie notices that a lot of people in the first two category have selected zero percent of their time is on technology. She also notes that for all but the first category, there are a lot of people who have selected 100% of their time is spent using technology. Leslie asks Kiara about these observations and how they might influence the results. Nancy says there are terms for measures where people are at the very top or very bottom of the range. When there are a lot of observations at the very bottom of a range, this is called a **floor effect**, while seeing a lot of observations at the top of a range is called a **ceiling effect**. 
+
+Leslie asks if they can still use ANOVA when there are floor and ceiling effects. Kiara says yes, but with some caution. She explains that, when there are floor or ceiling effects, this means that the variation in a measure is limited by its range. Since ANOVA is an analysis of **variance** which examines central tendency and variation together, the limitations of floor and ceiling effects can result in not finding differences where there are differences.
+
+Kiara mentions that the limitation with ceiling and floor effects usually is a problem when the underlying measure has a wider range than what is measured. In the case of technology use, the range of zero to 100 percent of the time is as wide as it can be, so the observations at the ceiling and floor of this measure are just accurately reflecting very low and very high levels of technology use among many in the sample. 
+
+### Unlock achievement 1: Check your understanding
+
+Describe the different parts of a boxplot including the upper and lower bounds of the box, the middle line through the box, and the whiskers. 
+
+## Achievement 2: Understanding and conducting one-way Analysis of Variance (ANOVA) 
+
+The t-tests were great for comparing two means, but Leslie wonders what happens when there are three or more means. For example, examining mean technology use across degree groups. Would she just do a $t$-test for each pair of means and compare mean tech use for those with less than high school to high school, less than high school to junior college, and so on? Kiara explains that conducting multiple tests on the same two variables is not a great idea given that each statistical test come with some probability that what is going on in the sample is not a good representation of what is happening in the population. 
+
+### Multiple t-tests and the familywise error rate
+
+For example, with the first independent samples t-test from the prior chapter, the probability that the two group means were the same in the populations the samples came from was .0000000000002886 (see \@ref(indepttest.ch6)). Although this is not a large probability, it is also not zero. If the threshold for the p-value to indicate statistical significance is .05, there can be up to a 5% probability that *rejecting the null hypothesis* is an error. Rejecting the null hypothesis when it is true is called a **Type I error** (see pull out box).
+
+With five groups in the degree variable, comparing each pair with a t-test (i.e., conducting **pairwise comparisons**) would result in 10 t-tests. If each t-test had a p-value threshold of .05 for statistical significance, the probability of at least one Type I error is fairly high. The formula for this probability of a Type I error when there are multiple comparisons is: 
+
+$$
+\begin{equation}
+\alpha_{f}=1 - (1-\alpha_{i})^k
+ (\#eq:alpha)
+\end{equation}
+$$
+
+Where $\alpha_{f}$ is the familywise Type I error rate, $\alpha_{i}$ is the individual alpha set as the statistical significance threshold, and $c$ is the number of comparisons. The formula for computing $c$ is $\frac{k\cdot(k-1)}{2}$, where $k$ is the total number of groups.
+
+So, for a five group degree variable where we set the alpha for each pairwise comparison at .05, the familywise $\alpha$ would be:
+
+$$
+\begin{equation}
+\alpha_{f}=1 - (1-.05_{i})^{10}=.40
+ (\#eq:alpha2)
+\end{equation}
+$$
+
+So, with 3 pairwise comparisons, the familywise $\alpha$ indicates there is a 40% probability that a conclusion was wrong on at least one of the $t$-tests. To control this error rate, and for efficiency, use a single analysis of variance (ANOVA) test instead of 10 t-tests. ANOVA is useful for testing whether three or more means are equal. It can be used with two means, but the $t$-test is preferable because it is more straightforward.
+
+### The F test statistic for ANOVA
+
+To compare mean age across the five degree categories, Nancy introduces Leslie to one of the ANOVA functions in R, `oneway.test()`. The `oneway.test()` function is in the **stats** library that loads with base R, so there are no new packages to install and load. The `oneway.test()` function has several arguments. The first argument is `formula =`, where the formula for testing would be entered. The formula for `oneway.test()` includes the continuous variable first, then the tilde, then the categorical variable. So, the formula would be `continuous ~ categorical`. In this case, with the USETECH and DEGREE variables, the formula is `USETECH ~ DEGREE`. 
+
+After the formula, the data frame name is entered for the `data =` argument and the final argument is `var.equal =` which refers to one of the assumptions of ANOVA which Kiara assures Leslie they will discuss later in Section \@ref(assumptanova). For now Kiara recommends using `var.equal = TRUE`. Leslie writes the ANOVA code: 
+
+```{r}
+# mean tech use percent by degree groups
+techuse.by.deg <- oneway.test(formula = USETECH ~ DEGREE,
+                              data = gss.2018.cleaned,
+                              var.equal = TRUE)
+techuse.by.deg
+```
+
+The output shows a couple of familiar statistics and one new one, the $F$-statistic. The $F$-statistic is a ratio where the variation _between_ the groups is compared to the variation _within_ the groups. The _between group variation_ is in the numerator to calculate $F$, while the _within group variation_ is in the denominator. Leslie is a little confused by this, so Kiara suggests modifying the boxplot to help think it through. Nancy removes the boxes and adds a horizontal line across the entire plot to show the overall mean of USETECH and several shorter horizontal lines to show the mean of USETECH by group. 
+
+```{r echo = FALSE, fig.cap="Distribution of tech use by degree."}
+# visualize variation between and within groups
+gss.2018.cleaned %>%
+  drop_na(USETECH) %>%
+  ggplot(aes(y = USETECH, x = DEGREE, color = DEGREE)) + 
+  geom_jitter(alpha = .3) +
+  scale_color_manual(values = c("#78A678", "dodgerblue2","#7463AC", 
+                               "deeppink", "gray80"), guide = FALSE) + 
+  stat_summary(fun.x = mean, color = "#88398a", geom = "tile", size = .65) + 
+  geom_hline(yintercept = mean(gss.2018.cleaned$USETECH,na.rm=T), size = 1.25, color = "#fdb863") +
+  theme_minimal() + 
+  xlab("Degree")
+```
+
+Leslie notices that the group mean for the junior college group (purple line) is higher than the overall mean (orange line). That is, the mean percent of time people use tech in this group is higher than the overall mean percent of time people use tech. In each group, the group mean does a better job than the overall mean of explaining tech use *for that group*. The difference between the group mean and the overall mean is *how much better* the group mean is at representing the group. This difference is used to compute the numerator of the F statistic:
+
+$$
+\begin{equation}
+F=\frac{\frac{\sum{n_{i.}(\overline{y}_{i.}-\overline{y})^2}}{k-1}}{\frac{\sum{\sum(y_{ik}-\overline{y}_{i.})^2}}{n-k}}
+ (\#eq:fstat)
+\end{equation}
+$$
+
+Where $n$ represents an individual observation, $y$ stands for the outcome variable. The subscript $i$ is for individual and the subscript $k$ is for group. Breaking down the formula you can see that, in the numerator, there is $\overline{y}_{i.}-\overline{y}_{}$, with $\overline{y}_{i.}$ being the mean of each group and $\overline{y}$ being the overall or **grand** mean. Subtracting the overall mean from the group mean results in the difference between the group and the overall sample; this can be positive or negative and so is squared for the sum to more accurately represent the difference. This squared value is then multiplied by $n_{i.}$ or the number of people in the group and divided by $k-1$ or the number of groups minus 1. This results in a numerator that quantifies the overall difference between group means and the grand mean for all the participants in the sample.
+
+The denominator sums the squared difference between each individual observation $y_{ik}$ and the mean of the group the individual is in, quantifying how far the individuals in the group are from the mean of the group. This is divided by the number of individuals minus the number of groups. 
+
+Altogether, the numerator quantifies the variation between the group means and the grand mean, while the denominator quantifies the variation between the individual values and the group means. The statistic is sometimes simplified as:
+
+$$
+\begin{equation}
+F=\frac{between-group-variability}{within-group-variability}
+ (\#eq:fstateasy)
+\end{equation}
+$$
+
+Because the difference between the group means and the grand mean represents the variability that the group mean explains for the group, the numerator is also sometimes referred to as **explained variance**. With the denominator summing the remaining distances, or information that is not explained by the group mean, between the observations and their group mean, the denominator is sometimes called **unexplained variance**. The $F$-statistic, then, can be referred to as a ratio of explained to unexplained variance. That is, how much of the variability in your data does the ANOVA model explain compared to how much it leaves unexplained. So, the larger the $F$-statistic, the more the ANOVA has explained compared to what it has left unexplained.
+
+Leslie notices that there are clearly some observations closer to the overall mean than they are to the group mean for this group and for other groups. Kiara explains that this is true for some observations, but the differences between each observed value and the group mean added together is a smaller number than the differences between each observed value and the overall mean. 
+
+True to the _analysis of variance_ name, the $F$-statistic can also be represented as the ratio of the variance between the groups to the variance within the groups:
+
+$$
+\begin{equation}
+F=\frac{s_b^2}{s_w^2}
+ (\#eq:fstatsimp)
+\end{equation}
+$$
+
+Once the $F$-statistic is computed, the probability of finding an $F$ at least as big as the one computed is determined by the F-distribution:
+
+```{r echo = FALSE, fig.cap="F distribution (df = 4 and 1404) with shaded rejection region for .05."}
+x <- seq(0,60,length=10000)
+db <- df(x, 4, 1404)
+dat <- data.frame(x, db)
+qplot(x, db, data = dat, geom = "line") +
+  geom_line()+
+  theme_minimal() +
+  ylim(0,.75) + xlim(0, 9) +
+  xlab("F statistic") + ylab("Probability") 
+```
+
+Nancy mentions that the $F$ distribution may remind Leslie of the $\chi^2$ distribution from the previous chapter since they are both right-skewed and do not go below zero. Also like the $\chi^2$ distribution, the $F$ distribution shape changes based on the degrees of freedom. 
+
+The ANOVA comparing mean time using technology across categories of degree had an $F$-statistic of `r techuse.by.deg$statistic`, so it is far to the right in the $F$ distribution. The probability of an $F$-statistic this large or larger is `r format(techuse.by.deg$p.value, scientific = FALSE)`. With a p-value this tiny, the result would be considered statistically significant. Kiara suggests going through the steps of NHST to organize the analyses more clearly. 
+
+#### NHST for ANOVA
+
+##### NHST Step 1: Write the null and alternate hypotheses
+
+HO: The mean time spent on technology use is equal across degree groups.
+
+HA: The mean time spent on technology use is **not** equal across degree groups.
+
+##### NHST Step 2: Compute the test statistic
+
+```{r}
+# print the results of the ANOVA
+techuse.by.deg
+```
+
+##### NHST Step 3: Compute the probability for the test statistic (p-value) 
+
+The p-value in this case is `r format(techuse.by.deg$p.value, scientific = FALSE)`. The value of an $F$-statistic being this large or larger happens a tiny percent of the time when the null hypothesis is true. 
+
+##### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+
+With a p-value of `r format(techuse.by.deg$p.value, scientific = FALSE)`, the ANOVA indicates that there is likely a difference among the means of time spent using technology based on degree. With Kiara's guidance, Leslie writes out the conclusion:
+
+> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p < .05] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. 
+
+### Unlock achievement 2: Check your understanding
+
+Analysis of variance, or ANOVA, is useful for:
+
+* Comparing the means for three or more groups  
+* Comparing a single mean to a population or hypothesized value 
+* Transforming a categorical variable into a continuous variable  
+* Examining the relationship between two categorical variables 
+
+## Achievement 3: Choosing and using post-hoc tests and contrasts
+
+Leslie asks Kiara if they can report that the **graduate degree** group has a significantly higher mean time spent using technology than people in the other groups. Kiara explains that ANOVA is an _omnibus_ test, which means it identifies whether there are any differences, but doesn't give any information about what is driving the significant results. Nancy reminds Leslie that another example of an _omnibus test_ is the $\chi^2$ test. While they used $\chi^2$ to determine whether a relationship was statistically significant, they had to compute standardized residuals or an odds ratio to make any claims about what the relationship is. Nancy mentions that there are two main ways to determine where significant differences among groups are following a significant omnibus test:
+
+* Post-hoc tests 
+* Planned contrasts 
+
+The two methods are both useful for examining differences among means. The difference between post-hoc tests and planned contrasts is that post-hoc tests examine **each pair of means** to determine which ones are the most different from each other and are therefore driving the statistically significant results, while planned contrasts can compare subsets of means or groups of means. Leslie is confused by the planned contrasts idea. Kiara thinks going through a couple examples of post-hoc and planned contrasts would be best to clarify.
+
+### Post-hoc tests
+
+#### Bonferroni 
+
+There are several different types of post-hoc tests, one of the more commonly used is the _Bonferroni_ post-hoc test. The Bonferroni  post-hoc test is a **pairwise** test that conducts a t-test for each pair of means but adjusts the threshold for statistical significance to ensure that there is a small enough risk of Type I error. 
+
+Nancy slides the laptop over and writes a line of code to conduct the Bonferroni post-hoc tests with the `pairwise.t.test()` function. The function takes several arguments including `x =` which takes the continuous variable, `g = ` which takes the grouping or categorical variable, and the p-value adjustment, `p.adj =` which can be specified to be `bonf` for Bonferroni:
+
+```{r}
+# find differences in mean tech use by degree groups
+
+bonf.tech.by.deg <- pairwise.t.test(x = gss.2018.cleaned$USETECH,
+                                    g = gss.2018.cleaned$DEGREE,
+                                    p.adj = "bonf")
+bonf.tech.by.deg
+```
+
+The output is different from previous statistical testing. Instead of a test statistic like $t$ or $F$, the output is a matrix of $p$-values. While the calculation of the $t$-statistic for each pair of groups is the same as other independent samples $t$-tests, the corresponding p-value is *adjusted* to correct for the multiple statistical tests that could lead to an inflated Type I error. 
+
+Specifically, the Bonferroni adjustment multiplies each $p$-value from each t-test by the overall number of t-tests conducted. Leslie remembers that there were 10 pairwise comparisons, so these p-values have been multiplied by 10. Higher $p$-values will not reach the threshold for statistical significance as often. Leslie notices that a few of the resulting $p$-values are 1.00000. Kiara explains that the $p$-value cannot be over 1, so for $p$-values that are over 1 when adjusted by the multiplication, they are rounded to exactly 1. 
+
+The adjusted $p$-values for seven of the t-tests fall below .05 and so indicate that the difference in mean time using technology between two groups is *statistically significant*. It looks like there are significant differences in mean time between _< high school_ and all of the other groups (p < .05); likewise there are significant differences in mean time using technology between _high school_ and all other groups. There are no differences among the means of the three college groups. Kiara suggests reporting the differences might be more meaningful with the actual mean values included. She reprints the use.stats object:
+
+```{r}
+# mean age by groups
+use.stats
+```
+
+Leslie summarizes the statistically significant differences identified in the Bonferroni post-hoc test:
+
+> Mean percent of time using technology is statistically significantly (p < .05) _lower_ for people with less than a high school diploma (m = `r round(use.stats[1,2], 1)`) compared to each of the other groups where the mean percent of time using technology ranges from `r round(use.stats[2,2], 1)` to `r round(use.stats[5,2], 1)`. 
+
+#### Tukey's Honestly Significant Difference
+
+Kiara advises Leslie that the Bonferroni post-hoc test is generally considered a very conservative post-hoc test that only identifies the  largest differences between means as statistically significant. This might be useful sometimes, but not always. When a less strict test will work, Kiara recommends using **Tukey's Test**. Tukey's post-hoc test is a modified $t$-test with the test statistic, $q$, calculated:
+
+$$
+\begin{equation}
+q=\frac{m_1 - m_2}{SE}
+ (\#eq:cov)
+\end{equation}
+$$
+
+Leslie is perplexed since this appears to be the same exact formula as the $t$-statistic for the independent samples t-test. Kiara explains that the $q$ test statistic is the same as the $t$, but the $q$ distribution is different from the $t$-distribution, raising the critical value necessary for the $q$ statistic to reach statistic significance. So, even with the same test statistic, it is more difficult to reach statistical significance with a Tukey's Test compared to a $t$-test.
+
+Unfortunately, Nancy explains, the `TukeyHSD()` command does not work well with the `oneway.test()` output from earlier, so the entire ANOVA model has to be re-estimated to use with the command. The `aov()` command works and takes similar arguments to the `oneway.test()` command, so nesting the estimation using `aov()` is one way to go. Leslie does not understand what Nancy means by **nesting** the commands. Nancy offers to create a little demonstration of how the same process might work with nested compared to non-nested commands (see Box \@ref(ch7nancy). Nancy explains that the `aov()` function takes two arguments, the `formula =` which is again `continuous ~ categorical`, and `data =` with the data frame name entered. She then explains that all of the `aov()` code is then entered into the `TukeyHSD()` function, like this:
+
+```{r}
+# Tukey post-hoc test for tech.by.deg
+tukey.tech.by.deg <- TukeyHSD(aov(formula = USETECH ~ DEGREE, 
+                                  data = gss.2018.cleaned))
+tukey.tech.by.deg
+
+```
+
+Comparing these results to the Bonferroni test results above, the means that were statistically significantly different with Bonferroni are also statistically significantly different with the Tukey's Test. However, the $p$-values are lower with Tukey. For example, the $p$-value for the comparison of bachelor to junior college was `r round(bonf.tech.by.deg[[3]][3,3], 1)` with the Bonferroni post-hoc test but `r round(tukey.tech.by.deg$DEGREE[8,4], 2)` with the Tukey's post-hoc test. 
+
+Leslie asks about the columns in the Tukey's output. Kiara explains that the first column called "diff" is the difference between the means in the sample while the second and third columns, "lwr" and "upr" are the lower and upper bounds of a confidence interval around the "diff" value. So, for example, the difference in time spent on technology between participants who graduated **high school** and those with **< high school** is 24.82%; in the population that this sample came from, the difference in time spent on technology is likely between 15.15% and 34.50%.
+
+This makes total sense to Leslie and she combines the $F$-test results and post-hoc results into a single interpretation:
+
+> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p < .05`] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. Mean percent of time using technology is statistically significantly (p < .05) _lower_ for people with less than a high school diploma (m = `r round(use.stats[1,2], 1)`) compared to each of the other groups where the mean percent of time using technology ranges from `r round(use.stats[2,2], 1)` to `r round(use.stats[5,2], 1)`. 
+
+### Planned comparisons 
+
+Kiara smiles at Leslie as if to communicate that there is something even better coming up! She explains that, rather than comparing every group to every other group, it might be more interesting to compare all the college groups as a whole to the other groups or the two lowest groups to the two highest groups. Bonferroni and Tukey are not designed to do group the groups and compare these means, but there are other options. Kiara says that **planned comparisons** can be used to compare one mean to another mean, two means to one mean, or really any subset of means to any other subset of means. 
+
+Planned comparisons are computed by developing **contrasts** that specify which means to compare to which other means. For example, to compare all the college groups to high school group, the contrast would omit the less than high school group and compare the mean for everyone in the high school group to the mean of the combined three college groups. Nancy prints the categories of DEGREE as a reminder:
+
+```{r}
+# look at the levels of education variable
+levels(x = gss.2018.cleaned$DEGREE)
+```
+
+Kiara explains that the order of the factor variable is the exact order the contrast should be developed in and that there are a few rules to keep in mind. First, a contrast is a group of numbers used to group categories. Second, the categories grouped together should all be represented by the same number in the contrast. Third, the numbers in the contrast should all add to zero. Finally, any category not included in the contrast should be represented by a zero. In this case, to compare the second level of the factor, **high school**, with the third, fourth, and fifth levels combined could be written as:
+
+* 0 (do not include) 
+* 3 (high school) 
+* -1 (junior college) 
+* -1 (bachelor) 
+* -1 (graduate) 
+
+The three categories represented by -1 will be grouped together because they are all represented by the same number. Adding 3 + -1 + -1 + -1 is equal to zero. The first step is to enter the contrast into R as a vector. Nancy goes ahead with the code:
+
+```{r}
+# put the contrast in a vector
+contrast1 <- c(0, 3, -1, -1, -1) 
+```
+
+Kiara suggests they look in the Environment pane where they see the new *contrast1* vector in the list of values. The next step is to assign *contrast1* to the DEGREE variable using `contrast()` and the `<-` to assign.
+
+```{r}
+# link the contrast to the categorical variable using contrast()
+contrasts(x = gss.2018.cleaned$DEGREE) <- contrast1
+
+```
+
+Kiara suggests they use `str()` to examine the *structure* of DEGREE variable and see the contrast:
+
+```{r}
+# view the structure of the DEGREE variable with contrast
+str(object = gss.2018.cleaned$DEGREE)
+```
+
+It looks like the contrast is one of the attributes of the vector now. Kiara says they are ready to re-run the ANOVA using `aov()`. Once the model has been estimated, the model object can be entered into `summary.aov()` along with information about the contrast. Nancy thinks it is easier to show the team than to explain the features of `summary.aov()`; she writes some code:
+
+```{r}
+# re-run the model using aov() 
+techuse.by.deg.aov <- aov(formula = USETECH ~ DEGREE, 
+            data = gss.2018.cleaned)
+
+# apply the contrasts to the anova object techuse.by.deg.aov
+# give the contrast a good descriptive name of "high school vs. college"
+tech.by.deg.contr <- summary.aov(object = techuse.by.deg.aov,
+                                 split = list(DEGREE = list("high school vs. college" = 1)))
+tech.by.deg.contr
+
+```
+
+The output shows that mean technology use for those who finished high school is statistically significantly different from mean technology use for the three college groups combined [F(`r tech.by.deg.contr[[1]][2,1]`, `r tech.by.deg.contr[[1]][2,2]`) = `r tech.by.deg.contr[[1]][2,4]`; p < .001]. 
+
+Leslie is interested in looking at the means being compared with this contrast so she can understand more of what is happening. She decides to create a graph that shows the mean technology use time for the high school group and a combined mean technology use time for the three college groups. To create the graph Leslie uses the tidyverse to `mutate()` the DEGREE variable so it groups the three college groups into a single group by recoding all three categories of college into one category called "college." The *< high school* group can be recoded to `NA` or something else since it will not be included in the graph or table. Leslie examines the means first:   
+
+```{r}
+# recode and compute the means for high school and college groups
+gss.2018.cleaned %>%
+  mutate(DEGREE = factor(x = DEGREE, labels = c(NA,
+                                                "high school", "college",
+                                                "college", "college"))) %>% 
+  group_by(DEGREE) %>%
+  summarise(m.techuse = mean(x = USETECH, na.rm = T),
+            sd.techuse = sd(x = USETECH, na.rm = T))
+```
+
+The difference between the mean technology use time for high school (m = 55.26) compared to college (m = 68.47) is pretty large, a visual might help to add more context: 
+
+```{r fig.cap="Distribution of time using technology by degree for contrast."}
+# add filter and ggplot
+gss.2018.cleaned %>% 
+  mutate(DEGREE = factor(x = DEGREE, labels = c(NA,
+                                                "high school", "college",
+                                                "college", "college"))) %>% 
+  filter(DEGREE == "high school" | DEGREE == "college") %>% 
+  ggplot(aes(y = USETECH, x = DEGREE, fill = DEGREE, color = DEGREE)) +
+  geom_boxplot(alpha = .8) +
+  geom_jitter(alpha = .3) +
+  scale_fill_manual(values = c("#78A678","#7463AC"), guide = FALSE) +
+  scale_color_manual(values = c("#78A678","#7463AC"), guide = FALSE) +
+  theme_minimal() + 
+  labs(x = "Degree", y = "Percent of time spent using technology")
+
+```
+
+It seems clear to Leslie that these means are different from each other. She thinks the less than high school group is probably also different from the college groups. Nancy says they can test both those ideas together using planned comparisons by writing some fancy code:
+
+```{r}
+# less than HS v. all college contrast
+contrast2 <- c(3, 0, -1, -1, -1)
+
+# bind the two contrasts together into a matrix
+cons <- cbind(contrast1, contrast2)
+
+# connect the matrix with the factor variable
+contrasts(x = gss.2018.cleaned$DEGREE) <- cons
+
+# estimate the ANOVA with contrasts
+tech.by.deg.contr <- summary.aov(object = techuse.by.deg.aov,
+                                 split = list(DEGREE = list("high school vs. college" = 1,
+                                                            "< high school vs. college" = 2)))
+tech.by.deg.contr
+```
+
+Leslie graphs the data again again to better understand both contrasts. There is a clear visual difference between the high school group and the college group and also between the less than high school group and the college group:
+
+```{r fig.cap="Distribution of tech use by degree for contrast comparing college to each of the other groups."}
+# recode to group the college groups
+gss.2018.cleaned %>% 
+  mutate(DEGREE = factor(x = DEGREE, 
+                         labels = c("< high school",
+                                    "high school", "college",
+                                    "college", "college"))) %>% 
+  ggplot(aes(y = USETECH, x = DEGREE)) +
+  geom_boxplot(aes(fill = DEGREE), alpha = .8) +
+  geom_jitter(aes(color = DEGREE), alpha = .3) +
+  scale_fill_manual(values = c("#78A678","#7463AC","dodgerblue2"), guide = FALSE) +
+  scale_color_manual(values = c("#78A678","#7463AC","dodgerblue2"), guide = FALSE) +
+  theme_minimal() + 
+  labs(x = "Degree", y = "Percent of time spent using technology")
+
+```
+
+Leslie is interested in how many contrasts can be done and also how all these statistical comparisons might be inflating the Type I error that they discussed with the post-hoc tests. Kiara explains that, in addition to each comparison comparing just two things and each comparison adding to zero, the planned comparisons can, and should, isolate each group (e.g., the high school group) one time. This ensures that the contrasts are **independent** of each other since the variance for each group is only isolated and used in a statistical comparison one time. Because each group is isolated one time, the total maximum number of contrasts allowable is one less than the number of groups. Leslie wants to make sure she has this right and summarizes the important characteristics of contrasts:
+
+* Contrast values add to zero 
+* Each contrast compares two groups 
+* Each category should be isolated one time 
+* The maximum number of contrasts is one less than the number of categories 
+
+Kiara confirms that these are the characteristics of the contrasts. She explains that two things ensure you are following all the rules:
+
+(1) Add up each contrast to make sure it adds to zero 
+
+(2) Multiply each value for in each contrast with the corresponding values in the other contrasts and add up the products; this should also add to zero 
+
+If each contrast adds to zero and the sum of the products across contrasts adds to zero, then the set of contrasts follows the rules for independence and can be used to understand differences.
+
+Leslie notices that they have not yet developed a full set of contrasts that fit these criteria. So far they only have two contrasts. With five total degree groups, there should be four contrasts in the list. Leslie thinks about the interesting comparisons she could do and comes up with an idea for four comparisons:
+
+* < high school v. high school and junior 
+* high school v. all three college groups 
+* junior college v. bachelor's and graduate degrees 
+* bachelor's v. graduate degree 
+
+She creates the set of contrasts that correspond to these ideas: 
+
+```{r}
+# contrasts for ANOVA of tech time by degree
+c1 <- c(2, -1, -1,  0,  0)
+c2 <- c(0,  3, -1, -1, -1)
+c3 <- c(0,  0,  2, -1, -1)
+c4 <- c(0,  0,  0,  -1, 1)
+
+# gind the contrasts into a matrix
+conts <- cbind(c1, c2, c3, c4)
+conts
+```
+
+Leslie looks at the matrix and notices that her vectors are now columns rather than rows. She starts to check the values. The first column is the first contrast. When she adds up 2 + -1 + -1 + 0 + 0 it equals zero. She adds up each of the other three columns and they are all equal to zero. The first requirement is met. The second requirement is more complicated. She has to multiply each value across the four contrasts. The first value for the first contrast is 2, the first value of the second contrast is 0, the first value of the third contrast is 0, and the first value of the fourth contrast is also 0. Multiplying $2 * 0 * 0 * 0 = 0$. The product of the second values across the four contrasts is $-1 * 3 * 0 * 0 = 0$. The product of the third values is $-1*-1*2*0=0$, the fourth values multiply to $0*-1*-1*-1=0$, and finally the product across the fifth values in the contrasts is $0*-1*-1*1=0$. Adding all these products together results in $0*0*0*0*0=0$. So, the second requirement is met. The set of contrasts is independent and ready to use:
+
+```{r}
+# connect the matrix with the factor variable
+contrasts(x = gss.2018.cleaned$DEGREE) <- conts
+
+# estimate the ANOVA with 4 independent contrasts
+tech.by.deg.contr <- summary.aov(object = techuse.by.deg.aov,
+                                 split = list(DEGREE = list("< high school vs. high school & jr college" = 1,
+                                                            "high school vs. college" = 2,
+                                                            "jr college vs. more college" = 3,
+                                                            "bachelor's vs. grad degree" = 4)))
+tech.by.deg.contr
+```
+
+Leslie is excited that it worked! The code felt a little confusing so it is nice to see the result. She is wondering now whether the p-values should be adjusted to account for the multiple testing. Kiara has done some reading on this and there does not seem to be consistent guidance, but since multiple statistical tests inflate the probability of a Type I error, she decides it is a good idea to apply some sort of correction. While this is not an option available in the `aov()` or `summary.aov()` commands, there is a `p.adjust()` command that adjusts p-values using one of several types of adjustments. Since Bonferroni is familiar and used in the post-hoc pairwise comparisons, Kiara thinks it is a good place to start.
+
+The first argument in the `p.adjust()` command is `p =`, which takes a p-value or a vector of p-values. The second argument is `method =`, which is where to specify "bonferroni." Nancy gives it a try, entering the vector `Pr(>F)` from the tech.by.deg.contr object since this is the vector which holds all the p-values: 
+
+```{r}
+# adjust p-values for multiple comparisons 
+adj.p.vals <- p.adjust(p = tech.by.deg.contr[[1]]$`Pr(>F)`, method = "bonferroni")
+adj.p.vals
+
+```
+
+The adjusted p-values are still very small, so the conclusions about statistical significance have not changed, even when using a conservative adjustment like Bonferroni. 
+
+Leslie wants one last visualization showing all the different comparison groups. It takes Nancy a few minutes given how complicated this is, but she ends up with a nice set of graphs demonstrating the differences among the various groups. She decides to try a violin plot instead of a boxplot this time. Violin plots are a combination of ideas from density plots and boxplots. They show the probability density of the data along the range of values and so might more clearly show some of the patterns in the data. Kiara suggests that the difference between the violin plot and the boxplot is similar to the difference between a density plot and a histogram. The violin plot shows more subtle variations in the distribution of observations.
+
+```{r echo = FALSE, fig.cap = "Visualizing the distribution of use by degree for four planned comparisons."}
+
+c1graph <- gss.2018.cleaned %>% 
+  mutate(DEGREE = factor(DEGREE, labels = c("< high school",
+                      "high school & jr coll", "high school & jr coll",
+                      NA, NA))) %>% 
+  filter(DEGREE == "< high school" | DEGREE == "high school & jr coll") %>%
+  ggplot(aes(y = USETECH, x = DEGREE)) +
+    geom_violin(aes(fill = DEGREE), alpha = .8) + 
+    geom_jitter(aes(color = DEGREE), alpha = .3) +
+    scale_fill_manual(values = c("#78A678", "#7463AC"), guide = FALSE) +
+    scale_color_manual(values = c("#78A678", "#7463AC"), guide = FALSE) +
+    theme_minimal() + xlab("") + ylab("Percent of time using tech")
+
+c2graph <- gss.2018.cleaned %>% 
+  mutate(DEGREE = factor(DEGREE, labels = c(NA,
+                      "high school", "college",
+                      "college", "college"))) %>% 
+  filter(DEGREE == "high school" | DEGREE == "college") %>%
+  ggplot(aes(y = USETECH, x = DEGREE)) +
+    geom_violin(aes(fill = DEGREE), alpha = .8) + 
+    geom_jitter(aes(color = DEGREE), alpha = .3) +
+    scale_fill_manual(values = c("#78A678", "#7463AC"), guide = FALSE) +
+    scale_color_manual(values = c("#78A678", "#7463AC"), guide = FALSE) +
+    theme_minimal() + xlab("") +ylab("")
+
+c3graph <- gss.2018.cleaned %>% 
+  mutate(DEGREE = factor(DEGREE, labels = c(NA,
+                      NA, "jr college",
+                      "more college", "more college"))) %>% 
+  filter(DEGREE == "jr college" | DEGREE == "more college") %>%
+  ggplot(aes(y = USETECH, x = DEGREE)) +
+    geom_violin(aes(fill = DEGREE), alpha = .8) + 
+    geom_jitter(aes(color = DEGREE), alpha = .3) +
+    scale_fill_manual(values = c("#78A678", "#7463AC"), guide = FALSE) +
+    scale_color_manual(values = c("#78A678", "#7463AC"), guide = FALSE) +
+    theme_minimal() + xlab("Degree")+ ylab("Percent of time using tech")
+
+c4graph <- gss.2018.cleaned %>% 
+  mutate(DEGREE = factor(DEGREE, labels = c(NA,
+                      NA, NA,
+                      "bachelor", "master"))) %>% 
+  filter(DEGREE == "bachelor" | DEGREE == "master") %>%
+  ggplot(aes(y = USETECH, x = DEGREE)) +
+    geom_violin(aes(fill = DEGREE), alpha = .8) + 
+    geom_jitter(aes(color = DEGREE), alpha = .3) +
+    scale_fill_manual(values = c("#78A678", "#7463AC"), guide = FALSE) +
+    scale_color_manual(values = c("#78A678", "#7463AC"), guide = FALSE) +
+    theme_minimal() + xlab("Degree") + ylab("")
+
+# plots together
+gridExtra::grid.arrange(c1graph, c2graph, c3graph, c4graph)
+
+```
+
+Leslie is still not convinced the bachelor's and master's degree categories should be statistically significantly different, but the violin helps to show the difference in the distributions a little more. Leslie asks Kiara when it is most appropriate to use the post-hoc tests that compare each pair of means and when it is more appropriate to do planned comparisons. Kiara explains that, when you have hypotheses ahead of time about which groups are different from one another, use planned comparisons. When you do not have hypotheses ahead of time about which means are different from each other, use post-hoc tests. Good research practices suggest that having hypotheses ahead of time is a stronger strategy unless the research is truly exploratory.
+
+Leslie wants to incorporate the means of the combined groups into the final interpretation with the planned comparisons. She turns to Nancy to write some code:
+
+```{r}
+# contrast 1 statistics
+gss.2018.cleaned %>% 
+  mutate(DEGREE = factor(DEGREE, labels = c("< high school",
+                      "high school & jr coll", "high school & jr coll",
+                      NA, NA))) %>% 
+  group_by(DEGREE) %>%
+  summarise(m.techuse = mean(x = USETECH, na.rm = T),
+            sd.techuse = sd(x = USETECH, na.rm = T))
+
+# contrast 2 statistics
+gss.2018.cleaned %>% 
+  mutate(DEGREE = factor(DEGREE, labels = c(NA,
+                      "high school", "any college",
+                      "any college", "any college"))) %>% 
+  group_by(DEGREE) %>%
+  summarise(m.techuse = mean(x = USETECH, na.rm = T),
+            sd.techuse = sd(x = USETECH, na.rm = T))
+
+# contrast 3 statistics
+gss.2018.cleaned %>% 
+  mutate(DEGREE = factor(DEGREE, labels = c(NA,
+                      NA, "jr college",
+                      "more than jr college", "more than jr college"))) %>% 
+  group_by(DEGREE) %>%
+  summarise(m.techuse = mean(x = USETECH, na.rm = T),
+            sd.techuse = sd(x = USETECH, na.rm = T))
+
+# contrast 4 statistics
+gss.2018.cleaned %>% 
+  mutate(DEGREE = factor(DEGREE, labels = c(NA,
+                      NA, NA,
+                      "bachelor", "master"))) %>% 
+  group_by(DEGREE) %>%
+  summarise(m.techuse = mean(x = USETECH, na.rm = T),
+            sd.techuse = sd(x = USETECH, na.rm = T))
+
+```
+
+
+> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p < .05] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. A set of planned comparisons found that the mean time spent using technology was statistically significantly (p < .05) lower for (1) those with *< high school* education (m = 24.8) compared to those with *high school or junior college* (m = 51.7), (2) those with a high school education (m = 49.61) compared to those with any college (m = 67.0), (3) those with a junior college degree (m = 62.4) compared to those with more college than that (m = 68.2), and (4) those with a bachelor's (m = 67.9) compared to those with a master's degree (m = 68.7). Overall the patterns show statistically significant increases in time spent using technology for those with more education.
+
+### Unlock achievement 3: Check your understanding
+
+Why is a post-hoc or planned comparison test useful after a statistically significant ANOVA result? 
+
+* There is no other way to know what the means are for each group   
+* They confirm whether or not your ANOVA is statistically significant  
+* Post-hoc and planned comparison tests help identify which groups means are different from each other   
+* Post-hoc and planned comparison  tests ensure that both variables have minimal missing data for ANOVA  
+
+Create a different set of planned comparisons that follows the rules, write and run the code, and interpret your results.
+
+## Achievement 4: Computing and interpreting effect sizes for ANOVA 
+
+After learning about Cramer's V for $\chi^2$ (see Section \@ref(cramersv)) and Cohen's D for $t$-tests (see Section \@ref(cohensd)), Leslie asks Kiara what the effect sizes are to report for ANOVA. Kiara explains that eta-squared, $\eta^2$, is the proportion of variability in the outcome variable that is explained by the statistical model and this is the commonly used effect size for ANOVA [@etasq]. Nancy is not so sure! She recently read a paper by Susan Skidmore and Bruce Thompson [@skidmore2013bias] that recommends $\omega^2$ instead. The $\eta^2$ has a known positive bias and been used widely mainly because it is the effect size that is available in some statistical software programs [@skidmore2013bias]. The $\omega^2$ effect size has the same general meaning, is adjusted to account for the positive bias, and is more stable when assumptions are not completely met. Kiara writes out the formula for $\eta^2$ to help her explain how it works:
+
+$$
+\begin{equation}
+\omega^2 = \frac{F-1}{F+\frac{n-k+1}{k-1}}
+ (\#eq:omsq)
+\end{equation}
+$$
+
+Where $n$ is the number of observations and $k$ is the number of groups. 
+
+Nancy jumps in with some R code to compute the $\omega^2$ for the technology use analyses. First she explains that the two functions they have used so far, `oneway.test()` and `aov()`, do not compute $\omega^2$ as part of the output. However, there are R packages that do compute it. Even so, Nancy recommends sticking with `aov()` and using the output from `aov()` to compute $\omega^2$. She shows the team how by examining the output from the earlier `aov()`:
+
+```{r}
+# ANOVA model from earlier
+summary(object = techuse.by.deg.aov)
+```
+
+Everything they need to compute $\omega^2$ is in the output:
+
+$$
+\begin{equation}
+\omega^2 = \frac{F-1}{F+\frac{n-k+1}{k-1}}=\frac{43.3-1}{43.3+\frac{1409-5+1}{5-1}}=.107
+ (\#eq:omsq2)
+\end{equation}
+$$
+
+Kiara is a little uneasy with Nancy's solution here and asks, for the sake of reproducibility, if there is any way to do this calculation directly in R without retyping the numbers. Nancy says there is, but it requires some fancy coding to access the values in the output. Kiara thinks that sounds better than typing out the values, so she and Nancy work on a set of instructions for Leslie to use if she is so inclined (see Box \@ref(ch7kiara)).
+
+The final thing Leslie wants to know is the cutoffs for small, medium, and large effects. Are they the same as for the other effect sizes? Kiara says unfortunately they are not, here are the cutoffs for $\eta^$ effect size:
+
+* $\omega^2$ = .01 to $\omega^2$ < .06 is a small effect 
+* $\omega^2$ = .06 to $\omega^2$ < .14 is a medium effect 
+* $\omega^2 \ge$ .14 is a large effect 
+
+In this case, the effect size is medium. There is a medium strength relationship between degree and time using technology. Leslie copies her interpretation from above and adds effect size:
+
+> The mean time spent on technology use was significantly different across degree groups [F(`r techuse.by.deg$parameter[1]`,`r techuse.by.deg$parameter[2]`) = `r round(techuse.by.deg$statistic)`; p < .05] indicating these groups likely came from populations with different mean time spent on technology use. The highest mean was `r use.stats[5,1]`% of time used for technology for those with graduate degrees. The lowest mean was `r use.stats[1,1]`% of the time for those with less than a high school diploma. A set of planned comparisons found that the mean time spent using technology was statistically significantly (p < .05) lower for (1) those with *< high school* education (m = 24.8) compared to those with *high school or junior college* (m = 51.7), (2) those with a high school education (m = 49.61) compared to those with any college (m = 67.0), (3) those with a junior college degree (m = 62.4) compared to those with more college than that (m = 68.2), and (4) those with a bachelor's (m = 67.9) compared to those with a master's degree (m = 68.7). Overall the patterns show statistically significant increases in time spent using technology for those with more education. The strength of the relationship between degree and time using technology was medium $\omega^2$ = .11.
+
+## Achievement 5: Testing ANOVA assumptions {#assumptanova}
+
+The first assumption for ANOVA is that the data are normally distributed. There are several ways to assess normality. Visually, a histogram, density plot, or QQ-plot is useful for identifying normal and non-normal data distribution. Statistically, a Shapiro-Wilk test can be used. 
+
+### Testing normality 
+
+Leslie decides to start with density plots and uses the same colors they used for the boxplots at the beginning. 
+
+```{r fig.cap="Distribution of technology use by degree categories."}
+#graph tech use by degree 
+gss.2018.cleaned %>%
+  drop_na(USETECH) %>%
+  ggplot(aes(x = USETECH, fill = DEGREE)) + 
+  geom_density() + 
+  facet_wrap(~ DEGREE, nrow = 2) + 
+  scale_fill_manual(values = c("#78A678", "dodgerblue2","#7463AC", 
+                               "deeppink", "gray80"), guide = FALSE) +
+  theme_minimal() + 
+  labs(x="Degree",
+       y="Survey participants") 
+  
+```
+
+None of the groups look normally distributed. While Leslie was making density plots, Nancy put together some qq-plots to confirm:
+
+```{r echo = FALSE, fig.cap="Distribution of technology use by degree."}
+#graph tech use by degree
+gss.2018.cleaned %>%
+  drop_na(USETECH) %>%
+  ggplot(aes(sample = USETECH, color = DEGREE)) + 
+  stat_qq() + 
+  facet_wrap(~ DEGREE, nrow = 2) + 
+  geom_abline(intercept = mean(gss.2018.cleaned$USETECH, na.rm = TRUE), 
+              slope = sd(gss.2018.cleaned$USETECH, na.rm = TRUE)) +
+  scale_color_manual(values = c("#78A678", "dodgerblue2","#7463AC", 
+                               "deeppink", "gray80"), guide = FALSE) +
+  theme_minimal() + 
+  labs(x="Percent time using tech",
+       y="Survey participants") 
+
+```
+
+Leslie notes that none of the groups appear to be normally distributed based on either qq-plot. She also notices that the floor and ceiling values appear to be driving some of the non-normality. The Shapiro-Wilk test does not seem necessary in this case given the big deviations from normal in the histograms and qq-plots, however, Nancy suggests that they try it just to confirm. Leslie reminds herself that the Shapiro-Wilk test is testing the null hypothesis that the data are normally distributed. Nancy remembers that she had trouble before with using this test for multiple groups. She tries something new with the R code, which is to use the usual `summarize()` after `group_by()` but just print the p-value for the tests:
+
+```{r}
+# statistical test of normality for groups
+gss.2018.cleaned %>%
+  drop_na(USETECH) %>%
+  group_by(DEGREE) %>%
+  summarize(shap.pval = shapiro.test(x = USETECH)$p.value)
+```
+
+Based on the p-values, all five of the Shapiro-Wilk tests were statistically significant, indicating that the null hypothesis for this test (i.e., the data are normally distributed) was rejected in each group. The team feels they have plenty of evidence that the data are not normally distributed. They move on to the next assumption.
+
+### Homogeneity of variances assumption
+
+The second assumption for ANOVA is the assumption of _homogeneity of variances_ or _equal variances across groups_. So, not only do the data need to be normally distributed, but the data should be equally spread out in each group. Leslie reviews the graphs thinks this might actually be an easier assumption to meet.
+
+Nancy mentions that the _Levene's Test_ is widely used to test the assumption of equal variances. The null hypothesis is that _the variances are equal_ while the alternate is that at least two of the variances are different. The **car** package in R has a Levene's test command that can be used to test for equal variances:
+
+```{r}
+# equal variances for systolic by sex
+car::leveneTest(y = USETECH ~ DEGREE, data = gss.2018.cleaned)
+```
+
+The p-value for the Levene's test suggests rejecting the null hypothesis; the variances of USETECH are statistically significantly different across groups (p < .05). So, the ANOVA fails the assumption of _homogeneity of variances_.
+
+Nancy summarizes the assumptions for the tests to make sure Leslie has them all:
+
+### ANOVA assumptions recap 
+
+* continuous variable and three or more independent groups 
+* independent observations 
+* normal distribution in each group 
+* equal variances for each group 
+
+Leslie asks Nancy what the difference is between independent observations and independent groups. Nancy explains that independent observations is the assumption that the people in your data are not related to one another in any important way. Things that might violate this assumption are having siblings or spouses in a data set or measuring the same person multiple times. Independent groups is the assumption that two groups are not related to one another. If one group was made up of all the spouses of another group, the two groups would not be independent.
+
+Leslie expresses some disappointment that ANOVA failed its assumptions. Kiara explains that, like with the t-tests, there is an alternate statistical test to use when ANOVA assumptions are not met.
+
+### Unlocking achievement 4: Check your understanding
+
+Which ANOVA assumption(s) appear(s) to be violated by the data in the graph shown? 
+
+```{r echo = FALSE, fig.cap="Distribution of data violating an ANOVA assumption."}
+ggplot(data = subset(gss.2018.cleaned, !is.na(HAPPY)), aes(x = USETECH)) + 
+  geom_density(fill = "#78A678") + 
+  facet_grid(HAPPY ~ .) +
+  theme_minimal() 
+```
+
+* continuous variable and three or more independent groups 
+* independent observations 
+* normal distribution in each group 
+* equal variances for each group 
+
+## Achievement 5: Choosing and using alternative tests when ANOVA assumptions are not met
+
+Kiara explains to Leslie that the two main assumptions for ANOVA, normality and homogeneity of variances, have different alternatives when each assumption is not met. 
+
+### Calculating an alternate $F$-statistic for failing the homogeneity assumption
+
+The first option Kiara brings up is for when the normality assumption is met but the homogeneity of variances assumption fails, the standard approach is to use ANOVA but compute an alternate F statistic that does not rely on equal variances. There are two alternate $F$-statistics that are widely used for this purpose:
+
+* Brown-Forsythe 
+* Welch 
+
+#### Brown-Forsythe test 
+
+The Brown-Forsythe approach to calculating $F$ starts with a transformation of the continuous variable from its measured values to values that represent the distance each observation is from the median of the variable. So, had the homogeneity of variances assumption failed for comparing degree across technology use groups, the technology use variable might be transformed this way:
+
+$$
+\begin{equation}
+t = |y_{ij} - med_{y_{ij}}|
+ (\#eq:bftest.t)
+\end{equation}
+$$
+
+The $F$-statistic is then computed using the same $F$ formula but with the means computed for the transformation ($t$) of the variable rather than the raw value ($y$) of the continuous variable:
+
+$$
+\begin{equation}
+F_{BF}=\frac{\frac{\sum{n_{i.}(\overline{t}_{i.}-\overline{t})^2}}{k-1}}{\frac{\sum{\sum(t_{ik}-\overline{t}_{i.})^2}}{n-k}}
+ (\#eq:bftest2)
+\end{equation}
+$$
+
+While there are R packages that can be used to compute the Brown-Forsythe directly, another option is to transform the outcome variable and use the `aov()` command used for ANOVA. Nancy shows the team how to create this new variable using `abs()` to get the absolute value of the difference between each value of USETECH and the median of USETECH, making sure to remove the NA in the `median()` function so it works.
+
+```{r}
+# add new variable to data management
+gss.2018.cleaned <- gss.2018 %>% 
+  mutate(USETECH = na_if(x = USETECH, y = -1)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 999)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 998)) %>% 
+  mutate(AGE = na_if(x = AGE, y = 98)) %>% 
+  mutate(AGE = na_if(x = AGE, y = 99)) %>% 
+  mutate(DEGREE = na_if(x = DEGREE, y = 8)) %>% 
+  mutate(DEGREE = na_if(x = DEGREE, y = 9)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 8)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 9)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 0)) %>% 
+  mutate(SEX = factor(SEX, labels = c("male","female"))) %>%
+  mutate(DEGREE = factor(x = DEGREE, labels = c("< high school",
+                                                "high school", "junior college",
+                                                "bachelor", "graduate"))) %>% 
+  mutate(HAPPY = factor(x = HAPPY, labels = c("very happy", 
+                                              "pretty happy",
+                                              "not too happy"))) %>%
+  mutate(usetech.t = abs(USETECH - median(USETECH, na.rm = TRUE)))
+
+# check new variable
+summary(object = gss.2018.cleaned$usetech.t)
+
+
+
+```
+
+The new variable looks good, Leslie copies the `oneway.test()` from earlier, changes it to use usetech.t instead, and starts the NHST process.
+
+#### NHST Step 1: Write the null and alternate hypotheses
+
+The null and alternate hypotheses would be:
+
+H0: The mean rank of technology use is the same across educational degree groups.
+
+HA: The mean rank of technology use is not the same across educational degree groups.
+
+#### NHST Step 2: Compute the test statistic
+
+```{r}
+# brown-forsythe anova
+usetech.t.by.degree <- oneway.test(formula = usetech.t ~ DEGREE,
+                                   data = gss.2018.cleaned)
+usetech.t.by.degree
+```
+
+#### NHST Step 3: Compute the probability for the test statistic (p-value) 
+
+The p-value in this case is `r format(usetech.t.by.degree$p.value, scientific = FALSE)`. The value of an $F_{BF}$-statistic being this large or larger happens a tiny percent of the time when the null hypothesis is true. 
+
+#### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+
+Leslie writes her conclusion:
+
+> The results show a statistically significant difference in the mean of the transformed usetech variable by degree group [F(`r usetech.t.by.degree$parameter[1]`, `r usetech.t.by.degree$parameter[2]`) = `r round(usetech.t.by.degree$statistic, 2)`; p < .05]. 
+
+Leslie is interested in how the transformed data used in these calculations looks; she decides to compute the descriptive statistics and examine a graph of the transformed variable to better understand the results.
+
+```{r}
+# means of transformed variable
+usetech.t.stats <- gss.2018.cleaned %>% 
+  group_by(DEGREE) %>%
+  summarise(m.usetech.t = mean(usetech.t, na.rm = T),
+            sd.usetech.t = sd(usetech.t, na.rm = T))
+usetech.t.stats
+```
+
+The mean of the transformed usetech variable, which were the difference between participant usetech value and the median value of usetech, was `r round(usetech.t.stats$m.usetech.t[1], 2)` for the **< high school** group and `r round(usetech.t.stats$m.usetech.t[2], 2)` for the high school group. The rest of the means were smaller. The transformation made the differences somewhat smaller and the means higher in the lower education groups. A boxplot shows the differences across the groups:
+
+```{r}
+# graph transformed USETCH variable
+gss.2018.cleaned %>%
+  drop_na(usetech.t) %>%
+  ggplot(aes(y = usetech.t, x = DEGREE, fill = DEGREE, color = DEGREE)) + 
+  geom_boxplot(alpha = .8) + 
+  geom_jitter(alpha = .3) +
+  scale_fill_manual(values = c("#78A678", "dodgerblue2","#7463AC", 
+                               "deeppink", "gray80"), guide = FALSE) +
+  scale_color_manual(values = c("#78A678", "dodgerblue2","#7463AC", 
+                               "deeppink", "gray80"), guide = FALSE) +
+  theme_minimal() + xlab("Degree") +
+  ylab("Distance to median of tech use time")
+```
+
+Leslie notices that the transformation has reduced the differences between the junior college, bachelor, and graduate categories, with the boxplot showing nearly the same median value for the transformed variable. Kiara reminds Leslie that they have another option for this situation. The Welch's variation on ANOVA is also useful when the assumption of homogeneity of variances is not met. 
+
+While Leslie has been working on the Brown-Forsyth test, Kiara looked up some additional information on the Welch test. Rather than use a transformed outcome variable, the main idea behind the Welch $F$-test is to use weights in the calculation of the group means and overall mean (also known as the **grand mean**). The weight is computed for each group to account for the different variances across groups:
+
+$$
+\begin{equation}
+w_1 = \frac{n_k}{s^2_k}
+ (\#eq:weightwelch)
+\end{equation}
+$$
+
+Where $n_k$ is the sample size in group k and $s^2_k$ is the variance in group k. The grand mean is computed using the weight and the weighted mean for each of the groups:
+
+$$
+\begin{equation}
+\overline{y}_{welch} = \frac{\sum_{j=1}^k{w_k \overline{y}_{k}}}{\sum_{j=1}^k{w_k}}
+ (\#eq:weightwelch2)
+\end{equation}
+$$
+
+Where $w_k$ is the weight for group $k$, $\overline{y}_k$ is the mean of the continuous variable for group $k$. The $\sum_{j=1}^k$ is the sum of each group from the first group, $j=1$ to the last group, $j=k$. The Welch grand mean is then used in the final computation of the Welch $F$-statistic, which gets a little complex [@field2013discovering]:
+
+$$
+\begin{equation}
+F_{welch}=\frac{\frac{\sum_{j=1}^k{w_k(\overline{y}_k-\overline{y}_{welch})^2}}{r-1}}{1+\frac{2}{3}\Bigg(\frac{\frac{3\sum_{j=1}^k\bigg(1-\frac{w_k}{\sum_{j=1}^k{w_k}}\bigg)^2}{n_k-1}}{k^2-1}\Bigg)(k-2)}
+ (\#eq:cov)
+\end{equation}
+$$
+
+Leslie takes one look at the formula and asks if there is an R command to compute the value. Nancy explains that the `oneway.test()` command computes Welch's F when the option `var.equal =` is set to be false. Leslie gets her NHST process started:
+
+#### NHST Step 1: Write the null and alternate hypotheses
+
+The null and alternate hypotheses would be:
+
+H0: Time using technology is the same across educational degree groups.
+
+HA: Time using technolgy is not the same across educational degree groups.
+
+#### NHST Step 2: Compute the test statistic
+
+```{r}
+# welch test for unequal variances
+welch.usetech.by.degree <- oneway.test(formula = USETECH ~ DEGREE,
+            data = gss.2018.cleaned,
+            var.equal = FALSE)
+welch.usetech.by.degree
+```
+
+#### NHST Step 3: Compute the probability for the test statistic (p-value) 
+
+The p-value in this case is `r format(welch.usetech.by.degree$p.value, scientific = FALSE)`. The value of an $F_{W}$-statistic being this large or larger happens a tiny percent of the time when the null hypothesis is true. 
+
+#### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+
+The results show another statistically significant difference in the mean of the usetech variable by degree group [F(`r welch.usetech.by.degree$parameter[1]`, `r welch.usetech.by.degree$parameter[2]`) = `r round(welch.usetech.by.degree$statistic, 2)`; p = `r format(welch.usetech.by.degree$p.value, scientific = FALSE)`]. Leslie notices that the $F$-statistic is a little larger and the degrees of freedom for the denominator is a smaller number. Kiara explains that the weighting is also used in the calculation of the denominator degrees of freedom [@field2013discovering]:
+
+$$
+\begin{equation}
+df_{denom}=\frac{1}{\frac{3\sum_{j=1}^k\bigg(1-\frac{w_k}{\sum_{j=1}^k{w_k}}\bigg)^2}{n_k-1}}
+ (\#eq:cov)
+\end{equation}
+$$
+
+With fewer degrees of freedom, the $F$-statistic has to be a larger number to reach statistical significance. Examine a few F-distributions to see how this works:
+
+```{r echo = FALSE, fig.cap="F-distributions with 4 degrees of freedom in the numerator."}
+x <- seq(0,20,length=10000)
+db2 <- df(x, 4, 2000)
+db3 <- df(x, 4, 25)
+db4 <- df(x, 4, 10)
+dat2 <- data.frame(x, db2, "2000")
+names(dat2) <- c("x","db", "df")
+dat3 <- data.frame(x, db3, "25")
+names(dat3) <- c("x","db", "df")
+dat4 <- data.frame(x, db4, "10")
+names(dat4) <- c("x","db", "df")
+dats <- rbind(dat2, dat3)
+dats <- rbind(dats, dat4)
+dats$df <- as.factor(dats$df)
+levels(dats)
+ggplot(data = dats, aes(x = x, y = db, color = df)) +
+  geom_line() +
+  theme_minimal() +
+  ylim(0,.8) + xlim(0, 5) +
+  xlab("F statistic") + ylab("Probability") + 
+  guides(color = guide_legend("Denominator\nd.f.")) +
+  scale_color_manual(values = c("dodgerblue2","#88398a", "deeppink"))
+
+```
+
+Leslie reviews the plot and notices that, while different, the distributions do not seem to be **very** different. Nancy notes that while it is true that there isn't much difference between the distributions, the area under the curves is what matters for the p-value cutoff. When the line is just slightly closer to the x-axis, this changes things quickly for the area under the curve. The thresholds for statistical significance (p < .05) for these three lines are `r qf(.95, 4, 2000)` for the 2000 degrees of freedom, `r qf(.95, 4, 25)` for the 25 degrees of freedom, and `r qf(.95, 4, 10)` for the 10 degrees of freedom. Nancy reminds Leslie that the numerator degrees of freedom has a bigger impact on the significance threshold. For example, an ANOVA with 2 degrees of freedom and the same 2000 degrees of freedom in the denominator would have a threshold for significance of `r qf(.95, 2, 2000)` instead of `r qf(.95, 4, 2000)` for the 4 and 2000 threshold.
+
+Leslie asks if the $\omega^2$ can be used to determine effect size for Welch $F$ and Brown-Forsythe $F$. Kiara has not seen any resources that explicitly show this as an option, but the Skidmore & Thompson paper suggests it may be biased, especially when groups being compared are different sizes and the homogeneity of variances assumption fails [@skidmore2013bias]. At this point, Kiara suggests using descriptive statistics and graphs to demonstrate differences until the statistical theory catches up. 
+
+### The Kruskal-Wallis test for failing the normality assumption
+
+The Kruskal-Wallis test is used to compare three or more groups when the normal distribution assumption fails for ANOVA. Like several of the tests used when the the outcome is not normally distributed for a t-test, the Kruskal-Wallis test compares ranks among groups. Specifically, the observations are put in order by size and each is assigned a rank. The mean rank for each group is then computed and used to calculate the KW test statistic, $H$:
+
+$$
+\begin{equation}
+H=\frac{12}{n(n+1)}\sum_{j=1}^k{n_j(\overline{r}_j-\frac{n+1}{2})^2}
+ (\#eq:kwtest)
+\end{equation}
+$$
+
+In this formula, $n$ is the overall sample size, $n_j$ is the sample size for group $j$ and $\overline{r}_j$ is the mean rank for group $j$. 
+
+#### NHST Step 1: Write the null and alternate hypotheses
+
+The null and alternate hypotheses would be:
+
+H0: The mean rank of technology use is the same across educational degree groups.
+
+HA: The mean rank of technology use is not the same across educational degree groups.
+
+#### NHST Step 2: Compute the test statistic
+
+```{r}
+# compare usetech by degree
+kw.usetech.by.degree <- kruskal.test(formula = USETECH ~ DEGREE,
+                                     data = gss.2018.cleaned)
+kw.usetech.by.degree
+```
+
+#### NHST Step 3: Compute the probability for the test statistic (p-value) 
+
+The p-value in this case is `r format(kw.usetech.by.degree$p.value, scientific = FALSE)`. The value of an $H$-statistic being this large or larger happens a tiny percent of the time when the null hypothesis is true. 
+
+#### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+
+The conclusion is that there is a difference in the mean rank for technology use by degree group (H(`r kw.usetech.by.degree$parameter`) = `r kw.usetech.by.degree$parameter`; p < .05). Like the ANOVA results, the KW test identifies if there is a difference somewhere among the means but does not identify which groups are different from one another. A post-hoc test like _Bonferroni_ or _Tukey_ could help. For KW, _Dunn's test_ of multiple comparisons is useful for identifying which groups are _statistically significantly_ different from which other groups.
+
+#### Post-hoc test for Kruskal-Wallis
+
+Dunn's test command `dunn.test()` is available in the <span style="font-family:Lucida Console, monospace;font-weight:bold">dunn.test</span> package. After installing the package, the command requires a method be selected for adjusting the p-value to account for the multiple comparisons. Nancy suggests Bonferroni since that is one of the methods commonly used with ANOVA. She shows Leslie that `dunn.test()` takes three arguments. The `x =` argument is the continuous variable, the `g = ` argument is for the groups, and the `method =` argument suggests the p-value adjustment method.
+
+```{r}
+# post-hoc test for usetech by degree
+dunn.usetech.by.degree <- dunn.test::dunn.test(x = gss.2018.cleaned$USETECH,
+                                               g = gss.2018.cleaned$DEGREE,
+                                               method = "bonferroni")
+```
+
+Note that the Dunn's test is a rank-sum test just like the Mann-Whitney U and can be interpreted in the same way. In this case it appears that there is _no difference_ in technology use for _graduate vs. bachelor_, _junior college vs. bachelor_, or _junior college vs. graduate_. All other pairings have statistically significant differences. The table shows a z-statistic for each pair computed from the sum of the ranks for the pair. Below the z-statistic is a p-value associated with the z-statistic. The p-value is adjusted using a Bonferroni adjustment, which means it was multiplied by the number of comparisons. In this case, the number of comparisons was $\frac{5\cdot(5-1)}{2}$ = 10.
+
+Leslie thinks it would be good to visualize the differences in order to better understand the results. Nancy knows some code to recode a variable into rank creates a rank variable. Leslie sees she has an argument for this variable that is new and asks what `na.last = "keep"` means. Nancy explains that the default for `rank()` is to give the NA values a rank; since it makes more sense to leave them as NA, she adds the "keep" option to the argument. She shows Leslie the help documentation where she found this information after noticing that the NA values had been given ranks in an earlier project. 
+
+```{r}
+# add new variable to data management
+gss.2018.cleaned <- gss.2018 %>% 
+  mutate(USETECH = na_if(x = USETECH, y = -1)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 999)) %>%
+  mutate(USETECH = na_if(x = USETECH, y = 998)) %>% 
+  mutate(AGE = na_if(x = AGE, y = 98)) %>% 
+  mutate(AGE = na_if(x = AGE, y = 99)) %>% 
+  mutate(DEGREE = na_if(x = DEGREE, y = 8)) %>% 
+  mutate(DEGREE = na_if(x = DEGREE, y = 9)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 8)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 9)) %>% 
+  mutate(HAPPY = na_if(x = HAPPY, y = 0)) %>% 
+  mutate(SEX = factor(SEX, labels = c("male","female"))) %>%
+  mutate(DEGREE = factor(x = DEGREE, labels = c("< high school",
+                                                "high school", "junior college",
+                                                "bachelor", "graduate"))) %>% 
+  mutate(HAPPY = factor(x = HAPPY, labels = c("very happy", 
+                                              "pretty happy",
+                                              "not too happy"))) %>%
+  mutate(usetech.t = abs(x = USETECH - median(USETECH, na.rm = TRUE))) %>%
+  mutate(usetech.rank = rank(x = USETECH, na.last = "keep"))
+
+# check new variable
+summary(object = gss.2018.cleaned$usetech.rank)
+```
+
+The new variable looks good and Leslie goes ahead with a graph:
+
+```{r fig.cap="Ranks of technology use by degree groups."}
+# graph the ranks
+gss.2018.cleaned %>%
+  ggplot(aes(y = usetech.rank, x = DEGREE)) + 
+  geom_boxplot(aes(fill = DEGREE), alpha = .8) + 
+  geom_jitter(aes(color = DEGREE), alpha = .3) +
+  scale_fill_manual(values = c("#78A678", "dodgerblue2","#7463AC", 
+                               "deeppink", "gray80"), guide = FALSE) +
+  scale_color_manual(values = c("#78A678", "dodgerblue2","#7463AC", 
+                               "deeppink", "gray80"), guide = FALSE) +
+  theme_minimal() + 
+  labs(x = "Degree", y = "Ranks of technology use time")
+
+```
+
+Leslie notices that the plot clearly demonstrates the significant differences seen in the post-hoc tests. The three college groups are very similar to one another, and there are differences among the other groups.
+
+#### Effect size for Kruskal-Wallis
+
+Leslie asks if there is also an effect size to report with the Kruskal-Wallis $H$? Kiara explains that $\eta^2$ works for Kruskal-Wallis, and is computed [@cohen2008explaining]:
+
+$$
+\begin{equation}
+\eta^2_H=\frac{H-k+1}{n-k}
+ (\#eq:kweta)
+\end{equation}
+$$
+
+For the Kruskal-Wallis test of technology use by degree, there are 936 NA values out of 2345 observations in the data frame, so $n=2345-936=1409$.
+
+$$
+\begin{equation}
+\eta^2_H=\frac{142.21-5+1}{1409-5}=.098
+ (\#eq:kweta2)
+\end{equation}
+$$
+
+The cutoff values are the same as for the $\omega^2$:
+
+* $\eta^2$ = .01 to $\eta^2$ < .06 is a small effect 
+* $\eta^2$ = .06 to $\eta^2$ < .14 is a medium effect 
+* $\eta^2 \ge$ .14 is a large effect 
+
+In this case, consistent with the ANOVA results, the effect size for the Kruskal-Wallis test is medium. There is a medium strength relationship between degree and time using technology. Leslie writes her interpretation:
+
+> A Kruskal-Wallis test found a statistically significant difference in technology use time across degree groups ($H$ = 142.21; p < .05). Based on post-hoc tests, those with less than a high school education had statistically significantly lower ranked times than all of the other groups (p < .05), people with a bachelor's degree, a master's degree, or a junior college degree also had significantly higher ranks than those with a high school diploma. There were no significant differences among the three college groups. There was a medium effect size for the relationship between degree and ranked values of technology use ($\eta^2 = .098$).
+
+### Unlocking achievement 5: Check your understanding
+
+Next to each test, put the ANOVA assumption violation it addresses.
+
+* Brown-Forsyth
+* Welch
+* Kruskal-Wallis
+
+## Achievement 6: Understanding and conducting two-way ANOVA 
+
+One-way ANOVA is useful when there is a single categorical variable (with 3+ categories) and a continuous variable being compared across the categories. What happens when there there are two categorical variables that may both be useful in explaining a continuous outcome? For example, Leslie has read that technology use varies by sex and age. Kiara says that both of those predictors are available in the data set and they can use ANOVA methods to answer the question. Specifically, two-way ANOVA is useful for situations where means are compared across the categories of two variables. ANCOVA (analysis of covariance) is useful for comparing means across groups while accounting for, or controlling for, some other continuous variable.
+
+### Exploratory data analysis for two-way ANOVA
+
+The boxplots for technology use by degree showed an increase in the percent of time using technology for those with higher educational attainment. Leslie suggests looking at the use of technology by sex:
+
+```{r fig.cap="Distribution of technology use by sex"}
+# graph usetech by sex
+gss.2018.cleaned %>%
+  ggplot(aes(y = USETECH, x = SEX)) + 
+  geom_jitter(aes(color = SEX), alpha = .3) +
+  geom_boxplot(aes(fill = SEX), alpha = .8) + 
+  scale_fill_manual(values = c("dodgerblue2","deeppink")) +
+  scale_color_manual(values = c("dodgerblue2","deeppink")) +
+  theme_minimal() + xlab("Sex") + 
+  ylab("Percent of time spent using technology")
+```
+
+It appears that sex does have some relationship to time spent on technology use. Nancy explains that two-way ANOVA can be used to determine if degree and sex both have relationships with technology use by themselves and whether they **interact** to explain technology use. That is, does technology use differ by degree differently for males and females. She suggests examining a boxplot with both categorical variables to help make a prediction:
+
+```{r fig.cap="Distribution of technology use by degree and sex"}
+# graph usetech by degree
+gss.2018.cleaned %>%
+ggplot(aes(y = USETECH, x = DEGREE, fill = SEX)) + 
+  geom_boxplot(alpha = .8) + 
+  scale_fill_manual(values = c("dodgerblue2","deeppink")) +
+  theme_minimal() + xlab("Degree") + 
+  ylab("Percent of time spent using technology")
+```
+
+Leslie notices that there appears to be a different pattern of technology use for males and females. Females with less than a high school degree are using technology a lower percent of the time, but then jump past the males in the high school group and stay higher than males for the junior college group as well. Males and females seem to have relatively equal time spent with technology once a bachelor or graduate degree is earned. 
+
+Nancy explains that this pattern of differences is consistent with an interaction. She suggests that they look at a traditional **means plot** to visualize the idea of an interaction. Although line graphs are ideally not used to display means by groups, they do aid in understanding what an interaction looks like. Nancy writes a little code so they can better understand any possible interaction:
+
+```{r fig.cap = "Means plot of technology use by degree and sex."}
+# means plots graph 
+gss.2018.cleaned %>%
+  ggplot(aes(y = USETECH, x = DEGREE, color = SEX)) + 
+  stat_summary(fun.y = mean, geom="point", size = 2) +
+  stat_summary(fun.y = mean, geom="line", aes(group = SEX), size = 1) +
+  scale_color_manual(values = c("dodgerblue2","deeppink")) +
+  theme_minimal() + 
+  labs(x = "Degree", y = "Percent of time spent using technology") +
+  ylim(0, 100)
+```
+
+Kiara explains that, When the lines in means plots like this one are parallel, this indicates that there is no interaction between the two categorical variables. The mean of the continuous variable is consistently higher or lower for certain groups compared to others. When the means plot shows lines that cross or diverge, this indicates that there is an interaction between the categorical variables. The mean of the continuous variable is different at different levels of the first continuous variable depending on the value of the other continuous variable. For example, mean technology use is lower for females compared to males for the lowest and highest degree categories, but female technology use is higher than male tech use for the three other categories of degree.
+
+Given this interaction and the differences seen in technology use by degree and by sex, Kiara suggests that the two-way ANOVA will likely find significant relationships for degree, sex, and the interaction between the two. Leslie thinks this sounds logical and starts the NHST process to test it. Leslie wants to examine the group means before estimating the ANOVA but now she has two groups. Nancy explains that `group_by()` will still work, just put both grouping variables in the parentheses:
+
+```{r}
+# means by degree and sex
+use.stats.2 <- gss.2018.cleaned %>% 
+  group_by(DEGREE, SEX) %>% 
+  drop_na(USETECH) %>%
+  summarize(m.techuse = mean(USETECH),
+            sd.techuse = sd(USETECH))
+use.stats.2
+```
+
+Leslie reviews the means and finds that the most striking difference among the means for males and females is in junior college, when males spend a mean of 47.0% of their time on technology while females spend 70.4% of their time. Within each education group, the other means for males and females are much closer. Leslie starts the NHST process:
+
+### Two-way ANOVA NHST
+
+#### NHST Step 1: Write the hypotheses 
+
+H0: The mean level of technology use is the same across groups by degree, sex, and their interaction. 
+
+HA: The mean level of technology use is not the same across groups.
+
+#### NHST Step 2: Compute the test statistic
+
+Kiara steps in to help Leslie at this point. The interaction term is included in the ANOVA command `aov()` by multiplying the two categorical variables. Leslie starts to write `formula = USETECH ~ DEGREE + SEX + DEGREE*SEX` in the `aov()` command, but Kiara explains that the individual terms are not needed if there is an interaction. The `aov()` command will include individual terms for any variables included in an interaction term. 
+
+Leslie writes the code to get the test statistic:
+
+```{r}
+# two-way ANOVA technology use by degree and sex
+techuse.by.deg.sex <- aov(formula = USETECH ~ DEGREE * SEX, data = gss.2018.cleaned)
+summary(techuse.by.deg.sex)
+```
+
+Nancy explains that the statistic column in the output is a column of $F$-statistics. Leslie notices that there are three $F$-statistics for this ANOVA. One for each of the two individual variables, also called *main effects* and one for the interaction term. 
+
+#### NHST Step 3: Compute the probability for the test statistic (p-value) 
+
+```{r echo = FALSE}
+library(broom)
+```
+
+The p-values in this case were `r tidy(techuse.by.deg.sex)$p.value[1]`, `r tidy(techuse.by.deg.sex)$p.value[2]`, and `r tidy(techuse.by.deg.sex)$p.value[3]`. These are very tiny p-values, for example, the value of an $F$-statistic being as large or larger than the $F$-statistic for the DEGREE main effect happens a tiny percent of the time when the null hypothesis is true. 
+
+#### NHST Steps 4 & 5: Interpret the probability and write a conclusion 
+
+The mean time spent on technology use was significantly different across degree groups [F(`r tidy(techuse.by.deg.sex)$df[1]`,`r tidy(techuse.by.deg.sex)$df[4]`) = `r tidy(techuse.by.deg.sex)$statistic[1]`; p = `r tidy(techuse.by.deg.sex)$p.value[1]`] indicating these groups likely came from populations with different mean time spent on technology use. Means were also statistically significant by sex [F(`r tidy(techuse.by.deg.sex)$df[2]`,`r tidy(techuse.by.deg.sex)$df[4]`) = `r tidy(techuse.by.deg.sex)$statistic[2]`; p = `r tidy(techuse.by.deg.sex)$p.value[2]`] and there was a statistically significant interaction between degree and sex on technology use [F(`r tidy(techuse.by.deg.sex)$df[3]`,`r tidy(techuse.by.deg.sex)$df[4]`) = `r tidy(techuse.by.deg.sex)$statistic[3]`; p = `r tidy(techuse.by.deg.sex)$p.value[3]`].  The highest mean was `r use.stats.2[9,3]`% of time used for technology for males with graduate degrees. The lowest mean was `r use.stats.2[2,3]`% of the time for females with less than a high school diploma. The interaction between degree and sex shows that time spent on technology use increases more quickly for females with both males and females eventually having high tech use in the top two education groups. 
+
+### Post-hoc test for two-way ANOVA
+
+After a little searching, Leslie is disappointed to find that the Bonferroni post-hoc test is not available in R for two-way ANOVA, but she does find that the Tukey Honestly Significant Difference test still works. She writes a single line of code to determine which groups have statistically significantly different mean technology use:
+
+```{r}
+# Tukey post-hoc test
+TukeyHSD(techuse.by.deg.sex)
+```
+
+Kiara explains that the output is showing one comparison per row. The first section is comparing groups of degree to each other. The second section is comparing males and females to each other. The third section is the interaction, comparing groups of degree+sex with each other. For example, the first row in this last section is **high school:male-< high school:male**, which compares **high school male** to **< high school male**. The numbers that follow are the difference between the means (diff = 17.8132060), the confidence interval around the difference (95% CI: 2.7275183 to 32.8988937), and the p-value for the difference between the means (p = 0.0072699). This indicates that there is a statistically significant (p < .05) difference of 17.81 between the means for these two groups *in the sample* and that the difference between the means is somewhere between 2.73 and 32.90 in the population this sample came from. 
+
+Leslie finds that there are so many groups with significant differences that it seems more useful to just include the boxplot from the exploratory analysis or the means plot, a table of p-values for the comparisons, and mention any interesting overall patterns in the comparisons. Kiara and Nancy agree. Leslie finds that there are significant differences between males and females in the high school and junior college groups, but that males and females are not significantly different across the other educational groups. She also finds that the college groups spent significantly more time using technology than the two other groups, but were not statistically significantly different from each other. Overall it appears that higher education groups spend more time using technology for males and females and that high school and junior college educated females spend more time using technology than males with these same education levels.
+
+### Two-way ANOVA assumptions
+
+Kiara mentions that the assumptions of homogeneity of variances and normality are also applicable in two-way ANOVA. She explains that normality would be a little trickier to test by looking at each group since there are five degree groups, two sex groups, and 10 degree-by-sex groups (e.g., male and < high school). Instead of checking normality one group at a time, when there are a large number of groups in an ANOVA model, this assumption can be checked by examinging the **residuals**. The residuals are the distances between the value of the outcome for each person and the value of the group mean for that person. When the residuals are normally distributed, this indicates that the values in each group are normally distributed around the group mean. 
+
+#### Testing the normality assumption
+
+Leslie looks at the `techuse.by.deg.sex` object in the environment pane sees the residuals. She uses a Shapiro-Wilk test to check normality statistically and then plots the residuals for a visual assessment:
+
+```{r}
+# statistical test of normality for groups
+shapiro.test(techuse.by.deg.sex$residuals)
+```
+
+Leslie reminds herself that the null hypthesis for the Shapiro-Wilk test is that the distribution is normal. By rejecting this null hypothesis with a tiny p-value, the assumption is failed. Leslie graphs the residuals to confirm. She finds that the `ggplot()` command does not work with the ANOVA object, so she converts the residuals to a new data frame first and then graphs them:
+
+```{r fig.cap = "Distribution of residuals from tech use by degree and sex ANOVA."}
+# make a data frame
+tech.deg.sex <- data.frame(techuse.by.deg.sex$residuals)
+
+# plotting the residuals
+tech.deg.sex %>%
+ggplot(aes(x = techuse.by.deg.sex.residuals)) + 
+  geom_histogram(fill = "#7463AC", col = "white") + 
+  theme_minimal() + 
+  labs(x = "Residuals") 
+
+```
+
+The residuals do not appear to be normally distributed. Instead, Leslie notices, they seem bimodal, with some large residuals at the lower end and some at the upper end of the range. This indicates that some observations are quite far below or above the group mean value for their group. 
+
+#### Testing the homogeneity of variances assumption
+
+Leslie remembers the `leveneTest()` command from the car package can be used to test the null hypothesis that the variances are equal. Because she does not need the car package open for anything else, she uses `car::` to open the package just for the `leveneTest()` command to test this assumption:
+
+```{r}
+# Levene test for ANOVA
+car::leveneTest(y = USETECH ~ DEGREE*SEX, center = mean, data = gss.2018.cleaned)
+```
+
+Leslie notes that the statistically significant results indicate that the null hypothesis is rejected and therefore the equal variances assumption is not met. The ANOVA has failed its assumptions.
+
+### Alternatives when two-way ANOVA assumptions fail 
+
+Kiara recently read a textbook that suggested using a Friedman test [@macfarland2016friedman]. The book described the test as conducting ANOVA on ranked values (like the Mann-Whitney U and Welch one-way ANOVA tests). Nancy and Leslie think this sounds good and Nancy looks up the code to conduct the test. In R, the Friedman test can be conducted using `friedman.test()` on a set of means for each group in a summary data format rather than raw data. Nancy loves a challenge and gets to work:
+
+```{r}
+# Friedman two-way ANOVA for ranked data
+# R command requires summary data
+agg.gss.2018 <- gss.2018.cleaned %>% 
+  drop_na(USETECH) %>%
+  group_by(DEGREE, SEX) %>%
+  summarize(m.usetech = mean(USETECH))
+```
+
+Now that she has a new data frame with the summary data in it, she looks at the help 
+
+```{r}
+# Friedman test
+tech.by.deg.sex.f <- friedman.test(formula = m.usetech ~ DEGREE | SEX, 
+                                   data = agg.gss.2018)
+tech.by.deg.sex.f
+
+```
+
+The team is surprised that the Friedman test finds no statistically significant difference in the ranks of technology use by degree and sex [$\chi^2$(`r tech.by.deg.sex.f$parameter`) = `r tech.by.deg.sex.f$statistic`; p = `r tech.by.deg.sex.f$p.value`]. Given the means plots and boxplots developed in the exploratory data analysis for two-way ANOVA, this seems like an unusual result. Kiara does a little digging and finds a number of manuscripts suggesting that the Friedman test is not a great option for addressing failed assumptions because of the way the ranks are computed [@zimmerman1993relative;@harwell1994monte]. 
+
+Instead of using Friedman, another suggested method is to compute the ranks of the outcome and conduct the two-way ANOVA on the ranked outcome variable. Luckily, Leslie computed ranks already for the Dunn's test earlier and tries out the two-way ANOVA code with the transformed outcome variable:
+
+```{r}
+# two-way ANOVA technology use by degree and sex
+techuse.by.deg.sex.t <- aov(formula = usetech.rank ~ DEGREE * SEX, 
+                            data = gss.2018.cleaned)
+summary(techuse.by.deg.sex.t)
+```
+
+Nancy makes some plots of the ranks to add some context to the results:
+
+```{r echo = FALSE}
+# boxplot of usetech ranks
+ranks.box <- ggplot(data = subset(gss.2018.cleaned, !is.na(USETECH)), 
+       aes(y = usetech.rank, x = DEGREE)) + 
+  geom_boxplot(aes(fill = SEX), alpha = .8) + 
+  scale_fill_manual(values = c("dodgerblue2","deeppink")) +
+  theme_minimal() + xlab("") + ylim(0,1100) + 
+  ylab("Ranked percent of time\nspent using technology") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+# means plot of usetech ranks 
+ranks.means <- ggplot(data = subset(gss.2018.cleaned, !is.na(USETECH)), 
+       aes(y = usetech.rank, x = DEGREE, color = SEX)) + 
+  stat_summary(fun.y = mean, geom="point", size = 2) +
+  stat_summary(fun.y = mean, geom="line", aes(group = SEX), size = 1) +
+  scale_color_manual(values = c("dodgerblue2","deeppink")) +
+  theme_minimal() + xlab("Degree") + 
+  ylab("Ranked percent of time\nspent using technology")
+
+# both plots together
+gridExtra::grid.arrange(ranks.box, ranks.means)
+
+```
+
+The plots show a the difference from one degree group to the other and between males and females. Leslie writes her interpretation of the ranked outcome ANOVA: 
+
+> A two-way ANOVA with ranked technology time use as the outcome found statistically significant main effects of degree and sex on technology use (p < .05) and a statistically significant interaction between degree and sex (p < .05). The overall pattern of results indicates that males and females with less than a high school education use technology the least, while those with a college degree use technology the most. Males and females differ a lot in use of technology for those with a junior college degree, with females having a junior college degree having the highest use of technology of all females. 
+
+Another strategy sometimes used when two-way ANOVA assumptions are not met is a Box-Cox transformation on the outcome variable. The Box-Cox power transformations were developed to reduce the non-normality of residuals, so they may be useful here. The original paper by Box and Cox does a nice job of explaining the transformations [@box1964analysis] and there are numerous tutorials on the use of these transformations.
+
+## Chapter summary
+
+### Achievements unlocked in this chapter: Recap
+
+After reading this chapter and following along, Leslie (and you) has learned and practiced: 
+
+#### Achievement 1 recap: Using graphics and descriptive statistics to make a prediction
+
+Prior to conducting inferential statistical tests like $\chi^2$, it is useful to get some idea of the characteristics and relationships in your data. Descriptive statistics and graphs, or exploratory data analysis (EDA), can serve two purposes: (1) understand the people, things, or phenomena you are studying better, and (2) make an educated prediction about the likely results of a statistical test, which can help identify issues if (or when) the test is not properly conducted.
+
+#### Achievement 2 recap: One-way analysis of variance (ANOVA)
+
+One-way ANOVA compares the means of three or more groups. Significant results indicate that the differences among the means likely reflects a difference in means from the populations the samples came from. One-way ANOVA is an omnibus test (like $\chi^2$), identifying significant relationships but providing no measure of the strength of the association between variables. 
+
+#### Achievement 3 recap: Post-hoc testing and planned comparisons
+
+Following a significant ANOVA result, planned comparisons or a post-hoc test like Bonferroni or Tukey HSD can identify significant differences between pairs of means. Planned comparisons are typically used when there are hypothesized differences among the groups while post-hoc tests are used when there are no specific hypotheses about differences among group means. 
+
+#### Achievement 4 recap: ANOVA assumptions
+
+Statistical tests rely on underlying assumptions about the characteristics of the data. When these assumptions are not met, the results may not reflect the true relationships among the variables. For ANOVA, four assumptions need to be met: (1) continuous variable and three or more independent groups, (2) independent observations, (3) normal distribution in each group, and (4)  equal variances for each group. 
+
+#### Achievement 5 recap: Alternatives when ANOVA assumptions are not met
+
+When assumptions are not met for ANOVA, there are alternative tests that account for the data not meeting assumptions. When the homogeneity of variances assumption is not met, two alternative $F$-statistics are good options: Brown-Forsythe and Welch. When the normality assumption is not met, the Kruskal-Wallis test is an alternative test that compares the mean ranks across groups.
+
+#### Achievement 6 recap: Two-way ANOVA
+
+Two-way ANOVA is useful for comparing means across groups of two categorical variables separately and as an interaction. This type of statistical model can answer the question of how tech use varies by education and by sex and by the interaction of education and sex. Assumption checking and post-hoc tests apply in two-way ANOVA in similar ways as they did in one-way ANOVA.
+
+### Chapter exercises 
+
+The coder and hacker exercises are an opportunity to apply the skills from this chapter to a new scenario or a new data set. The coder edition will evaluate your application of the commands learned in this chapter (and earlier chapters) to similar scenarios to those in the chapter; the hacker edition will evaluate your use of the procedures from this chapter in new scenarios, usually going a step beyond what was explicitly explained. 
+
+Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 multiple choice questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 multiple choice questions correctly on your first try the rest correctly on your first or second try.
+
+Visit edge.sagepub.com/harris1e to complete the multiple choice questions and download the materials for the chapter exercises.
+
+Q1: What is the primary purpose of ANOVA?
+
+a. Comparing means across 3 or more groups 
+b. Comparing medians across 3 or more groups 
+c. Examining the relationship between two categorical variables 
+d. Identifying normally distributed data 
+
+Q2: Which of the following assumptions does NOT apply to ANOVA? 
+
+a. Independent observations 
+b. Normal distribution of continuous variable  
+c. Homogeneity of variances 
+d. Includes one bivariate variable  
+
+Q3: How many pairwise comparisons would there be for an ANOVA with four groups? 
+
+a. 16 
+b. 4 
+c. 12 
+d. 6 
+
+Q4: Apply a Bonferroni adjustment to a p-value of .01 if the analyses included 6 pairwise comparisons. If the threshold for statistical significance were .05, would the adjusted p-value be significant? 
+
+a. Yes 
+b. No 
+
+Q5: In which situation would you use planned comparisons?
+
+a. After a significant ANOVA to compare each pair of means 
+b. Instead of an ANOVA when the data did not meet the normality assumption 
+c. When you have to choose between two categorical variables 
+d. When you conduct an ANOVA and have hypotheses about which sets of means are different from one another
+
+#### Chapter exercises: Coder edition 
+
+Depending on your score in the knowledge check, choose either the coder or hacker edition of the chapter exercises. Use the data from this chapter and the appropriate tests to examine technology use by happiness. 
+
+1) Open the data using the strategy shown in this chapter 
+2) Clean the happiness, sex, and tech use variables so they have clear variable names, category labels, and missing value coding 
+3) (**A1**) Use graphics and descriptive statistics to examine tech use on its own, by sex, and by happiness 
+4) (**A1**) Based on the graphs and statistics from question 3, make a prediction about what you would find when you compare tech use across groups for happiness and for sex 
+5) (**A2**, **A5**) Conduct the appropriate test to compare mean time using tech across happiness groups. If the $F$-statistic is significant, use a post-hoc test to determine which means are statistically significantly different from each other. Interpret your results. 
+6) (**A3**, **A5**) Check assumptions for the ANOVA and conduct an appropriate alternate analysis if it does not pass assumptions. Interpret your results. 
+7) (**A6**) Conduct a two-way ANOVA with time using technology by sex and happiness. Interpret results and check assumptions.
+
+#### Chapter exercises: Hacker edition
+
+Complete the coder edition and:
+
+* Use the graphics in #3 to hypothesize which happiness groups have different tech use means. Write planned comparisons instead to test your hypotheses and conduct an appropriate planned comparison analysis instead of post-hoc tests in #5. 
+* Conduct and interpret post-hoc test for the two-way ANOVA developed in #7 
+
+#### Instructor note
+
+Solutions to exercises can be found on the book website, along with *Ideas for Gamification* for those who want to *take it further*.
+
+### BOXES
+
+#### Nancy's fancy code: nested and non-nested commands {#ch7nancy}
+
+<img align = "left" src = "graphics\nancy.gif" style="PADDING-RIGHT: 30px">
+
+sometimes it is more efficient, although not always more clear, to nest R functions inside each other. Nested functions work from the inside to the outside, so if function A is nested inside function B, function A will run first and the results of function A will be passed to function B. For example, there are nested and non-nested ways to compute the TukeyHSD post-hoc test: 
+
+##### Non-nested
+
+```{r}
+# run the ANOVA and get a new object 
+anova.for.Tukey <- aov(formula = USETECH ~ DEGREE,
+                         data = gss.2018.cleaned)
+
+# use the ANOVA object in TukeyHSD
+tukey.tech.by.deg <- TukeyHSD(anova.for.Tukey )
+tukey.tech.by.deg
+```
+
+##### Nested
+
+Put the ANOVA analysis inside the TukeyHSD command to do the ANOVA first and then pass its results directly to `TukeyHSD()`:
+
+```{r}
+# Tukey post-hoc test for tech.by.deg
+tukey.tech.by.deg <- TukeyHSD(aov(formula = USETECH ~ DEGREE, 
+                                  data = gss.2018.cleaned))
+tukey.tech.by.deg
+```
+
+The nested version is less code overall, but if the ANOVA object is useful for other reasons, the non-nested option may be more efficient. Both versions give the same results, it just depends on the purpose and structure of you code for which is more clear and efficient.
+
+#### Kiara's reproducibility resource: accessing elements of a list {#ch7kiara}
+
+<img align = "left" src = "graphics\kiara.gif" style="PADDING-RIGHT: 30px">
+
+Kiara wants to demonstrate how working with R code is going to be more precise and therefore easier to reproduce than copying results and doing the math by hand, even if it does seem more efficient. She demonstrates by computing the $\omega^2$ for the ANOVA by hand and with R. To do this math in R from the `aov()` object **techuse.by.deg.aov**, some fancy code is needed to access the list that is created with `summary()`. The object created by `summary()` is a list.  
+
+```{r}
+# create a summary object
+summ.tech.anova <- summary(object = techuse.by.deg.aov)
+```
+
+Looking at the list in the environment pane, there are several entries in the list (Figure \@ref(fig:summ.obj)). 
+
+```{r summ.obj, echo = FALSE, fig.cap="Screenshot of GSS Data Explorer 2018 USETECH variable."}
+knitr::include_graphics("graphics/chap7-summ.object.JPG")
+```
+
+To access the parts of the list, square brackets are `[]` are used. A single element of the list requires double square brackets `[[]]` with the position of the element inside. So, for the **summ.tech.anova** object, use:
+
+```{r}
+# access first item in the summ.tech.anova list
+summ.tech.anova[[1]]
+```
+
+Great! If you need a single number from this first list element, use the single square brackets `[]` to get the number. Inside single square brackets put the position of the number you need with row first and column second. For example, to get the $F$ value from this list element, use row 1 and column 4:
+
+```{r}
+# access first item in the summ.tech.anova list
+summ.tech.anova[[1]][1, 4]
+```
+
+Voila! There is the $F$ statistic all by itself. This strategy could be used to compute the $\omega^$ using code instead of retyping numbers. Remember the formula:
+
+$$
+\begin{equation}
+\omega^2 = \frac{F-1}{F+\frac{n-k+1}{k-1}}=\frac{43.3-1}{43.3+\frac{1409-5+1}{5-1}}=.107
+ (\#eq:omsq2)
+\end{equation}
+$$
+
+Now use R code to get the value. The degrees of freedom for degree are $k-1$ and the degrees of freedom for the residuals are $n-k$, so these can be used to get $k$ and $n$: 
+
+```{r}
+# compute omega using R code
+k.om <- summ.tech.anova[[1]][1, 1] + 1
+n.om <- summ.tech.anova[[1]][2, 1] + summ.tech.anova[[1]][1, 1] + 1
+omega.sq <- (summ.tech.anova[[1]][1, 4])/(summ.tech.anova[[1]][1, 4] + (n.om - k.om + 1)/(k.om - 1))
+omega.sq
+```
+
+The $\omega^2$ is a little larger, likely due to the rounding of the $F$ statistic in the by-hand version of the calculations. Kiara is satisfied that this has demonstrated the need to use R code for reproducibility. Leslie grudgingly agrees even though the code seems really long and complicated for a .002 difference. 
+
+#### Leslie's stats stuff: Type I and Type II errors {#ch7leslie}
+
+<img align = "left" src = "graphics\leslie.gif" style="PADDING-RIGHT: 30px">
+
+There are four possible outcomes to a statistical test: 
+
+```{r echo = FALSE, message = FALSE}
+library(descr)
+row.col.vals <- matrix(c('True', 'Type I error', 
+                          'Type II error', 'True'), 
+                        nrow = 2, dimnames = list(c("Fail to reject", "Reject"),
+                                           c("True",
+                                                        "False")))
+
+library(htmlTable)
+htmlTable(row.col.vals,
+          header =  paste(c("True", "False"), ""),
+          rnames = paste(c("Failed to reject", "Rejected"), ""),
+          cgroup = "In reality, the null hypothesis is...",
+          n.rgroup = 2,
+          rgroup = "Hypothesis test")
+
+
+```
+
+A Type II error, also called $\beta$, is when there is a relationship but the study did not detect it. A Type I error, also called $\alpha$, is when there is **no relationship** but the study detects one. The $\alpha$ for Type I error is also the threshold set for statistical significance. The threshold for statistical significance is the amount of uncertainty tolerated in concluding whether or not a result is _statistically significant_. If $\alpha$ is .05, this is a willingness to risk a 5% chance of making a Type I error of rejecting the null hypothesis when it should be retained. Increasing sample size and decreasing the threshold for _statistical significance_ ($\alpha$) can aid in decreasing Type I and II errors. 
+
+
+
+
+
+

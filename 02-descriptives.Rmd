@@ -157,7 +157,7 @@ Kiara explains that the **numeric** data type is also used for variables that do
 
 Leslie remembers that each different type of variable requires a different approach for analysis. Before getting into any complex statistical modeling, she remembers that descriptive statistics are key for understanding who or what is in the data set and often help in choosing an appropriate statistical test and refining analysis planning. 
 
-### Unlocking achievement 1: Check your understanding
+### unlock achievement 1: Check your understanding
 
 Identify the most appropriate R data type for the following variables: 
 
@@ -212,7 +212,7 @@ While the numbers look ok, Nancy suggests that this table is poorly formatted an
 * Clear column and row labels
     + row/column sample size if different from overall
     
-### Data management 
+### Data management {#datamgmt}
     
 In order to format this table so it is clear, Nancy advises that Leslie use some of the tools from Chapter 1 and some new tools. The first thing to do might be to add **labels** to the transgender variable so that it is clear which categories the frequencies represent. Leslie reminds herself that **labels** are the words that describe each category of a categorical or factor type variable. Before she can add labels, Leslie needs to know what type of variable the transgender variable is. Leslie starts by examining the data type of the variable with the `class()` command: 
 
@@ -322,7 +322,7 @@ Hmisc::describe(x = brfss.2014.cleaned)
 
 They look through the information and see that percents are included, which is something that is not in the `summary()` output, however, there is a lot of output to read through in order to find specific information. Kiara says she prefers to use more targeted statistics and just uses `summary()` and `describe()` to get a sense of the data or to confirm her data management tasks have worked. Leslie thinks this is a good strategy, although she is curious what other packages might be out there and whether any of them and have the perfect descriptive statistics code. Kiara says she might like the <span style="font-family:Lucida Console, monospace;font-weight:bold">tableone</span> package they will use later.
 
-### Unlocking achievement 2: Check your understanding
+### unlock achievement 2: Check your understanding
 
 Use one of the methods shown to create a table of the HADMAM variable, which indicates whether or not the survey participant had a mammogram. Review the question and response options in the codebook and recode to ensure that the correct category labels show up in the table (see link in references [@brfss-2014-codebook]) before you begin. 
  
@@ -351,7 +351,7 @@ Nancy asks Leslie if she knows what the different types of parentheses stand for
 
 While dividing variables that are continuous or **numeric** data type into groups can be useful in some cases, Nancy suggests that there are descriptive statistics to examine numeric variables directly. Leslie knows all about these statistics, which include measures of the **central tendency** and **spread** of the values for a **numeric** variable.
 
-### Defining and calculating central tendency
+### Defining and calculating central tendency {#centtend}
 
 Leslie remembers from her statistics courses that central tendency is a measure of the center, or typical value, of a variable and that there are three measures of central tendency: mean, median, and mode. 
 
@@ -451,7 +451,7 @@ hist(x2, main="Right skewed distribution", xlab="Values of variable",ylab = "Pro
 abline(v=mean(x2), col="#78A678", lwd=5)
 ```
 
-#### Using the median
+#### Using the median {#median}
 
 Leslie reminds everyone that the **median** is the middle number when numbers are in order from smallest to largest. When there are an even number of numbers, the median is the mean of the middle two numbers. Nancy types some quick code to show that, in the examples above, the median for the friend groups with and without Bill gates would be:
 
@@ -555,7 +555,7 @@ The mean is 51,200, the median and mode are both 41,000. So the mean, median, an
 
 The mode is sometimes used is to identify the most common (or typical) category of a **factor** variable. For example, she says, in the tables above, the mode of the transgender variable is *Not transgender* with over 150 thousand observations in that category. 
 
-### Messy data and computing measures of central tendency 
+### Messy data and computing measures of central tendency {#messy}
 
 Using these commands with variables from a data frame is similar. Nancy wants to show Leslie how to create a histogram and compute the mean, median, and mode for the PHYSHLTH variable from the BRFSS data set. PHYSHLTH is the number of physically unhealthy days a survey participant has had in the last 30 days. Looking at page 11 of the BRFSS codebook it appears that the values of 77 and 99 should be coded as missing before examining the variable. It also looks like 88 should be coded as zero. Leslie copies and pastes her data management code from much earlier in the day. Nancy is eager to keep coding and slides the laptop over to type in the new code for changing 77 and 99 to NA. She also recodes PHYSHLTH to be 0, which is a little complicated:
 
@@ -644,7 +644,7 @@ In addition to using central tendency to characterize a variable, Leslie remembe
 * median: use **range** or **interquartile range (IQR)** to measure spread
 * mode: use the **index of qualitative variation** to measure spread
 
-#### Spread to report with the mean 
+#### Spread to report with the mean {#mean.spread}
 
 The variance is the average of the squared differences between each value of a variable and the mean of the variable. Leslie shows Nancy the formula from an old statistics textbook and Nancy writes the R code so Leslie can review how it works:
 
@@ -872,7 +872,7 @@ qualvar::B(x = as.numeric(x = brfss.2014.cleaned$TRNSGNDR))
 
 The resulting value of `r round(qualvar::B(as.numeric(brfss.2014.cleaned$TRNSGNDR)), 2)` indicates that observations in this data set are well spread out among the six categories. While it is true that there are people in all categories, the *Not transgender* category contains a much larger group than any of the other categories. Leslie tries a few of the other indices and starts to think that the indices of qualitative variation tend to have higher values than she would have expected. She and Kiara agree that it is important to include other information for context when using one of these indices.
 
-### Unlocking achievement 3: Check your understanding
+### Unlock achievement 3: Check your understanding
 
 Find central tendency and spread for the number of unhealthy mental health days (MENTHLTH). Review the possible values for the variable in the BRFSS codebook first and clean the data so 77, 88, and 99 are handled appropriately.
 
@@ -1688,7 +1688,7 @@ Computing the correct statistics is a great start, but organizing statistics in 
 
 The coder and hacker exercises are an opportunity to apply the skills from this chapter to a new scenario or a new data set. The coder edition will evaluate your application of the commands learned in this chapter (and earlier chapters) to similar scenarios to those in the chapter; the hacker edition will evaluate your use of the procedures from this chapter in new scenarios, usually going a step beyond what was explicitly explained. 
 
-Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 questions correctly on your first try the rest correctly on your first or second try. Visit edge.sagepub.com/harris1e to complete the multiple choice questions and download the materials for the assignment.
+Before picking the coder or hacker version, check your knowledge. We recommend the coder edition if you answer all 5 questions correctly by your third try and the hacker edition if you answer at least 3 of the 5 questions correctly on your first try the rest correctly on your first or second try. Visit edge.sagepub.com/harris1e to complete the multiple choice questions and download the materials for the exercises.
 
 Q1: What is a measure of spread that is appropriate for each central tendency? 
 

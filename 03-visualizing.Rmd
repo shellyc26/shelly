@@ -876,7 +876,7 @@ gridExtra::grid.arrange(mosaic.gun.use.sex,
 
 For Leslie, these graphs are pretty similiar in the informatin they convey. The mosaic plot and stacked bar graph are very similar, with the exception of the y-axis, which shows the number of participants for the stacked bar graph. While the difference in the percent of males and females who use firearms is clear in the mosaic and stacked bar plots, what is not clear in these two graphs is whether there is an equal number of males who have used or not used a firearm or, if it is not equal, which group is larger. The grouped bar plot seems to include everything, making it easy to compare firearm use both within the male and female group and between the two groups. In terms of communicating statistical results, Leslie thinks this graph may become one of her favorites along with the boxplot from the previous section.
 
-### Bar graphs, point graphs, and boxplots for one categorical and one continuous  
+### Bar graphs, point graphs, and boxplots for one categorical and one continuous {#catcont}
 
 Leslie suggests that bar graphs can also be useful to examine how continuous measures differ across groups. For example, the NHANES data includes a measure of age in years. The team already knows that a higher percentage of men than women use firearms. They decide to also examine whether firearm users tend to be younger or older than those who do not use firearms. Age is measured in years which is not *truly continuous* since partial years are not included, but the underlying concept is a continuous one, with age spanning across a continuum of years rather than being broken up into categories. 
 
@@ -901,7 +901,7 @@ bar.gun.use.age
 While the graph looks good, there doesn't seem to be much of a difference in the mean age of those who have used a firearm and those who have not used a firearm. Both groups appear to be just under 45 years old as a mean. This graph is not exciting to Nancy or Leslie. Kiara is too busy looking over the code format to notice. Leslie thinks back to the descriptive statistics day and remembers that the mean is really only useful when the data are normally distributed. She suggests to Nancy that they check the distribution of age for people who do and do not use firearms. Nancy grabs the laptop and slides in front of her and starts typing immediately. Leslie gives up and just looks over her shoulder as she makes density plots:
 
 ```{r}
-# bar graph with means for bar height
+# density plots of age by firearm use category
 dens.gun.use.age <- nhanes.2012.clean %>%
   drop_na(gun.use) %>%
   ggplot(aes(x = RIDAGEYR,
@@ -1005,9 +1005,9 @@ Finally, `rename()` changed the variable named X to a variable named weapons and
 ```{r eval = FALSE}
 # make a long data frame
 fbi.deaths.cleaned <- fbi.deaths %>%
-  slice(3:7) %>%                                                 # selects rows 3 to 7
+  slice(3:7) %>%                                                                    # selects rows 3 to 7
   gather(key = year, value = number, X2012, 
-         X2013, X2014, X2015, X2016) %>%                         # turn columns into rows
+         X2013, X2014, X2015, X2016) %>%                                            # turn columns into rows
   mutate(year, year = substr(x = year, start = 2, stop = 5)) %>%                    # remove X from front of year entries
   rename(weapons = X) %>%
   mutate(weapons, weapons = droplevels(x = weapons))
@@ -1401,7 +1401,7 @@ gridExtra::grid.arrange(line.gun.manu,
 
 There are clearly better options depending on the data for graphing the relationship between two continuous or numeric variables. Line graphs are useful to show change over time or to graph data with little variation. Scatterplots are better for when there is some variation in the relationship between the two variables. Nancy thinks they are done with graphs, but Kiara has one more thing she wants to discuss. Because graphs are such an important part of communicating data, it is extremely important that they are well-formatted. Formatting graphs well is also key for making sure your work is reproducible.
 
-### Unlocking achievement 3: Check your understanding
+### unlock achievement 3: Check your understanding
 
 Plot an appropriate graph to show the relationship between transgender status and the number of unhealthy days. Explain why you chose this graph and not the others available.
 
