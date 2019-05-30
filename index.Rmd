@@ -106,15 +106,37 @@ mutate(agecat = ifelse(age<30,"18-29",
                                            "75+"))))
 gss.2016$agecat <- as.factor(gss.2016$agecat)
 
-#SHELLY'S ALTERNATIVE (see email comment about logic)
+#SHELLY'S ALTERNATIVE (see notes comment about reasoning)
+#option 1: the dplyr way
 
-gss.Test <- gss.2016 %>%
+gss.Test.Dplyr <- gss.2016 %>%
   mutate(agecat = case_when(
     age < 30 ~ "18-29",
     age >= 30 & age < 60 ~ "30-59",
     age >= 60 & age < 75 ~ "60-74",
     age >= 75 ~ "75+")) %>%
   mutate_at(vars("agecat"), list(~as.factor))
+
+#option 2: the "formal" way
+gss.Test.Formal <- gss.2016 #you wouldn't actually include this, just for demo
+
+gss.Test.Formal$agecat <- NA #initialize empty column
+
+for (i in 1:nrow(gss.Test.Formal)) {
+  if (is.na(gss.Test.Formal$age[i])) {
+    next
+  } else if (gss.Test.Formal$age[i] < 30) {
+    gss.Test.Formal$agecat[i] <- "18-29"
+  } else if (gss.Test.Formal$age[i] >= 30 & gss.Test.Formal$age[i] < 60) {
+    gss.Test.Formal$agecat[i] <- "30-59"
+  } else if (gss.Test.Formal$age[i] >= 60 & gss.Test.Formal$age[i] < 75) {
+    gss.Test.Formal$agecat[i] <- "60-74"
+  } else {
+    gss.Test.Formal$agecat[i] <- "75+"
+  } 
+}
+
+gss.Test.Formal$agecat <- factor(gss.Test.Formal$agecat)
 
 #make a bar graph of support for grass by age group
 library(ggplot2)
@@ -181,7 +203,7 @@ In this very small data set, there are three **observations** (the rows) and two
 
 ### Entering and storing variables in R
 
-Now that they have the basic idea for observations and variables, Kiara moves into talking about R. She explains that R is an objected oriented (OO) language where information is stored as **objects** and then data management and analyses are done on the stored objects. Before an object can be used in data management or analyses in R, it has to be stored in the R environment. 
+Now that they have the basic idea for observations and variables, Kiara moves into talking about R. She explains that R stores information as **objects** and then data management and analyses are done on the stored objects. Before an object can be used in data management or analyses in R, it has to be stored in the R environment. 
 
 Information is stored as objects in R by **assigning** the information a name, which can be a single letter or some combinations of letters and numbers that will serve as the name of the object. Assigning an object to a name is done by using an arrow like this: `<-`. The arrow separates the name of the object on the left from the object itself on the right, like this: `name <- object`. An object can be as simple as one letter or number. An object can also be as complex as several data sets combined together.
 
@@ -214,7 +236,7 @@ To demonstrate using the states object in a mathematical expression, Kiara tells
 2 + states
 ```
 
-Leslie notes that 31 is printed in the Console. This is the value of `2 + 29`. Before they go on, Kiara wants to explain a few vocabulary terms to Leslie. When Leslie enters code and running the code results in something being displayed on the screen, the thing that is displayed is the **output**. For example, the 31 printed after running the code above is **output**. 
+Leslie notes that `31` is printed in the Console. This is the value of `2 + 29`. Before they go on, Kiara wants to explain a few vocabulary terms to Leslie. When Leslie enters code and running the code results in something being displayed on the screen, the thing that is displayed is the **output**. For example, the 31 printed after running the code above is **output**. 
 
 ### Unlock achievement 1: Check your understanding
 
@@ -230,7 +252,7 @@ For example, the meaning of the code above, `states <- 29`, `states`, and `2 + s
 
 Kiara wants to pause here for a minute and give Leslie a little more information about the difference between writing R code in the **Console** and writing R code in a **Script** file. She explains that the difference is mostly about being able to edit and save code; code written in the Console at the `>` prompt is executed immediately and not able to be edited or saved. Leslie suggests that the History pane saves the code, which Kiara confirms is true, but the History pane cannot be saved as a code file and shared, nor can code in the History pane be edited. 
 
-A **Script** file, however, is a text file similar to something written in the **Notepad** text editor on a Windows computer or the **Cocoa** text editor on a Mac computer. A Script file can be edited, saved, and shared just like any text file. When Script files are saved they have the **.R** file extension. 
+A **Script** file, however, is a text file similar to something written in the **Notepad** text editor on a Windows computer or the **TextEdit** text editor on a Mac computer. A Script file can be edited, saved, and shared just like any text file. When Script files are saved they have the **.R** file extension. 
 
 Kiara opens a new Script window and shows Leslie how to include information about the code in by typing comments that explain what the code is for, like this:
 
@@ -359,21 +381,21 @@ In addition to annotating code, using a prolog, and including useful information
 
 #### Naming constants
 
-Kiara explains that there are recommended methods for naming objects in R that depend on the type of object [@GooglesRStyleGuide-2019-04-17]. There are several types of objects in R. The **states** object is a *constant* because it is a single numeric value. The recommended format for constants is starting with a "k" and then using camel case. Camel case is capitalizing the first letter of each word in the object name, with the exception of the first word (captial letters kind of look like camel humps). Leslie thinks she gets it and wants to correct the naming of the states object. Kiara says she can either make an entirely new object from scratch, like this: 
+Kiara explains that there are recommended methods for naming objects in R that depend on the type of object [@GooglesRStyleGuide-2019-04-17]. There are several types of objects in R. The **states** object is a *constant* because it is a single numeric value. The recommended format for constants is starting with a "k" and then using camel case. Camel case is capitalizing the first letter of each word in the object name, with the exception of the first word (the captial letters kind of look like camel humps). Leslie thinks she gets it and wants to correct the naming of the `states` object. Kiara says she can either make an entirely new object from scratch, like this: 
 
 ```{r c1main8}
 # make a new object with well-formatted name
 kStates <- 29
 ```
 
-Or, she can assign the existing states object to a new name, like this:
+Or, she can assign the existing `states` object to a new name, like this:
 
 ```{r c1main9}
 # assign states object a new name
 kStates <- states
 ```
 
-Leslie notices that this uses the same format with the `<-` as assigning the value of 29 to the states, Kiara explains that this arrow assigns whatever is on the right side of the arrow to the object name on the left. In this case, the states object is assigned to the kStates object name. Leslie notices that states and kStates are now both listed in the environment. This seems unnecessary since they both hold the same information. Kiara shows her how to remove an object using the `rm()` command:
+Leslie notices that this uses the same format with the `<-` as assigning the value of 29 to the `states` object. Kiara explains that this arrow assigns whatever is on the right side of the arrow to the object name on the left. In this case, the `states` object is assigned to a new object called `kStates`. Leslie notices that `states` and `kStates` are now both listed in the environment. This seems unnecessary since they both hold the same information. Kiara shows her how to remove an object using the `rm()` command:
 
 ```{r c1main10}
 # remove the states object
@@ -384,17 +406,17 @@ This looks different from what they have been doing so far since it includes a c
 
 #### Naming variables
 
-Another type of object is a variable. Variables are measures of some characteristic for each observation in a data set. For example, income and voted are both variables. Variable objects are named using **dot case** or **camel case**. Dot case puts a dot between words in a variable while camel case capitalizes each word in the variable name (except the first word). For example, if Leslie measured the number of medical marijuana perscriptions filled by each cancer patient in a data set during a year, she could use dot case and call the variable filled.script.month or use camel case and call it filledScriptMonth. Kiara mentions that dot case is the preferred method of naming objects but camel case is frequently used and there are other naming conventions used by some R users (see Box \@ref(ch1kiara4)).
+Another type of object is a variable. Variables are measures of some characteristic for each observation in a data set. For example, income and voted are both variables. Variable objects are named using **dot case** or **camel case**. Dot case puts a dot between words in a variable while camel case capitalizes each word in the variable name (except the first word). For example, if Leslie measured the number of medical marijuana perscriptions filled by each cancer patient in a data set during a year, she could use dot case and call the variable `filled.script.month` or use camel case and call it `filledScriptMonth`. Kiara mentions that dot case is the preferred method of naming objects but camel case is frequently used and there are other naming conventions used by some R users (see Box \@ref(ch1kiara4)).
 
 #### Naming functions
 
-Functions are objects that perform a series of R commands to do something in particular. They are usually written when someone has to do the same thing multiple times and wants to make the process more efficient. Kiara explains that functions are a more advanced skill that they will cover later. For now she just wants to give the naming format for a function, which is camel case with the first letter capitalized (also called Pascal case). So, for example, a function that multiplies everything in your data set by 2 might be called **MultiplyByTwo** or something similar.  
+Functions are objects that perform a series of R commands to do something in particular. They are usually written when someone has to do the same thing multiple times and wants to make the process more efficient. Kiara explains that functions are a more advanced skill that they will cover later. For now she just wants to give the naming format for a function, which is camel case with the first letter capitalized (also called Pascal case). So, for example, a function that multiplies everything in your data set by 2 might be called `MultiplyByTwo` or something similar.  
 
 Kiara explains to Leslie that when she is first starting to code it is a good time to develop a coding style and begin using a consistent way of annotating code and the recommended way of naming things. Kiara prefers dot case for variable names and using underscores for filenames and Leslie agrees, so the code examples throughout this text will use these styles along with the recommended styles for constants and functions.
 
 ### Unlock achievement 2: Check your understanding
 
-Open a new script file (or modify the existing file if you have been following along) and create a prolog. Make a constant named kIllegalNum and assign it the value of *21*. Subtract 2 from the variable and check the value.
+Open a new script file (or modify the existing file if you have been following along) and create a prolog. Make a constant named `kIllegalNum` and assign it the value of *21*. Subtract 2 from the variable and check the value.
 
 ## Achievement 3: Understanding and changing data types
 
@@ -487,7 +509,7 @@ kSixEight
 class(x = kSixEight)
 ```
 
-Because six is not greater than eight, the expression 6 > 8 is FALSE, which is assigned to the kSixEight constant.
+Because six is not greater than eight, the expression `6 > 8` is `FALSE`, which is assigned to the `kSixEight` constant.
 
 ### Character data type
 
@@ -517,7 +539,7 @@ NOTE: Some letters and words are already used by R and will cause some confusion
 
 ### Unlocking achievement 3: Check your understanding
 
-Check the data type for the kIllegalNum constant you created to unlock achievement 1. 
+Check the data type for the `kIllegalNum` constant you created to unlock achievement 1. 
 
 ## Acheivement 4: Entering or loading data into R
 
@@ -525,7 +547,7 @@ Usually when social scientists collect information to answer a question, they co
 
 ### Creating vectors for different data types 
 
-The format for a vector uses the `c()` for concatenate. The parentheses are filled with the elements of the vector separated by commas. If the members of the vector are meant to be saved as character type variables, use single or double quotes around each member. Kiara demonstrates character, numeric, and logical vectors:
+The format for a vector uses the command `c()` for concatenate. The parentheses are filled with the elements of the vector separated by commas. If the members of the vector are meant to be saved as character type variables, use single or double quotes around each member. Kiara demonstrates character, numeric, and logical vectors:
 
 ```{r c1main21}
 char.vector <- c('Oregon','Vermont','Maine')    # creates character vector charVector
@@ -567,7 +589,7 @@ nums.1.to.4 * 5
 nums.1.to.4[nums.1.to.4 > 2]                 
 ```
 
-So far the results of these operations are just printed in the Console. Leslie asks how to keep the results. Kiara explains that the results can be assigned to a new vector using the assignment arrow. For example:
+Leslie notices that while the results of these operations printed in the Console, they are no where to be found in her Global Environment pane. Leslie asks how to keep the results. Kiara explains that the results can be assigned to a new vector using the assignment arrow. For example:
 
 ```{r c1main24}
 # add three to number vector and save
@@ -591,7 +613,7 @@ The results show the original vector with 3 added to each value and the result o
 
 In addition to the **vector** format, Kiara explains that R also uses the **matrix** format to store information. A matrix is information, or data elements, stored in a rectangular format with rows and columns. Coders can perform operations on matrices like with vectors.
 
-The R command for producing a matrix is, surprisingly, **matrix**. The matrix command takes arguments to enter the data, `data = `,  and to specify the number of rows, `nrow = `, and columns, `ncol = `, like this:
+The R command for producing a matrix is, surprisingly, `matrix()`. This command takes arguments to enter the data, `data = `,  and to specify the number of rows, `nrow = `, and columns, `ncol = `, like this:
 
 ```{r c1main26}
 # create and print a matrix
@@ -684,11 +706,11 @@ Now that Leslie has a data frame, there are many options open for data managemen
 summary(object = pot.legal)
 ```
 
-This output looks a little confusing to Leslie, so Kiara explains what she is seeing. The top row includes the names of the three variables in the **data frame**. Below each variable is some information about that data frame. What is shown there depends on the data type of the variable. The state variable is a character variable, so the information below "state" shows how many observations there are for this variable in the "Length:5" row. The next row shows the class of the state variable with "Class :character" and the **Mode** or most common value of the variable, which does not make sense for this variable because it is a character variable. Leslie is curious about this use of **mode** since she had learned it before as a measure of **central tendency**; Kiara explains that **mode** is one of the descriptive statistics they will talk about next time they meet.
+This output looks a little confusing to Leslie, so Kiara explains what she is seeing. The top row includes the names of the three variables in the `pot.legal` **data frame**. Below each variable is some information about that data frame. What is shown there depends on the data type of the variable. The state variable is a character variable, so the information below *state* shows how many observations there are for this variable in the "Length:5" row. The next row shows the class of the state variable with "Class :character" and the **Mode** or most common value of the variable, which does not make sense for this variable because it is a character variable. Leslie is curious about this use of **mode** since she had learned it before as a measure of **central tendency**; Kiara explains that **mode** is one of the descriptive statistics they will talk about next time they meet.
 
 The next column of information is for *year.legal*, which is a factor variable. This entry shows each of the categories of the factor and how many observations are in that category. For example, 1996 is one of the categories of the factor and there is one observation that is 1996. Likewise, 2016 is one of the categories of the factor and there is one observation in this category. Kiara mentions that this output format shows up to six rows of information for each variable in a data frame and many variables will have more than six categories. When this is the case, the six categories with the most observations in them will be shown in the output.  
 
-Finally, the ounce.lim column of information shows "Min. :1.0" which indicates that the minimum value of this variable is 1. This column also shows "Max. :8.0" for the maximum value of 8 and a few other **descriptive statistics** that the team will cover more in Chapter 2. 
+Finally, the *ounce.lim* column of information shows "Min. :1.0" which indicates that the minimum value of this variable is 1. This column also shows "Max. :8.0" for the maximum value of 8 and a few other **descriptive statistics** that the team will cover more in Chapter 2. 
 
 ### Importing data frames from outside sources
 
@@ -716,7 +738,7 @@ gss.2016 <- read.csv(file = "data/WeedLegalByAgeGSS2016.csv")
 summary(object = gss.2016)
 ```
 
-The `summary()` command output shows two column headings, **ï..grass** and **age**. These two column headings are the two variables in the data set. Under each of these heading are two more columns separated by colons. The column before the colon lists the values that are present in the variable. The column after the colon lists the number of times the value is present in the variable. So, the information under the **ï..grass** column heading shows that **DK** is one of the values of the **ï..grass** variable and this value occurs 110 times. 
+The `summary()` command output shows two column headings, *grass* and *age*. These two column headings are the two variables in the data set. Under each of these heading are two more columns separated by colons. The column before the colon lists the values that are present in the variable. The column after the colon lists the number of times the value is present in the variable. So, the information under the *grass* column heading shows that "DK" is one of the values of the *grass* variable and this value occurs 110 times. 
 
 Kiara advises Leslie that the `fread()` command in the <span style="font-family:Lucida Console, monospace;font-weight:bold">data.table</span> package or the `read_csv()` command in the <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span> package may be more useful for opening csv files from online sources. To install one of these packages, go to the Tools menu in R Studio and select **Install Packages...**. Type "data.table" in the dialog box that opens. For other ways to install packages, see Box \ref(ch1nancy).
 
@@ -734,7 +756,7 @@ gss.2016 <- data.table::fread(input = "data/WeedLegalByAgeGSS2016.csv")
 summary(object = gss.2016)
 ```
 
-It looks like both the grass and the age variable were imported as character variables. Leslie thinks grass should be a factor and age should be numeric. Kiara agrees and Leslie writes the code:
+It looks like both *grass* and *age* were imported as character variables. Leslie thinks *grass* should be a factor and *age* should be numeric. Kiara agrees and Leslie writes the code:
 
 ```{r c1main35}
 # change grass and age data types
@@ -753,7 +775,7 @@ Before they move on, Kiara wants to mention another important feature  of the `:
 library(package = "Hmisc")
 ```
 
-<span style="font-family:Lucida Console, monospace;font-weight:bold">Hmisc</span> loads without a problem. Kiara types the `summarize()` command to try to get the length of the age variable from the gss.2016 data frame. Kiara notes that this code is a little more complicated than what they have looked at so far and they will go through the formatting soon, but for now, this is just to demonstrate the how the use of the `summarize()` command results in a conflict when both <span style="font-family:Lucida Console, monospace;font-weight:bold">dplyr</span> and <span style="font-family:Lucida Console, monospace;font-weight:bold">Hmisc</span> are open: 
+<span style="font-family:Lucida Console, monospace;font-weight:bold">Hmisc</span> loads without a problem. Kiara types the `summarize()` command to try to get the length of the `age` variable from the `gss.2016` data frame. Kiara notes that this code is a little more complicated than what they have looked at so far and they will go through the formatting soon, but for now, this is just to demonstrate the how the use of the `summarize()` command results in a conflict when both <span style="font-family:Lucida Console, monospace;font-weight:bold">dplyr</span> and <span style="font-family:Lucida Console, monospace;font-weight:bold">Hmisc</span> are open: 
 
 ```{r c1main37, eval=FALSE}
 # use the summarize command
@@ -805,12 +827,12 @@ This works too! If the conflicting package is not needed again, this method of a
 
 ### Cleaning data types in an imported file 
 
-After that long detour, Kiara goes back to the task at hand. She notes for Leslie that, while the variable names look good after loading with `fread()`, the variables both seem to be **character** data type. Most data sets have a codebook that lists all the variables and how they were measured. This information can help to identify what data type is appropriate for a variable and other information about the data. Check the codebook for the General Social Survey (GSS) [@gss2016codebook] to determine what data types these variables are. For example, on page 304 of the codebook it shows the measurement of the variable grass, which has five possible responses:
+After that long detour, Kiara goes back to the task at hand. She notes for Leslie that, while the variable names look good after loading with `fread()`, the variables both seem to be **character** data type. Most data sets have a "codebook" that lists all the variables and how they were measured, sometimes called a "data dictionary". This information can help to identify what data type is appropriate for a variable and other information about the data. Check the codebook for the General Social Survey (GSS) [@gss2016codebook] to determine what data types these variables are. For example, on page 304 of the codebook it shows the measurement of the variable grass, which has five possible responses:
 
 *Do you think the use of marijuana should be made legal or not?*
 
 * Should 
-* should not 
+* Should not 
 * Don't know 
 * No answer 
 * Not applicable 
@@ -827,7 +849,7 @@ head(x = gss.2016)
 
 Leslie finds that the age variable appears to be measured in years.
 
-So, the grass variable should be changed to a **factor** while the age variable should be either **numeric** or **integer**. When in doubt choosing between numeric and integer, numeric is more flexible.
+So, the `grass` variable should be changed to a **factor** while the `age` variable should be either **numeric** or **integer**. When in doubt choosing between numeric and integer, numeric is more flexible.
 
 Because Leslie is not changing the contents of the variables, she keeps the same variable names. To do this, she uses the arrow to assign the variable with the new assigned type back to the same variable name. Notice the data frame name and variable name on the left of the assignment arrow `<-` are exactly the same as on the right. when new information is assigned to an existing variable, it over-writes whatever was saved in that variable.
 
@@ -846,7 +868,7 @@ summary(object = gss.2016)
 
 ```
 
-Leslie uses class and summary to check and confirm that the variables are now the correct type.
+Leslie uses `class()` and `summary()` to check and confirm that the variables are now the correct type.
 
 ### Unlock achievement 4: Check your understanding
 
@@ -867,7 +889,7 @@ Other responses like "Don't know" or "Inapplicable" may sometimes be treated as 
 
 ### Recoding missing values to NA
 
-In the summary of the GSS data the grass variable has five possible values: DK (don't know), IAP (inapplicable), LEGAL, NOT LEGAL, and NA (no answer). According to NORC, the DK, IAP, and NA are all missing values. However, R only treats **NA** as missing. So, before conducting any analyses, the DK and IAP values should be converted to NA to be treated as missing in any analyses. That is, the grass variable should be **recoded** so that its missing values are all **NA**.
+In the summary of the GSS data the `grass` variable has five possible values: DK (don't know), IAP (inapplicable), LEGAL, NOT LEGAL, and NA (no answer). According to NORC, the DK, IAP, and NA are all missing values. However, R only treats **NA** as missing. So, before conducting any analyses, the DK and IAP values should be converted to NA to be treated as missing in any analyses. That is, the `grass` variable should be **recoded** so that its missing values are all **NA**. Note that **NA** is a reserved "word" in R. In order to use **NA**, both letters must be uppercase (`Na` is not permitted), and there can be no quotations (`"NA"` will treat this as a character, rather than a true missing value). 
 
 There are many ways to recode variables in R. Kiara's favorite data management package is the <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span> package. She shows Leslie how to install the package by going to the **Tools** menu and choosing **Install packages...** and typing <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span> in the box that pops up. Leslie installs <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span>. Kiara closes her laptop to show Leslie a one of her laptop stickers. It shows the <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span> logo in a hexagon. Kiara explains that the R community likes to advertise the packages they use and like with hexagonal laptop stickers. It is not unusual, she says, to see a laptop covered in stickers like this one:
 
@@ -884,20 +906,20 @@ library("tidyverse")
 
 If the <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span> package is not installed, the library command will show an error. 
 
-Kiara shows Leslie the pipe feature, `%>%`, that is available in the <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span> and useful for data management and other tasks. The `%>%` works to send or *pipe* information through a command or set of commands. In this case, Kiara says, they will pipe the gss.2016 data set into a `mutate()` command that can be used to recode values. The `mutate()` command takes the name of the variable to recode and then information on how to recode it. Kiara thinks it might just be best to show Leslie the code and walk through it:   
+Kiara shows Leslie the pipe feature, `%>%`, that is available in the <span style="font-family:Lucida Console, monospace;font-weight:bold">tidyverse</span> and useful for data management and other tasks. The `%>%` works to send or *pipe* information through a command or set of commands. In this case, Kiara says, they will pipe the `gss.2016` data set into a `mutate()` command that can be used to recode values. The `mutate()` command takes the name of the variable to recode and then information on how to recode it. Kiara thinks it might just be best to show Leslie the code and walk through it:   
 
 ```{r c1main45}
 # use tidyverse pipe to change DK to NA
 gss.2016 <- gss.2016 %>% 
   mutate(grass = na_if(x = grass, y = "DK"))
 
-# check the summary, there should be 110 + 3 in the NA categorya
+# check the summary, there should be 110 + 3 in the NA category
 summary(object = gss.2016)
 ```
 
-Kiara walks Leslie through the code. First is the `gss.2016 <-` which indicates that whatever happens on the right hand side of the `<-` will be assigned to the gss.2016 object name. The first thing after the arrow is `gss.2016 %>%` which indicates that the gss.2016 data is being piped into whatever comes on the next line, in this case, it is being piped into the `mutate()` command. The `mutate()` command on the next line uses `na_if()` to make the grass variable equal to **NA** if the grass variable is currently coded as **DK**.
+Kiara walks Leslie through the code. First is the `gss.2016 <-` which indicates that whatever happens on the right hand side of the `<-` will be assigned to the `gss.2016` object name. The first thing after the arrow is `gss.2016 %>%` which indicates that the `gss.2016` data is being "piped" into whatever comes on the next line, in this case, it is being piped into the `mutate()` command. The `mutate()` command on the next line uses `na_if()`, which says "if any observation in the `grass` variable is currently coded as **DK**, change that observation to instead be coded as **NA**".
 
-Leslie is a little confused but tries to summarize. She believes the command is changing the **DK** values in the grass variable to **NA**, which is the R shorthand for missing. Kiara says that is correct and it is completely fine to be confused. It takes a while to get used to the way R works and the way different command structures like the `%>%` work. Kiara thinks maybe adding the IAP recoding to the command might be useful for reinforcing the ideas. She adds to her code to replace IAP with NA:
+Leslie is a little confused but tries to summarize. She believes the command is changing the **DK** values in the `grass` variable to **NA**, which is the R shorthand for missing. Kiara says that is correct and it is completely fine to be confused. It takes a while to get used to the way R works and the way different command structures like the `%>%` work. Kiara thinks maybe adding the IAP recoding to the command might be useful for reinforcing the ideas. She adds to her code to replace IAP with NA:
 
 ```{r c1main46}
 # use tidyverse pipe to change DK and IAP to NA
@@ -911,7 +933,7 @@ summary(object = gss.2016)
 
 That works!
 
-Leslie finds the summary information accurate, with zero observations coded as DK or IAP. However, the DK and IAP category labels are still listed even though there are no observations with these coded values. Kiara explains that R will keep all the different levels of a factor during a recode, so Leslie will need to remove unused categories with the `droplevels()` command if she no longer needs them. Leslie wants to try this herself and adds a line of code to Kiara's code:
+Leslie finds the summary information accurate, with zero observations coded as "DK" or "IAP". She then looks at her Global Environment, clicks on the blue arrow for the `gss.2016` data frame, and notices something odd: the category labels for "DK" and "IAP" are still listed even though there are no observations with these coded values (because Leslie just recoded them to "NA"). Kiara explains that R will keep all the different levels of a factor during a recode, so Leslie will need to remove unused categories with the `droplevels()` command if she no longer needs them. Leslie wants to try this herself and adds a line of code to Kiara's code:
 
 ```{r c1main47}
 # use tidyverse pipe to change DK and IAP to NA
@@ -949,7 +971,7 @@ gss.2016 <- gss.2016 %>%
   mutate(grass = droplevels(x = grass)) %>%
   mutate(age.cat = cut(x = age, 
                        breaks = c(-Inf, 29, 59, 74, Inf),
-                       labels = c("< 30", "30 - 59", "60 - 74", "75+" )))
+                       labels = c("< 30", "30 - 59", "60 - 74", "75+")))
 
 summary(object = gss.2016)
 ```
@@ -1029,7 +1051,7 @@ Leslie finds the Tools menu and selects **Install Packages...** to install the p
 library(package = "ggplot2")
 ```
 
-With Kiara's help, Leslie starts with a basic plot using the `ggplot()` command from the <span style="font-family:Lucida Console, monospace;font-weight:bold">ggplot2</span> package. Kiara advises her to start by storing the graph in a new object with a new name. Leslie chooses **legalize.bar**. Kiara says to follow a similar structure to the data management from above. Start by piping the **gss.2016** data. Kiara says the data will be piped into the `ggplot()` command this time. The `ggplot()` command needs to know which variable or variables from the gss.2016 will be placed on the axes. In the grammar of graphics, this information is considered **aesthetics** and is included in the `aes()` command within the `ggplot()` command. There is only one variable for this graph, the **grass** variable, which is on the x-axis. Kiara helps Leslie write the commands she needs. After the basics of the graph are included in the `ggplot()` command, the graph type is added in a new **layer**. 
+With Kiara's help, Leslie starts with a basic plot using the `ggplot()` command from the <span style="font-family:Lucida Console, monospace;font-weight:bold">ggplot2</span> package. Kiara advises her to start by storing the graph in a new object with a new name. Leslie chooses **legalize.bar**. Kiara says to follow a similar structure to the data management from above. Start by piping the `gss.2016` data. Kiara says the data will be piped into the `ggplot()` command this time. The `ggplot()` command needs to know which variable or variables from the `gss.2016` will be placed on the axes. In the grammar of graphics, this information is considered **aesthetics** and is included in the `aes()` command within the `ggplot()` command. There is only one variable for this graph, the `grass` variable, which is on the x-axis. Kiara helps Leslie write the commands she needs. After the basics of the graph are included in the `ggplot()` command, the graph type is added in a new **layer**. 
 
 Kiara explains that graphs build with `ggplot()` are built in layers. The first layer starts with `ggplot()` and contains the basic information about which data are being graphed and which variables are included. The next layer typically gives the graph type, or **geometry** in the grammar of graphics language, and starts with `geom_` followed by one of the available types. In this case, Leslie is looking for a bar graph, so the `geom_bar()` is the geometry for this graph. Leslie starts to write this by adding a `%>%` after the line with `ggplot()` on it, but Kiara stops her. The `geom_bar()` is not a new command, but is a layer of the plot and so is added with a `+` instead of a `%>%`. Leslie types:
 
@@ -1152,7 +1174,7 @@ legalize.bar
 
 ```
 
-The last thing to do is to recode the levels of the grass variable to be Yes and No. Kiara can sense that Leslie is about done for the day, so she nods at Nancy and Nancy goes ahead and adds the final line needed with `mutate()` and `recode_factor()` to create the graph:
+The last thing to do is to recode the levels of the `grass` variable to be Yes and No. Kiara can sense that Leslie is about done for the day, so she nods at Nancy and Nancy goes ahead and adds the final line needed with `mutate()` and `recode_factor()` to create the graph:
 
 ```{r c1main59, fig.cap="Support for marijuana legalization among participants in the 2016 General Social Survey."}
 # make a bar graph for grass variable
@@ -1201,7 +1223,7 @@ Finally the full graph appears. Leslie is overwhelmed by what seems to be hundre
 
 ### Unlock achievement 6: Check your understanding
 
-Think about the number of missing values for grass and age. Run the summary command to confirm. If 1824 of the 2867 observations had values for both grass and age, 32 observations were missing age, and 1024 observations were missing grass. How many observations were missing values for both? 
+Think about the number of missing values for `grass` and `age`. Run the summary command to confirm. If 1824 of the 2867 observations had values for both `grass` and `age`, 32 observations were missing `age`, and 1024 observations were missing `grass`. How many observations were missing values for both? 
 
 Now try some visual changes to the graph. Change the *No* bar to the official R-Ladies purple color *#88398a* and change the *Yes* bar to the color *gray40*. Change the theme to another theme from the <span style="font-family:Lucida Console, monospace;font-weight:bold">ggplot2</span> themes available online (see reference [@Completethemesggthemeggplot2-2019-04-16]).  
 
@@ -1250,12 +1272,12 @@ b. factor
 c. integer 
 d. character 
 
-Q2: Which of the following opens the ggplot2 library?
+Q2: Which of the following opens the `ggplot2` library?
 
-a. install.packages("ggplot2") 
-b. library(ggplot2) 
-c. summary(ggplot2)
-d. open(ggplot2)
+a. `install.packages("ggplot2")` 
+b. `library(ggplot2)` 
+c. `summary(ggplot2)`
+d. `open(ggplot2)`
 
 Q3: The block of text at the top of a code file that introduces the project is called:
 
@@ -1350,9 +1372,9 @@ The second way is to use the R `install.packages()` command, like this:
 install.packages(pkgs = "ggplot2")
 ```
 
-Please note that you only have to install a package **ONE TIME**. Reinstalling it every time you use R will take you a lot of processing power and slow you down.
+Please note that you only have to install a package **ONE TIME**. Reinstalling it every time you use R will take you a lot of processing power and slow you down. You also need to be connected to the internet in order to install a package.
 
-Once you install <span style="font-family:Lucida Console, monospace;font-weight:bold">ggplot2</span>, you have to open it. Unlike installing, you will have to open the package every time you want to use it. This is similar to other programs you use on your computer. When you first get a new program like R or Microsoft Word, you install it once. However, you have to open the program every time you want to use it. Use the `library()` command to open a package:
+Once you install <span style="font-family:Lucida Console, monospace;font-weight:bold">ggplot2</span>, you have to open it. Unlike installing, you will have to open the package every time you want to use it. This is similar to other programs you use on your computer. When you first get a new program like R or Microsoft Word, you install it once. However, you have to open the program every time you want to use it. Note that you do not need internet access to use the package, after it has been installed on your computer. Use the `library()` command to open a package:
 
 ```{r c1end3}
 library(package = "ggplot2")
